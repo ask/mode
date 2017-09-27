@@ -22,8 +22,8 @@ So for us the answer was to create a generic ``Service`` class that handles
 this for us, including creating pretty graphs of active services in the
 system, and what they are currently doing.
 
-It's also inspired by Celery bootsteps, you could say it's a less
-formal version of it that builds the graph at runtime instead of in advance.
+Heavily inspired by Celery/RabbitMQ bootsteps, you could say it's a less
+formal version of that, where the graph is built at runtime.
 
 Creating a Service
 ==================
