@@ -6,7 +6,7 @@ class MyService(mode.Service):
     async def on_started(self) -> None:
         self.log.info('Service started (hit ctrl+C to exit).')
 
-    @Service.task
+    @mode.Service.task
     async def _background_task(self) -> None:
         print('BACKGROUND TASK STARTING')
         while not self.should_stop:
