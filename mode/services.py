@@ -25,6 +25,7 @@ FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
 
 class ServiceBase(ServiceT):
     """Base class for services."""
+
     log: CompositeLogger
 
     #: Logger used by this service.
@@ -104,6 +105,8 @@ class Service(ServiceBase):
 
     Notes:
         Instantiating a service will create the asyncio event loop.
+        If your object is created as a side effect of importing a module,
+        then you should use :class:`mode.proxy.ServiceProxy`.
 
     Keyword Arguments:
         beacon (NodeT): Beacon used to track services in a graph.
