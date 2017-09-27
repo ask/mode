@@ -1,0 +1,3 @@
+pytest-cov
+codecov
+-r typecheck.txt
