@@ -45,7 +45,7 @@ class ServiceBase(ServiceT):
 
     def _format_log(self, severity: int, msg: str,
                     *args: Any, **kwargs: Any) -> str:
-        return f'[^{"-" * self.beacon.depth}{self.shortlabel}]: {msg}'
+        return f'[^{"-" * (self.beacon.depth - 1)}{self.shortlabel}]: {msg}'
 
     def _log(self, severity: int, msg: str, *args: Any, **kwargs: Any) -> None:
         self.logger.log(severity, msg, *args, **kwargs)
@@ -150,7 +150,7 @@ class Service(ServiceBase):
     _tasks: ClassVar[List[ServiceTask]] = None
 
     @classmethod
-    def task(cls, fun: Callable[..., Awaitable]) -> ServiceTask:
+    def task(cls, fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
         """Decorator used to define a service background task.
 
         Example:
@@ -163,6 +163,21 @@ class Service(ServiceBase):
             ...         await self.sleep(1.0)
         """
         return ServiceTask(fun)
+
+    @classmethod
+    def timer(cls, interval: Seconds) -> Callable[
+            [Callable[[ServiceT], Awaitable[None]]], ServiceTask]:
+        _interval = want_seconds(interval)
+
+        def _decorate(
+                fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
+            @wraps(fun)
+            async def _repeater(self: ServiceT) -> None:
+                while not self.should_stop:
+                    await self.sleep(_interval)
+                    await fun(self)
+            return cls.task(_repeater)
+        return _decorate
 
     @classmethod
     def transitions_to(cls, flag: str) -> Callable:
