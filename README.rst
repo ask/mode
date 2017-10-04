@@ -2,10 +2,10 @@
  Mode: AsyncIO Services
 =====================================================================
 
-|build-status| |coverage| |license| |wheel| |pyversion| |pyimp|
+|build-status| |license| |wheel| |pyversion| |pyimp|
 
 :Version: 1.0.0
-:Web: http://mode.readthedocs.io/
+:Web: http://mode.readthedocs.org/
 :Download: http://pypi.python.org/pypi/mode
 :Source: http://github.com/fauststream/mode
 :Keywords: async, service, framework, actors, bootsteps, graph
@@ -28,8 +28,8 @@ So for us the answer was to create a generic ``Service`` class that handles
 this for us, including creating pretty graphs of active services in the
 system, and what they are currently doing.
 
-It's also inspired by Celery bootsteps, you could say it's a less
-formal version of it that builds the graph at runtime instead of in advance.
+Heavily inspired by Celery/RabbitMQ bootsteps, you could say it's a less
+formal version of that, where the graph is built at runtime.
 
 Creating a Service
 ==================
@@ -52,12 +52,12 @@ To start the service, call ``await service.start()``::
 
     await service.start()
 
-Or you can use ``mode.worker.Worker`` (or a subclass of this) to start your
+Or you can use ``mode.Worker`` (or a subclass of this) to start your
 services-based asyncio program from the console::
 
     if __name__ == '__main__':
-        from mode.worker import Worker
-        worker = Worker(MyService(), loglevel='INFO', logfile=None)
+        imoport mode
+        worker = mode.Worker(MyService(), loglevel='INFO', logfile=None)
         worker.execute_from_commandline()
 
 It's a Graph!
@@ -122,7 +122,7 @@ Installation
 You can install Mode either via the Python Package Index (PyPI)
 or from source.
 
-To install using `pip`,::
+To install using `pip`::
 
     $ pip install -U mode
 
@@ -134,7 +134,7 @@ Downloading and installing from source
 Download the latest version of Mode from
 http://pypi.python.org/pypi/mode
 
-You can install it by doing the following,::
+You can install it by doing the following::
 
     $ tar xvfz mode-0.0.0.tar.gz
     $ cd mode-0.0.0
@@ -155,7 +155,7 @@ With pip
 You can install the latest snapshot of Mode using the following
 pip command::
 
-    $ pip install https://github.com/fauststream/mode/zipball/master#egg=mode
+    $ pip install https://github.com/fauststream/Mode/zipball/master#egg=mode
 
 FAQ
 ===
@@ -301,9 +301,6 @@ version 1.2.0 available at http://contributor-covenant.org/version/1/2/0/.
 .. |build-status| image:: https://secure.travis-ci.org/fauststream/mode.png?branch=master
     :alt: Build status
     :target: https://travis-ci.org/fauststream/mode
-
-.. |coverage| image:: https://codecov.io/github/fauststream/mode/coverage.svg?branch=master
-    :target: https://codecov.io/github/fauststream/mode?branch=master
 
 .. |license| image:: https://img.shields.io/pypi/l/mode.svg
     :alt: BSD License
