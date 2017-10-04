@@ -150,7 +150,7 @@ class Service(ServiceBase):
     _tasks: ClassVar[List[ServiceTask]] = None
 
     @classmethod
-    def task(cls, fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
+    def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
         """Decorator used to define a service background task.
 
         Example:
@@ -174,7 +174,7 @@ class Service(ServiceBase):
             @wraps(fun)
             async def _repeater(self: ServiceT) -> None:
                 while not self.should_stop:
-                    await self.sleep(_interval)
+                    await self.sleep(_interval)  # type: ignore
                     await fun(self)
             return cls.task(_repeater)
         return _decorate

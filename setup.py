@@ -121,6 +121,7 @@ setup(
     url=meta['homepage'],
     platforms=['any'],
     license='BSD',
+    keywords='asyncio service bootsteps graph coroutine',
     packages=find_packages(exclude=['ez_setup', 'tests', 'tests.*']),
     include_package_data=True,
     zip_safe=False,
