@@ -128,6 +128,7 @@ setup(
     install_requires=reqs('default.txt'),
     tests_require=reqs('test.txt'),
     extras_require=extras_require(),
+    python_require='~=3.6',
     classifiers=classifiers,
     long_description=long_description,
 )
