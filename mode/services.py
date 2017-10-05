@@ -5,8 +5,8 @@ from functools import wraps
 from time import monotonic
 from types import TracebackType
 from typing import (
-    Any, Awaitable, Callable, ClassVar, Generator, Iterable,
-    List, MutableSequence, Optional, Sequence, Set, Type, Union, cast,
+    Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
+    MutableSequence, Optional, Sequence, Set, Type, Union, cast,
 )
 from .types import DiagT, ServiceT
 from .utils.logging import CompositeLogger, get_logger
@@ -26,6 +26,8 @@ FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
 class ServiceBase(ServiceT):
     """Base class for services."""
 
+    abstract: ClassVar[bool] = True
+
     log: CompositeLogger
 
     #: Logger used by this service.
@@ -33,10 +35,16 @@ class ServiceBase(ServiceT):
     logger: logging.Logger = None
 
     def __init_subclass__(self) -> None:
-        super().__init_subclass__()
-        if self.logger is None or getattr(self.logger, '__modex__', False):
-            self.logger = get_logger(self.__module__)
-            self.logger.__modex__ = True
+        if self.abstract:
+            self.abstract = False
+        else:
+            self._init_subclass_logger()
+
+    @classmethod
+    def _init_subclass_logger(cls) -> None:
+        if cls.logger is None or getattr(cls.logger, '__modex__', False):
+            cls.logger = get_logger(cls.__module__)
+            cls.logger.__modex__ = True
 
     # This contains the common methods for Service and ServiceProxy
 
@@ -112,6 +120,7 @@ class Service(ServiceBase):
         beacon (NodeT): Beacon used to track services in a graph.
         loop (asyncio.AbstractEventLoop): Event loop object.
     """
+    abstract: ClassVar[bool] = True
     Diag: Type[DiagT] = Diag
 
     #: Set to True if .stop must wait for the shutdown flag to be set.
@@ -147,7 +156,7 @@ class Service(ServiceBase):
 
     #: The ``@Service.task`` decorator adds :class:`ServiceTask`
     #: instances to this list (which is a class variable).
-    _tasks: ClassVar[List[ServiceTask]] = None
+    _tasks: ClassVar[Dict[str, List[ServiceTask]]] = None
 
     @classmethod
     def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
@@ -197,12 +206,38 @@ class Service(ServiceBase):
     def __init_subclass__(self) -> None:
         # Every new subclass adds @Service.task decorated methods
         # to the class-local `_tasks` list.
-        if self._tasks is None:
-            self._tasks = []
-        self._tasks.extend([
-            value for key, value in self.__dict__.items()
-            if isinstance(value, ServiceTask)
-        ])
+        if self.abstract:
+            self.abstract = False
+        else:
+            self._init_subclass_logger()
+            self._init_subclass_tasks()
+
+    @classmethod
+    def _init_subclass_tasks(cls) -> None:
+        # XXX Python 3.6.3 introduces mysterious bug
+        # where the storage for subclasses is always the same,
+        # so when we set cls._tasks = [], it will actually clear the
+        # tasks for all subclasses.  Hacked around this situation
+        # by making _tasks a mapping from classid -> list of tasks,
+        # that way all subclasses can share the same attribute.
+        clsid = cls._get_class_id()
+        if cls._tasks is None:
+            cls._tasks = {}
+        tasks = []
+        for base in cls.__bases__ + (cls,):
+            tasks.extend([
+                attr for attr in vars(base).values()
+                if isinstance(attr, ServiceTask)
+            ])
+        cls._tasks[clsid] = tasks
+
+    @classmethod
+    def _get_tasks(cls) -> List[ServiceTask]:
+        return cls._tasks[cls._get_class_id()]
+
+    @classmethod
+    def _get_class_id(cls) -> str:
+        return '.'.join([cls.__module__, cls.__qualname__])
 
     def __init__(self, *,
                  beacon: NodeT = None,
@@ -324,7 +359,7 @@ class Service(ServiceBase):
             await self.on_first_start()
         self.log.info('Starting...')
         await self.on_start()
-        for task in self._tasks:
+        for task in self._get_tasks():
             self.add_future(task(self))
         for child in self._children:
             if child is not None:
