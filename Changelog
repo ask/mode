@@ -4,6 +4,18 @@
  Change history
 ================
 
+.. _version-1.0.1:
+
+1.0.1
+=====
+:release-date: 2017-10-05 02:53 P.M PDT
+:release-by: Ask Solem
+
+- Fixes compatibility with Python 3.6.3.
+
+    Python 3.6.3 badly broke ``__init_subclass__``, in such a way that
+    any class attribute set is set for all subclasses.
+
 .. _version-1.0.0:
 
 1.0.0
