@@ -43,13 +43,14 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
     def wakeup(self) -> None:
         notify(self._please_wakeup)
 
-    def add(self, service: ServiceT) -> None:
+    def add(self, *services: ServiceT) -> None:
         # XXX not thread-safe, but shouldn't have to be.
         size = len(self._services)
-        self._services.append(service)
-        self._index[service] = size + 1 if size else size
-        assert service.supervisor is None
-        self._contribute_to_service(service)
+        self._services.extend(services)
+        for i, service in enumerate(services):
+            self._index[service] = (size + i + 1) if size else 0
+            assert service.supervisor is None
+            self._contribute_to_service(service)
 
     def _contribute_to_service(self, service: ServiceT) -> None:
         # A "poisonpill" is the default behavior for any service
@@ -61,12 +62,13 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
         # the running program abruptly.  See :class:`PoisonpillSupervisor`.
         service.supervisor = self
 
-    def discard(self, service: ServiceT) -> None:
-        self._index.pop(service, None)
-        try:
-            self._services.remove(service)
-        except ValueError:
-            pass
+    def discard(self, *services: ServiceT) -> None:
+        for service in services:
+            self._index.pop(service, None)
+            try:
+                self._services.remove(service)
+            except ValueError:
+                pass
 
     def insert(self, index: int, service: ServiceT) -> None:
         old_service, self._services[index] = self._services[index], service

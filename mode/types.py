@@ -146,11 +146,11 @@ class SupervisorStrategyT(ServiceT):
         ...
 
     @abc.abstractmethod
-    def add(self, service: ServiceT) -> None:
+    def add(self, *services: ServiceT) -> None:
         ...
 
     @abc.abstractmethod
-    def discard(self, service: ServiceT) -> None:
+    def discard(self, *services: ServiceT) -> None:
         ...
 
     @abc.abstractmethod
