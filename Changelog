@@ -4,6 +4,26 @@
  Change history
 ================
 
+.. _version-1.0.2:
+
+1.0.2
+=====
+:release-date: 2017-10-10 01:51 P.M PDT
+:release-by: Ask Solem
+
+- Adds support for Python 3.6.0
+
+- Adds backports of typing improvements in CPython 3.6.1
+  to ``mode.utils.compat``: ``AsyncContextManager``, ``ChainMap``,
+  ``Counter``, and ``Deque``.
+
+- ``Supervisor.add`` and ``.discard`` now takes an arbitrary number
+  of services to add/discard as star arguments.
+
+- Fixed typo in example: ``Service.task`` -> ``mode.Service.task``.
+
+    Contributed by Xu Jing.
+
 .. _version-1.0.1:
 
 1.0.1
