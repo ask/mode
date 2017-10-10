@@ -1,9 +1,7 @@
 import abc
 import asyncio
-from typing import (
-    Any, AsyncContextManager, Awaitable, Callable,
-    MutableMapping, Set, Type,
-)
+from typing import Any, Awaitable, Callable, MutableMapping, Set, Type
+from .utils.compat import AsyncContextManager
 from .utils.times import Seconds
 from .utils.types.trees import NodeT
 

@@ -1,10 +1,10 @@
-from collections import Counter
 from functools import partial
 from typing import (
     Any, Callable, IO, ItemsView, Iterable, Iterator,
     List, MutableMapping, Sequence, Set, cast,
 )
 from .formatter import GraphFormatter
+from ..compat import Counter
 from ..types.graphs import DependencyGraphT, GraphFormatterT
 
 
@@ -99,7 +99,7 @@ class DependencyGraph(DependencyGraphT):
 
         See https://en.wikipedia.org/wiki/Topological_sorting
         """
-        count: Counter = Counter()
+        count: Counter[Any] = Counter()
         result = []
 
         for node in self:

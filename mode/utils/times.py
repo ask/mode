@@ -4,7 +4,8 @@ from datetime import timedelta
 from functools import singledispatch
 from time import monotonic
 from types import TracebackType
-from typing import AsyncContextManager, Optional, Type, Union
+from typing import Optional, Type, Union
+from .compat import AsyncContextManager
 
 __all__ = ['Bucket', 'Seconds', 'TokenBucket', 'rate_limit', 'want_seconds']
 

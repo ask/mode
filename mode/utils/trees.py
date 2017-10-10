@@ -1,6 +1,6 @@
-from collections import deque
 from contextlib import suppress
 from typing import Any, Iterator, List, cast
+from .compat import Deque
 from .graphs import DependencyGraph
 from .objects import shortlabel
 from .types.graphs import DependencyGraphT
@@ -79,7 +79,7 @@ class Node(NodeT):
 
     def traverse(self) -> Iterator[NodeT]:
         """Iterator traversing the tree in BFS order."""
-        stack: Deque[NodeT] = deque([self])
+        stack: Deque[NodeT] = Deque([self])
         while stack:
             node = stack.popleft()
             yield node
@@ -102,7 +102,7 @@ class Node(NodeT):
     def as_graph(self) -> DependencyGraphT:
         """Convert to :class:`~mode.utils.graphs.DependencyGraph`."""
         graph = DependencyGraph()
-        stack = deque([self])
+        stack: Deque[NodeT] = Deque([self])
         while stack:
             node = stack.popleft()
             for child in node.children:

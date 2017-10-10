@@ -183,7 +183,7 @@ class Service(ServiceBase):
             @wraps(fun)
             async def _repeater(self: ServiceT) -> None:
                 while not self.should_stop:
-                    await self.sleep(_interval)  # type: ignore
+                    await self.sleep(_interval)
                     await fun(self)
             return cls.task(_repeater)
         return _decorate
