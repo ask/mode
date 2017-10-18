@@ -112,8 +112,10 @@ class CompositeLogger:
 def _setup_logging(**kwargs: Any) -> None:
     # stupid logging just have to crash if both stream/loglevel
     # set EVEN IF ONE OF THEM IS SET TO NONE AAAAAAAAAAAAAAAAAAAAAHG
-    if 'stream' in kwargs:
+    if 'filename' in kwargs and kwargs['filename'] is None:
         del kwargs['filename']
+    if 'stream' in kwargs and kwargs['stream'] is None:
+        del kwargs['stream']
     logging.basicConfig(**kwargs)
 
 
