@@ -1,87 +1,116 @@
+"""ServiceThread - Service that starts in a separate thread.
+
+Will use the default thread pool executor (``loop.set_default_executor()``),
+unless you specify a specific executor instance.
+
+Note: To stop something using the thread's loop, you have to
+use the ``on_thread_stop`` callback instead of the on_stop callback.
+"""
 import asyncio
 import os
 import sys
-import threading
 import traceback
+from concurrent.futures import Executor
 from typing import Any
-from .types import ServiceT
+from .services import Service
 
 __all__ = ['ServiceThread']
 
 
-class ServiceThread(threading.Thread):
-    _shutdown: threading.Event
-    _stopped: threading.Event
+class ServiceThread(Service):
+    wait_for_shutdown = True
 
-    def __init__(self, service: ServiceT,
+    def __init__(self,
                  *,
-                 daemon: bool = False,
-                 loop: asyncio.AbstractEventLoop = None) -> None:
-        self.service = service
-        self._shutdown = threading.Event()
-        self._stopped = threading.Event()
-        self._loop = loop
-        super().__init__(daemon=daemon)
+                 executor: Executor = None,
+                 loop: asyncio.AbstractEventLoop = None,
+                 thread_loop: asyncio.AbstractEventLoop = None,
+                 **kwargs: Any) -> None:
+        # cannot share loop between threads, so create a new one
+        assert asyncio.get_event_loop()
+        self.executor = executor
+        self.parent_loop = loop or asyncio.get_event_loop()
+        self.thread_loop = thread_loop or asyncio.new_event_loop()
+        self._thread_started = asyncio.Event(loop=self.parent_loop)
+        super().__init__(loop=thread_loop, **kwargs)
 
-    def run(self) -> None:
-        if self._loop is None:
-            self._loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self._loop)
-        self._loop.run_until_complete(self._serve(self._loop))
-
-    async def _start_service(self, loop: asyncio.AbstractEventLoop) -> None:
-        service = self.service
-        service.loop = loop
-        await service.start()
-        await self.on_start()
-
-    async def on_start(self) -> None:
+    async def on_thread_stop(self) -> None:
         ...
 
-    async def on_restart(self) -> None:
-        ...
+    # The deal with asyncio.Event and threads.
+    #
+    # Every thread needs a dedicated event loop, but events can actually
+    # be shared between threads in some ways:
+    #
+    #   - Any thread can set/check the flag (.set() / .is_set())
+    #   - Only the thread owning the loop can wait for the event
+    #     to be set (await .wait())
 
-    async def _stop_service(self) -> None:
-        await self.service.stop()
-        await self.on_stop()
+    # So X(Service) adds dependency Y(ServiceThread)
 
-    async def on_stop(self) -> None:
-        ...
+    # We add a new _thread_started event owned by the parent loop.
+    #
+    # Original ._started event is owned by parent loop
+    #
+    #    X calls await Y.start(): which schedules the thread to be
+    #       started in the loop.default_executor ThreadPool.
+    #    Y starts the thread, and the thread calls super().start to start
+    #    the ServiceThread inside that thread.
+    #    After starting the thread will wait for _stopped to be set.
 
-    async def _serve(self, loop: asyncio.AbstractEventLoop) -> None:
-        shutdown_set = self._shutdown.is_set
-        await self._start_service(loop)
+    # ._stopped is owned by thread loop
+    #      parent sets _stopped.set(), thread calls _stopped.wait()
+    #      and only wait needs the loop.
+    # ._shutdown is owned by parent loop
+    #      thread calls _shutdown.set(), thread calls _shutdown.wait()
+
+    def _new_shutdown_event(self) -> asyncio.Event:
+        return asyncio.Event(loop=self.parent_loop)
+
+    async def maybe_start(self) -> None:
+        if not self._thread_started.is_set():
+            await self.start()
+
+    async def start(self) -> None:
+        # cannot await the future returned by run_in_executor,
+        # as that would make us wait until the webserver exits.
+        # Instead we add as Future dependency to this service, so that
+        # it is stopped with `await service.stop()`
+        assert not self._thread_started.is_set()
+        self._thread_started.set()
+        self.add_future(self.loop.run_in_executor(
+            self.executor, self._start_thread))
+
+    def _start_thread(self) -> None:
+        # set the default event loop for this thread
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self._serve())
+
+    async def _stop_children(self) -> None:
+        ...   # called by thread instead of .stop()
+
+    async def _stop_futures(self) -> None:
+        ...   # called by thread instead of .stop()
+
+    async def _shutdown_thread(self) -> None:
+        await super()._stop_children()
+        await self.on_thread_stop()
+        self.set_shutdown()
+        await super()._stop_futures()
+
+    async def _serve(self) -> None:
         try:
-            while not shutdown_set():
-                try:
-                    await asyncio.sleep(1, loop=loop)
-                except BaseException as exc:  # pylint: disable=broad-except
-                    try:
-                        self.on_crash('{0!r} crashed: {1!r}', self.name, exc)
-                        self._set_stopped()
-                    finally:
-                        os._exit(1)  # exiting by normal means won't work
-        finally:
+            await super().start()
+            await self.wait_until_stopped()
+        except BaseException as exc:  # pylint: disable=broad-except
             try:
-                await self._stop_service()
+                self.on_crash('{0!r} crashed: {1!r}', self.name, exc)
+                await self.crash(exc)
             finally:
-                self._set_stopped()
+                os._exit(1)  # exiting by normal means won't work
+        finally:
+            await self._shutdown_thread()
 
     def on_crash(self, msg: str, *fmt: Any, **kwargs: Any) -> None:
         print(msg.format(*fmt), file=sys.stderr)
         traceback.print_exc(None, sys.stderr)
-
-    def _set_stopped(self) -> None:
-        try:
-            self._stopped.set()
-        except TypeError:
-            # we lost the race at interpreter shutdown,
-            # so gc collected built-in modules.
-            pass
-
-    def stop(self) -> None:
-        """Graceful shutdown."""
-        self._shutdown.set()
-        self._stopped.wait()
-        if self.is_alive():
-            self.join(threading.TIMEOUT_MAX)

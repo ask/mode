@@ -244,10 +244,10 @@ class Service(ServiceBase):
                  loop: asyncio.AbstractEventLoop = None) -> None:
         self.diag = self.Diag(self)
         self.loop = loop or asyncio.get_event_loop()
-        self._started = asyncio.Event(loop=self.loop)
-        self._stopped = asyncio.Event(loop=self.loop)
-        self._shutdown = asyncio.Event(loop=self.loop)
-        self._crashed = asyncio.Event(loop=self.loop)
+        self._started = self._new_started_event()
+        self._stopped = self._new_stopped_event()
+        self._shutdown = self._new_shutdown_event()
+        self._crashed = self._new_crashed_event()
         self._crash_reason = None
         self._beacon = Node(self) if beacon is None else beacon.new(self)
         self._children = []
@@ -255,6 +255,18 @@ class Service(ServiceBase):
         self._futures = []
         self.on_init()
         super().__init__()
+
+    def _new_started_event(self) -> asyncio.Event:
+        return asyncio.Event(loop=self.loop)
+
+    def _new_stopped_event(self) -> asyncio.Event:
+        return asyncio.Event(loop=self.loop)
+
+    def _new_shutdown_event(self) -> asyncio.Event:
+        return asyncio.Event(loop=self.loop)
+
+    def _new_crashed_event(self) -> asyncio.Event:
+        return asyncio.Event(loop=self.loop)
 
     async def transition_with(self, flag: str, fut: Awaitable,
                               *args: Any, **kwargs: Any) -> Any:
@@ -419,10 +431,7 @@ class Service(ServiceBase):
             self.log.info('Stopping...')
             self._stopped.set()
             await self.on_stop()
-            for child in reversed(self._active_children):
-                if child is not None:
-                    await child.stop()
-            self._active_children.clear()
+            await self._stop_children()
             self.log.debug('Shutting down...')
             if self.wait_for_shutdown:
                 self.log.debug('Waiting for shutdown')
@@ -431,11 +440,20 @@ class Service(ServiceBase):
                     loop=self.loop,
                 )
                 self.log.debug('Shutting down now')
-            for future in reversed(self._futures):
-                future.cancel()
-            await self._gather_futures()
+            await self._stop_futures()
             await self.on_shutdown()
             self.log.info('-Stopped!')
+
+    async def _stop_children(self) -> None:
+        for child in reversed(self._active_children):
+            if child is not None:
+                await child.stop()
+        self._active_children.clear()
+
+    async def _stop_futures(self) -> None:
+        for future in reversed(self._futures):
+            future.cancel()
+        await self._gather_futures()
 
     async def _gather_futures(self) -> None:
         while self._futures:
