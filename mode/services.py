@@ -210,7 +210,7 @@ class Service(ServiceBase):
             self.abstract = False
         else:
             self._init_subclass_logger()
-            self._init_subclass_tasks()
+        self._init_subclass_tasks()
 
     @classmethod
     def _init_subclass_tasks(cls) -> None:
