@@ -7,8 +7,6 @@ Note: To stop something using the thread's loop, you have to
 use the ``on_thread_stop`` callback instead of the on_stop callback.
 """
 import asyncio
-import os
-import signal
 import sys
 import traceback
 from concurrent.futures import Executor
