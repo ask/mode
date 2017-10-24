@@ -5,6 +5,7 @@ __all__ = ['LOOPS', 'use']
 
 LOOPS: Mapping[str, str] = {
     'aio': None,
+    'eventlet': 'mode.loop.eventlet',
     'gevent': 'mode.loop.gevent',
     'uvloop': 'mode.loop.uvloop',
 }
