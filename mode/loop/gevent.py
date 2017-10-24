@@ -1,4 +1,5 @@
 import os
+import warnings
 os.environ['GEVENT_LOOP'] = 'mode.loop._gevent_loop.Loop'
 try:
     import gevent
@@ -9,6 +10,20 @@ except ImportError:
         'Gevent loop requires the gevent library: '
         'pip install gevent') from None
 gevent.monkey.patch_all()
+
+try:
+    import psycopg2  # noqa: F401
+except ImportError:
+    pass
+else:
+    try:
+        import psycogreen.gevent
+    except ImportError:
+        warnings.warn(
+            "psycopg2 installed, but not psycogreen: pg will be blocking")
+    else:
+        psycogreen.gevent.patch_psycopg()
+
 try:
     import aiogevent
 except ImportError:
@@ -16,6 +31,7 @@ except ImportError:
     raise ImportError(
         'Gevent loop requires the aiogevent library: '
         'pip install aiogevent') from None
+
 import asyncio  # noqa: E402
 if asyncio._get_running_loop() is not None:
     raise RuntimeError('Event loop created before importing gevent loop!')
