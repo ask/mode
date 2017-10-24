@@ -8,6 +8,7 @@ use the ``on_thread_stop`` callback instead of the on_stop callback.
 """
 import asyncio
 import os
+import signal
 import sys
 import traceback
 from concurrent.futures import Executor
@@ -103,11 +104,11 @@ class ServiceThread(Service):
             await super().start()
             await self.wait_until_stopped()
         except BaseException as exc:  # pylint: disable=broad-except
-            try:
-                self.on_crash('{0!r} crashed: {1!r}', self.name, exc)
-                await self.crash(exc)
-            finally:
-                os._exit(1)  # exiting by normal means won't work
+            self.on_crash('{0!r} crashed: {1!r}', self.label, exc)
+            await self.crash(exc)
+            if self.beacon.root is not None:
+                await self.beacon.root.data.crash(exc)
+            raise
         finally:
             await self._shutdown_thread()
 
