@@ -5,14 +5,11 @@ python:
 - '3.6'
 os:
 - linux
-- osx
 env:
   global:
   - PYTHONUNBUFFERED=yes
 matrix:
   include:
-      - os: osx
-        env: TOXENV=3.6
     - env: TOXENV=flake8
     - env: TOXENV=typecheck
     - env: TOXENV=3.6
