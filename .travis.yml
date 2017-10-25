@@ -1,1 +1,27 @@
+language: python
+sudo: required
+cache: pip
+python:
+- '3.6'
+os:
+- linux
+- osx
+env:
+  global:
+  - PYTHONUNBUFFERED=yes
+matrix:
+  include:
+  - python: '3.6'
+    env: TOXENV=flake8
+  - python: '3.6'
+    env: TOXENV=typecheck
+  - python: '3.6'
+    env: TOXENV=3.6
+  - python: '3.6'
+    env: TOXENV=apicheck
+before_install:
 install: travis_retry pip install -U tox
+script: tox -v -- -v
+notifications:
+  slack:
+    secure: BjXwFkOJcCcfMgK014fv5QnN+exFNTEBIPTGKCu+CXQWYiTHsLEDzdbfG3tXZrflmgEsSGFXB88o+A6x49PF0CTgAz55yTDu5gtJ3L7csFeABH4ntshVuvthfw0wLB8tlLGzXfOynjtOWqJcHJoK69WrKvNY3MvPwzwKobJOtLMfI0AHrJMgtJPiIz8iiZ5S9h3TsZX2YSLcnuc86zdipsGmZnRcjTKzFGqSLS1CazXc39MAKgYPYH+SKV8zo/0PkULZycUmKKEe/jMfSGIHfeD5g8JacndgbVh/btybCvkWBSAy7sOnwbc5TH+Q2PO2zDOE2S0tXF5mOvWq7zxZdVa0Slz69AbHUDocyZu6+JQ2AIbu39yEfwZZ1EJMp/U0+SUUvnA8C0jEsYkRv/PlpYG8AV+O0EDOa+EI1Ha44TD0z4U4y0bbkKRR2hi+6RTbB09EWSRQLlzq0ZVt3AA/wLxSpMFYuGR8NjUEMx7YI5ZB9rORRZaz07ssu6fnvXk7b/3tJ9lg5tfEeghrDTMXKC4IymB76Apm3nw7ufOv6Xk9o8R4Xake2tIlY08L/EjtTghfFZqeJ2qFIJ/76RRzOKOvGFrsjOLer/gpA4hFcIsReOO1MazjXaNbKwOuM0pfuaEzbaEKM36NUyCjijaPOWIfqvkJqBp4FCHafHJW3sw=
