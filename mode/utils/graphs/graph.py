@@ -74,12 +74,12 @@ class DependencyGraph(DependencyGraphT):
     def valency_of(self, obj: Any) -> int:
         """Return the valency (degree) of a vertex in the graph."""
         try:
-            l = [len(self[obj])]
+            sizes = [len(self[obj])]
         except KeyError:
             return 0
         for node in self[obj]:
-            l.append(self.valency_of(node))
-        return sum(l)
+            sizes.append(self.valency_of(node))
+        return sum(sizes)
 
     def update(self, it: Iterable) -> None:
         """Update graph with data from a list of ``(obj, deps)`` tuples."""
