@@ -11,14 +11,10 @@ env:
   - PYTHONUNBUFFERED=yes
 matrix:
   include:
-  - python: '3.6'
-    env: TOXENV=flake8
-  - python: '3.6'
-    env: TOXENV=typecheck
-  - python: '3.6'
-    env: TOXENV=3.6
-  - python: '3.6'
-    env: TOXENV=apicheck
+    - env: TOXENV=flake8
+    - env: TOXENV=typecheck
+    - env: TOXENV=3.6
+    - env: TOXENV=apicheck
 before_install:
 install: travis_retry pip install -U tox
 script: tox -v -- -v
