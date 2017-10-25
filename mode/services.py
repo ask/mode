@@ -37,8 +37,7 @@ class ServiceBase(ServiceT):
     def __init_subclass__(self) -> None:
         if self.abstract:
             self.abstract = False
-        else:
-            self._init_subclass_logger()
+        self._init_subclass_logger()
 
     @classmethod
     def _init_subclass_logger(cls) -> None:
@@ -208,8 +207,7 @@ class Service(ServiceBase):
         # to the class-local `_tasks` list.
         if self.abstract:
             self.abstract = False
-        else:
-            self._init_subclass_logger()
+        self._init_subclass_logger()
         self._init_subclass_tasks()
 
     @classmethod

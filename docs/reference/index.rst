@@ -22,6 +22,17 @@ Mode
     mode.types
     mode.worker
 
+Event Loops
+===========
+
+.. toctree::
+    :maxdepth: 1
+
+    mode.loop
+    mode.loop.eventlet
+    mode.loop.gevent
+    mode.loop.uvloop
+
 Utils
 =====
 

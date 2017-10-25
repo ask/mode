@@ -30,6 +30,10 @@ globals().update(conf.build_config(
     # from pathlib import Path
     # path_additions=[Path.cwd().parent / 'testproj']
     apicheck_ignore_modules=[
+        'mode.loop.eventlet',
+        'mode.loop.gevent',
+        'mode.loop.uvloop',
+        'mode.loop._gevent_loop',
         'mode.utils.graphs.formatter',
         'mode.utils.graphs.graph',
     ],
