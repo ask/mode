@@ -12,7 +12,7 @@ except (AttributeError, ImportError):
 from setuptools import find_packages, setup
 
 NAME = 'mode'
-EXTENSIONS = {}
+EXTENSIONS = {'eventlet', 'gevent', 'uvloop'}
 E_UNSUPPORTED_PYTHON = '%s 1.0 requires %%s %%s or later!' % (NAME,)
 
 PYIMP = _pyimp()
