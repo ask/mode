@@ -4,6 +4,30 @@
  Change history
 ================
 
+.. _version-1.1.1:
+
+1.1.1
+=====
+:release-date: 2017-10-25 04:34 P.M PDT
+:release-by: Ask Solem
+
+- Added alternative event loop implementations: eventlet, gevent, uvloop.
+
+    E.g. to use gevent as the event loop, install mode using::
+
+        $ pip install mode[gevent]
+
+    and add this line to the top of your worker entrypoint module::
+
+        import mode.loop
+        mode.loop.use('gevent')
+
+- Service: More fixes for the weird `__init_subclass__` behavior
+  only seen in Python 3.6.3.
+
+- ServiceThread: Now propagates errors raised in the thread
+  to the main thread.
+
 .. _version-1.1.0:
 
 1.1.0
