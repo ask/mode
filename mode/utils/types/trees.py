@@ -59,7 +59,7 @@ class NodeT(abc.ABC):
         ...
 
     @root.setter
-    def root(self, ndoe: 'NodeT') -> None:
+    def root(self, node: 'NodeT') -> None:
         ...
 
     @property
