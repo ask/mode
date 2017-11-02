@@ -59,7 +59,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
         # Setting the service.supervisor attribute here means calling
         # `await service.crash(exc)` won't traverse the tree, crash
         # every parent of the service, until it hits Worker terminating
-        # the running program abruptly.  See :class:`PoisonpillSupervisor`.
+        # the running program abruptly.  See :class:`CrashingSupervisor`.
         service.supervisor = self
 
     def discard(self, *services: ServiceT) -> None:
@@ -178,7 +178,7 @@ class OneForAllSupervisor(SupervisorStrategy):
                 await self.restart_service(service)
 
 
-class PoisonpillSupervisor(SupervisorStrategy):
+class CrashingSupervisor(SupervisorStrategy):
 
     def _contribute_to_service(self, service: ServiceT) -> None:
         # We don't do anything here, which means service.supervisor

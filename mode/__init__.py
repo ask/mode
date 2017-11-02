@@ -40,7 +40,7 @@ if typing.TYPE_CHECKING:
         OneForAllSupervisor,
         OneForOneSupervisor,
         SupervisorStrategy,
-        PoisonpillSupervisor,
+        CrashingSupervisor,
     )
     from .types import ServiceT, SupervisorStrategyT      # noqa: E402
     from .utils.times import Seconds, want_seconds        # noqa: E402
@@ -53,7 +53,7 @@ __all__ = [
     'OneForAllSupervisor',
     'OneForOneSupervisor',
     'SupervisorStrategy',
-    'PoisonpillSupervisor',
+    'CrashingSupervisor',
     'ServiceT', 'SupervisorStrategyT',
     'Seconds', 'want_seconds',
     'get_logger', 'setup_logging',
@@ -72,7 +72,7 @@ all_by_module: Mapping[str, Sequence[str]] = {
         'OneForAllSupervisor',
         'OneForOneSupervisor',
         'SupervisorStrategy',
-        'PoisonpillSupervisor',
+        'CrashingSupervisor',
     ],
     'mode.types': ['ServiceT', 'SupervisorStrategyT'],
     'mode.utils.times': ['Seconds', 'want_seconds'],
