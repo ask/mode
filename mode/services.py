@@ -144,11 +144,6 @@ class Service(ServiceBase):
     #: They are started/stopped with the service.
     _children: MutableSequence[ServiceT]
 
-    #: After child service is started it's added to this list,
-    #: which is used by ``stop()`` to only stop services that have
-    #: been actually started.
-    _active_children: List[ServiceT]
-
     #: .add_future adds futures to this list
     #: They are started/stopped with the service.
     _futures: List[asyncio.Future]
@@ -249,7 +244,6 @@ class Service(ServiceBase):
         self._crash_reason = None
         self._beacon = Node(self) if beacon is None else beacon.new(self)
         self._children = []
-        self._active_children = []
         self._futures = []
         self.on_init()
         super().__init__()
@@ -374,7 +368,6 @@ class Service(ServiceBase):
         for child in self._children:
             if child is not None:
                 await child.maybe_start()
-                self._active_children.append(child)
         self.log.debug('Started.')
         await self.on_started()
 
@@ -443,10 +436,9 @@ class Service(ServiceBase):
             self.log.info('-Stopped!')
 
     async def _stop_children(self) -> None:
-        for child in reversed(self._active_children):
+        for child in reversed(self._children):
             if child is not None:
                 await child.stop()
-        self._active_children.clear()
 
     async def _stop_futures(self) -> None:
         for future in reversed(self._futures):
