@@ -4,6 +4,22 @@
  Change history
 ================
 
+.. _version-1.2.0:
+
+1.2.0
+=====
+:release-date: 2017-11-02 03:17 P.M PDT
+:release-by: Ask Solem
+
+- Renames PoisonpillSupervisor to CrashingSupervisor.
+
+- Child services now stopped even if not fully started.
+
+    Previously ``child_service.stop()`` would not be called
+    if `child_service.start()` never completed, but as a service
+    might be in the process of starting other child services, we need
+    to call stop even if not fully started.
+
 .. _version-1.1.1:
 
 1.1.1
