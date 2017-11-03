@@ -1,5 +1,5 @@
-import pytest
 from mode.utils.objects import cached_property
+import pytest
 
 
 class test_cached_property:
