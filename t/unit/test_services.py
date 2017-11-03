@@ -1,6 +1,7 @@
+import asyncio
 from unittest.mock import Mock
-import pytest
 from mode import Service
+import pytest
 
 
 class S(Service):
@@ -62,3 +63,32 @@ async def test_interface():
 
 def test_repr():
     assert repr(S())
+
+
+@pytest.mark.asyncio
+async def test_subclass_can_override_Service_task():
+
+    class ATaskService(Service):
+        values = []
+
+        def on_init(self):
+            self.event = asyncio.Event(loop=self.loop)
+
+        @Service.task
+        async def _background_task(self):
+            self.values.append(1)
+            self.event.set()
+
+    class BTaskService(ATaskService):
+
+        @Service.task
+        async def _background_task(self):
+            self.values.append(2)
+            self.event.set()
+
+    service = BTaskService()
+    await service.start()
+    await service.event.wait()
+    await service.stop()
+
+    assert ATaskService.values == [2]

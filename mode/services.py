@@ -148,9 +148,9 @@ class Service(ServiceBase):
     #: They are started/stopped with the service.
     _futures: List[asyncio.Future]
 
-    #: The ``@Service.task`` decorator adds :class:`ServiceTask`
-    #: instances to this list (which is a class variable).
-    _tasks: ClassVar[Dict[str, List[ServiceTask]]] = None
+    #: The ``@Service.task`` decorator adds names of attributes
+    #: that are ServiceTasks to this list (which is a class variable).
+    _tasks: ClassVar[Dict[str, Set[str]]] = None
 
     @classmethod
     def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
@@ -216,17 +216,23 @@ class Service(ServiceBase):
         clsid = cls._get_class_id()
         if cls._tasks is None:
             cls._tasks = {}
-        tasks = []
+        tasks: Set[str] = set()
         for base in cls.__bases__ + (cls,):
-            tasks.extend([
-                attr for attr in vars(base).values()
-                if isinstance(attr, ServiceTask)
-            ])
+            tasks |= {
+                attr_name for attr_name, attr_value in vars(base).items()
+                if isinstance(attr_value, ServiceTask)
+            }
         cls._tasks[clsid] = tasks
 
-    @classmethod
-    def _get_tasks(cls) -> List[ServiceTask]:
-        return cls._tasks[cls._get_class_id()]
+    def _get_tasks(self) -> Iterable[ServiceTask]:
+        seen: Set[ServiceTask] = set()
+        cls = type(self)
+        for attr_name in cls._tasks[cls._get_class_id()]:
+            task = getattr(self, attr_name)
+            assert isinstance(task, ServiceTask)
+            assert task not in seen
+            seen.add(task)
+            yield task
 
     @classmethod
     def _get_class_id(cls) -> str:
