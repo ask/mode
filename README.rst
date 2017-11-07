@@ -4,7 +4,7 @@
 
 |build-status| |license| |wheel| |pyversion| |pyimp|
 
-:Version: 1.2.0
+:Version: 1.2.1
 :Web: http://mode.readthedocs.org/
 :Download: http://pypi.python.org/pypi/mode
 :Source: http://github.com/fauststream/mode
@@ -296,7 +296,7 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported by opening an issue or contacting one or more of the project maintainers.
 
 This Code of Conduct is adapted from the Contributor Covenant,
-version 1.2.0 available at http://contributor-covenant.org/version/1/2/0/.
+version 1.2.1 available at http://contributor-covenant.org/version/1/2/0/.
 
 .. |build-status| image:: https://secure.travis-ci.org/fauststream/mode.png?branch=master
     :alt: Build status
