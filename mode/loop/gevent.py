@@ -32,7 +32,7 @@ except ImportError:
         'Gevent loop requires the aiogevent library: '
         'pip install aiogevent') from None
 
-import asyncio  # noqa: E402
+import asyncio  # noqa: E402,I100,I202
 if asyncio._get_running_loop() is not None:
     raise RuntimeError('Event loop created before importing gevent loop!')
 

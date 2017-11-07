@@ -16,7 +16,7 @@ except ImportError:
         'Eventlet loop requires the aioeventlet library: '
         'pip install aioeventlet') from None
 
-import asyncio  # noqa: E402
+import asyncio  # noqa: E402,I100,I202
 if asyncio._get_running_loop() is not None:
     raise RuntimeError('Event loop created before importing eventlet loop!')
 
