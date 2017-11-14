@@ -17,6 +17,7 @@ Mode
     mode.exceptions
     mode.proxy
     mode.services
+    mode.signals
     mode.supervisors
     mode.threads
     mode.types

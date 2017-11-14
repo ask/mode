@@ -1,11 +1,61 @@
 import abc
 import asyncio
-from typing import Any, Awaitable, Callable, MutableMapping, Set, Type
+import typing
+from typing import (
+    Any, Awaitable, Callable, Generic,
+    MutableMapping, Set, Type, TypeVar, Union,
+)
+from weakref import ReferenceType
 from .utils.compat import AsyncContextManager
 from .utils.times import Seconds
 from .utils.types.trees import NodeT
 
-__all__ = ['DiagT', 'ServiceT']
+__all__ = [
+    'SignalHandlerT',
+    'SignalHandlerRefT',
+    'SignalT',
+    'DiagT',
+    'ServiceT',
+]
+
+T = TypeVar('T')
+T_contra = TypeVar('T_contra', contravariant=True)
+
+SignalHandlerT = Union[
+    Callable[..., None],
+    Callable[..., Awaitable[None]],
+]
+
+if typing.TYPE_CHECKING:
+    SignalHandlerRefT = Union[SignalHandlerT, ReferenceType[SignalHandlerT]]
+else:
+    SignalHandlerRefT = Any
+
+
+class SignalT(Generic[T]):
+    name: str
+    owner: Type
+
+    @abc.abstractmethod
+    def connect(self, fun: SignalHandlerT, **kwargs: Any) -> Callable:
+        ...
+
+    @abc.abstractmethod
+    def disconnect(self, fun: SignalHandlerT,
+                   *,
+                   sender: Any = None,
+                   weak: bool = True) -> None:
+        ...
+
+    @abc.abstractmethod
+    async def __call__(self, sender: T_contra,
+                       *args: Any, **kwargs: Any) -> None:
+        ...
+
+    @abc.abstractmethod
+    async def send(self, sender: T_contra,
+                   *args: Any, **kwargs: Any) -> None:
+        ...
 
 
 class DiagT(abc.ABC):

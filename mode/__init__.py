@@ -36,13 +36,14 @@ del(re)
 
 if typing.TYPE_CHECKING:
     from .services import Service                         # noqa: E402
+    from .signals import Signal                           # noqa: E402
     from .supervisors import (                            # noqa: E402
         OneForAllSupervisor,
         OneForOneSupervisor,
         SupervisorStrategy,
         CrashingSupervisor,
     )
-    from .types import ServiceT, SupervisorStrategyT      # noqa: E402
+    from .types import ServiceT, SignalT, SupervisorStrategyT  # noqa: E402
     from .utils.times import Seconds, want_seconds        # noqa: E402
     from .utils.logging import get_logger, setup_logging  # noqa: E402
     from .utils.objects import label, shortlabel          # noqa: E402
@@ -50,6 +51,7 @@ if typing.TYPE_CHECKING:
 
 __all__ = [
     'Service',
+    'Signal',
     'OneForAllSupervisor',
     'OneForOneSupervisor',
     'SupervisorStrategy',
@@ -68,13 +70,14 @@ from types import ModuleType  # noqa
 
 all_by_module: Mapping[str, Sequence[str]] = {
     'mode.services': ['Service'],
+    'mode.signals': ['Signal'],
     'mode.supervisors': [
         'OneForAllSupervisor',
         'OneForOneSupervisor',
         'SupervisorStrategy',
         'CrashingSupervisor',
     ],
-    'mode.types': ['ServiceT', 'SupervisorStrategyT'],
+    'mode.types': ['ServiceT', 'SignalT', 'SupervisorStrategyT'],
     'mode.utils.times': ['Seconds', 'want_seconds'],
     'mode.utils.logging': ['get_logger', 'setup_logging'],
     'mode.utils.objects': ['label', 'shortlabel'],
