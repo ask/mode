@@ -1,8 +1,10 @@
 import abc
-from typing import Any, Iterator, List
+from typing import Any, Generic, Iterator, List
 from .graphs import DependencyGraphT
 
 __all__ = ['NodeT']
+
+_T = TypeVar('_T')
 
 
 class NodeT(abc.ABC):
@@ -13,19 +15,19 @@ class NodeT(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _new_node(cls, data: Any, **kwargs: Any) -> 'NodeT':
+    def _new_node(cls, data: _T, **kwargs: Any) -> 'NodeT':
         ...
 
     @abc.abstractmethod
-    def new(self, data: Any) -> 'NodeT':
+    def new(self, data: _T) -> 'NodeT':
         ...
 
     @abc.abstractmethod
-    def add(self, data: Any) -> None:
+    def add(self, data: _T) -> None:
         ...
 
     @abc.abstractmethod
-    def discard(self, data: Any) -> None:
+    def discard(self, data: _T) -> None:
         ...
 
     @abc.abstractmethod

@@ -4,7 +4,7 @@ from .compat import Deque
 from .graphs import DependencyGraph
 from .objects import shortlabel
 from .types.graphs import DependencyGraphT
-from .types.trees import NodeT
+from .types.trees import NodeT, _T
 
 __all__ = [
     'Node',
@@ -37,10 +37,10 @@ class Node(NodeT):
     _parent: NodeT = None
 
     @classmethod
-    def _new_node(cls, data: Any, **kwargs: Any) -> NodeT:
+    def _new_node(cls, data: _T, **kwargs: Any) -> NodeT:
         return cls(data, **kwargs)  # type: ignore
 
-    def __init__(self, data: Any,
+    def __init__(self, data: _T,
                  *,
                  root: NodeT = None,
                  parent: NodeT = None,
@@ -50,7 +50,7 @@ class Node(NodeT):
         self.parent = parent
         self.children = children or []
 
-    def new(self, data: Any) -> NodeT:
+    def new(self, data: _T) -> NodeT:
         """Create new node from this node."""
         node = self._new_node(
             data,
@@ -67,11 +67,11 @@ class Node(NodeT):
         parent.add(self)
         return self
 
-    def add(self, data: Any) -> None:
+    def add(self, data: _T) -> None:
         """Add node as a child node."""
         self.children.append(data)
 
-    def discard(self, data: Any) -> None:
+    def discard(self, data: _T) -> None:
         """Remove node so it's no longer a child of this node."""
         # XXX slow
         with suppress(ValueError):
