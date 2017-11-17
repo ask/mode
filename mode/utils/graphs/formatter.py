@@ -1,6 +1,6 @@
 from typing import Any, Mapping
 from ..objects import label
-from ..types.graphs import GraphFormatterT
+from ..types.graphs import GraphFormatterT, _T
 
 
 def dedent_initial(s: str, n: int = 4) -> str:
@@ -97,16 +97,16 @@ class GraphFormatter(GraphFormatterT):
     def tail(self) -> str:
         return self.FMT(self._tail)
 
-    def label(self, obj: Any) -> str:
+    def label(self, obj: _T) -> str:
         return label(obj)
 
-    def node(self, obj: Any, **attrs: Any) -> str:
+    def node(self, obj: _T, **attrs: Any) -> str:
         return self.draw_node(obj, self.node_scheme, attrs)
 
-    def terminal_node(self, obj: Any, **attrs: Any) -> str:
+    def terminal_node(self, obj: _T, **attrs: Any) -> str:
         return self.draw_node(obj, self.term_scheme, attrs)
 
-    def edge(self, a: Any, b: Any, **attrs: Any) -> str:
+    def edge(self, a: _T, b: _T, **attrs: Any) -> str:
         return self.draw_edge(a, b, **attrs)
 
     def _enc(self, s: str) -> str:
@@ -116,7 +116,7 @@ class GraphFormatter(GraphFormatterT):
         return self._enc(fmt.format(
             *args, **dict(kwargs, IN=self.IN, INp=self.INp)))
 
-    def draw_edge(self, a: Any, b: Any,
+    def draw_edge(self, a: _T, b: _T,
                   scheme: Mapping = None,
                   attrs: Mapping = None) -> str:
         return self.FMT(
@@ -124,7 +124,7 @@ class GraphFormatter(GraphFormatterT):
             dir=self.direction, attrs=self.attrs(attrs, self.edge_scheme),
         )
 
-    def draw_node(self, obj: Any,
+    def draw_node(self, obj: _T,
                   scheme: Mapping = None,
                   attrs: Mapping = None) -> str:
         return self.FMT(

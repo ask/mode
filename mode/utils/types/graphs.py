@@ -1,10 +1,14 @@
 import abc
-from typing import Any, IO, Iterable, Mapping, MutableMapping, Sequence
+from typing import (
+    Any, Generic, IO, Iterable, Mapping, MutableMapping, Sequence, TypeVar,
+)
 
 __all__ = ['GraphFormatterT', 'DependencyGraphT']
 
+_T = TypeVar('_T')
 
-class GraphFormatterT(abc.ABC):
+
+class GraphFormatterT(Generic[_T]):
 
     scheme: Mapping[str, Any]
     edge_scheme: Mapping[str, Any]
@@ -39,19 +43,19 @@ class GraphFormatterT(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def label(self, obj: Any) -> str:
+    def label(self, obj: _T) -> str:
         ...
 
     @abc.abstractmethod
-    def node(self, obj: Any, **attrs: Any) -> str:
+    def node(self, obj: _T, **attrs: Any) -> str:
         ...
 
     @abc.abstractmethod
-    def terminal_node(self, obj: Any, **attrs: Any) -> str:
+    def terminal_node(self, obj: _T, **attrs: Any) -> str:
         ...
 
     @abc.abstractmethod
-    def edge(self, a: Any, b: Any, **attrs: Any) -> str:
+    def edge(self, a: _T, b: _T, **attrs: Any) -> str:
         ...
 
     @abc.abstractmethod
@@ -59,34 +63,34 @@ class GraphFormatterT(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def draw_edge(self, a: Any, b: Any,
+    def draw_edge(self, a: _T, b: _T,
                   scheme: Mapping = None,
                   attrs: Mapping = None) -> str:
         ...
 
     @abc.abstractmethod
-    def draw_node(self, obj: Any,
+    def draw_node(self, obj: _T,
                   scheme: Mapping = None,
                   attrs: Mapping = None) -> str:
         ...
 
 
-class DependencyGraphT(abc.ABC, Mapping):
+class DependencyGraphT(Generic[_T], Mapping[_T, _T]):
 
-    adjacent: MutableMapping
+    adjacent: MutableMapping{_T, _T]
 
     @abc.abstractmethod
     def __init__(self,
-                 it: Iterable = None,
-                 formatter: GraphFormatterT = None) -> None:
+                 it: Iterable[_T] = None,
+                 formatter: GraphFormatterT[_T] = None) -> None:
         ...
 
     @abc.abstractmethod
-    def add_arc(self, obj: Any) -> None:
+    def add_arc(self, obj: _T) -> None:
         ...
-
+w
     @abc.abstractmethod
-    def add_edge(self, A: Any, B: Any) -> None:
+    def add_edge(self, A: _T, B: _T) -> None:
         ...
 
     @abc.abstractmethod
@@ -98,7 +102,7 @@ class DependencyGraphT(abc.ABC, Mapping):
         ...
 
     @abc.abstractmethod
-    def valency_of(self, obj: Any) -> int:
+    def valency_of(self, obj: _T) -> int:
         ...
 
     @abc.abstractmethod
@@ -110,5 +114,5 @@ class DependencyGraphT(abc.ABC, Mapping):
         ...
 
     @abc.abstractmethod
-    def to_dot(self, fh: IO, *, formatter: GraphFormatterT = None) -> None:
+    def to_dot(self, fh: IO, *, formatter: GraphFormatterT[_T] = None) -> None:
         ...
