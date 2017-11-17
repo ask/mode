@@ -52,6 +52,7 @@ if typing.TYPE_CHECKING:
 __all__ = [
     'Service',
     'Signal',
+    'SignalT',
     'OneForAllSupervisor',
     'OneForOneSupervisor',
     'SupervisorStrategy',

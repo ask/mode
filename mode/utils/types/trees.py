@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Generic, Iterator, List
+from typing import Any, Generic, Iterator, List, TypeVar
 from .graphs import DependencyGraphT
 
 __all__ = ['NodeT']
@@ -7,7 +7,7 @@ __all__ = ['NodeT']
 _T = TypeVar('_T')
 
 
-class NodeT(abc.ABC):
+class NodeT(Generic[_T]):
     root: 'NodeT'
     children: List[Any]
     parent: 'NodeT'

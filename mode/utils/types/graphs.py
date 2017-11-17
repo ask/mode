@@ -77,7 +77,7 @@ class GraphFormatterT(Generic[_T]):
 
 class DependencyGraphT(Generic[_T], Mapping[_T, _T]):
 
-    adjacent: MutableMapping{_T, _T]
+    adjacent: MutableMapping[_T, _T]
 
     @abc.abstractmethod
     def __init__(self,
@@ -88,7 +88,7 @@ class DependencyGraphT(Generic[_T], Mapping[_T, _T]):
     @abc.abstractmethod
     def add_arc(self, obj: _T) -> None:
         ...
-w
+
     @abc.abstractmethod
     def add_edge(self, A: _T, B: _T) -> None:
         ...
