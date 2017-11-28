@@ -8,6 +8,7 @@ dependencies:
     - wheel
     - pip:
         - Sphinx
+        - sphinx_celery
         - sphinxcontrib-asyncio
         - sphinx-autodoc-annotation
         - alabaster
