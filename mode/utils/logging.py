@@ -7,10 +7,13 @@ import threading
 import traceback
 from functools import singledispatch
 from pprint import pprint
-from typing import Any, IO, Union
+from typing import Any, Callable, IO, Mapping, Set, Union
+import colorlog
 
 __all__ = [
+    'ExtensionFormatter',
     'CompositeLogger',
+    'formatter',
     'cry',
     'get_logger',
     'level_name',
@@ -19,7 +22,60 @@ __all__ = [
 ]
 
 DEVLOG: bool = bool(os.environ.get('DEVLOG', ''))
-DEFAULT_FORMAT = '[%(asctime)s: %(levelname)s] %(message)s'
+DEFAULT_FORMAT: str = """\
+[%(asctime)s: %(levelname)s]: %(log_color)s%(message)s\
+"""
+
+DEFAULT_COLORS = {**colorlog.default_log_colors, 'INFO': 'white'}
+
+#: Set by ``setup_logging`` if logging target file is a TTY.
+LOG_ISATTY: bool = False
+
+FormatterHandler = Callable[[Any], Any]
+
+
+_formatter_registry: Set[FormatterHandler]
+_formatter_registry = set()
+
+
+def formatter(fun: FormatterHandler) -> FormatterHandler:
+    """Register formatter for logging positional args."""
+    _formatter_registry.add(fun)
+    return fun
+
+
+class ExtensionFormatter(colorlog.TTYColoredFormatter):
+    """Formatter that can register callbacks to format args.
+
+    Extends :pypi:`colorlog`.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        self._format_args(record)
+        return super().format(record)
+
+    def _format_args(self, record: logging.LogRecord) -> None:
+        if isinstance(record.args, Mapping):
+            # logger.log(severity, "msg %(foo)s", foo=303)
+            record.args = {
+                k: self._format_arg(v) for k, v in record.args.items()
+            }
+        else:
+            if not isinstance(record.args, tuple):
+                # logger.log(severity, "msg %s", foo)
+                record.args = (record.args,)
+            # logger.log(severity, "msg %s", ('foo',))
+            record.args = tuple(
+                self._format_arg(arg) for arg in record.args
+            )
+
+    def _format_arg(self, arg: Any) -> Any:
+        # Reduce value by calling all registered formatters.
+        for fun in _formatter_registry:
+            res = fun(arg)
+            if res is not None:
+                arg = res
+        return arg
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -56,19 +112,46 @@ def setup_logging(
         *,
         loglevel: Union[str, int] = None,
         logfile: Union[str, IO] = None,
-        logformat: str = None) -> int:
+        logformat: str = None,
+        log_colors: Mapping[str, str] = DEFAULT_COLORS) -> int:
     """Setup logging to file/stream."""
     stream: IO = None
     _loglevel: int = level_number(loglevel)
     if not isinstance(logfile, str):
         stream, logfile = logfile, None
+        if stream is None:
+            stream = sys.stdout
+        global LOG_ISATTY
+        try:
+            LOG_ISATTY = stream.isatty()
+        except AttributeError:
+            pass
+
     _setup_logging(
         level=_loglevel,
         filename=logfile,
         stream=stream,
         format=logformat or DEFAULT_FORMAT,
+        log_colors=log_colors,
     )
     return _loglevel
+
+
+def _setup_logging(*,
+                   filename: str = None,
+                   stream: IO = None,
+                   format: str = DEFAULT_FORMAT,
+                   log_colors: Mapping[str, str] = DEFAULT_COLORS,
+                   **kwargs: Any) -> None:
+    if filename:
+        assert stream is None
+        logging.basicConfig(filename=filename, **kwargs)
+    if stream:
+        assert filename is None
+        handler = colorlog.StreamHandler(stream)
+        formatter = ExtensionFormatter(format, log_colors=log_colors)
+        handler.setFormatter(formatter)
+        logging.basicConfig(handlers=[handler], **kwargs)
 
 
 class CompositeLogger:
@@ -107,16 +190,6 @@ class CompositeLogger:
     def format(self, severity: int, msg: str,
                *args: Any, **kwargs: Any) -> str:
         return self._obj._format_log(severity, msg, *args, **kwargs)
-
-
-def _setup_logging(**kwargs: Any) -> None:
-    # stupid logging just have to crash if both stream/loglevel
-    # set EVEN IF ONE OF THEM IS SET TO NONE AAAAAAAAAAAAAAAAAAAAAHG
-    if 'filename' in kwargs and kwargs['filename'] is None:
-        del kwargs['filename']
-    if 'stream' in kwargs and kwargs['stream'] is None:
-        del kwargs['stream']
-    logging.basicConfig(**kwargs)
 
 
 def cry(file: IO,
