@@ -4,6 +4,24 @@
  Change history
 ================
 
+.. _version-1.3.0:
+
+1.3.0
+=====
+:release-date: 2017-12-04 01:17 P.M PST
+:release-by: Ask Solem
+
+- Now supports color output in logs when logging to a terminal.
+
+- Now depends on :pypi:`colorlog`
+
+- Added :class:`mode.Signal`: async. implementation of the observer
+  pattern (think Django signals).
+
+- DependencyGraph is now a generic type: ``DependencyGraph[int]``
+
+- Node is now a generic type: ``Node[Service]``.
+
 .. _version-1.2.1:
 
 1.2.1
