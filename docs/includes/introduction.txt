@@ -1,4 +1,4 @@
-:Version: 1.2.1
+:Version: 1.3.0
 :Web: http://mode.readthedocs.org/
 :Download: http://pypi.python.org/pypi/mode
 :Source: http://github.com/fauststream/mode
