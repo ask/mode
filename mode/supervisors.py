@@ -168,9 +168,8 @@ class OneForAllSupervisor(SupervisorStrategy):
         # and restart all of them
         if services:
             # Stop them all simultaneously.
-            await asyncio.wait(
-                [service.stop() for service in self._services],
-                return_when=asyncio.ALL_COMPLETED,
+            await asyncio.gather(
+                *[service.stop() for service in self._services],
                 loop=self.loop,
             )
             # Then restart them one by one.
