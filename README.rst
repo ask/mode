@@ -163,43 +163,56 @@ FAQ
 Can I use Mode with Django/Flask/etc.?
 --------------------------------------
 
-Yes! Use gevent/eventlet and use a bridge to integrate with asyncio.
+Yes! Use gevent/eventlet as a bridge to integrate with asyncio.
 
-- ``aiogevent`` enables you to run Mode on top of gevent:
+Using ``gevent``
+~~~~~~~~~~~~~~~~
 
-    https://pypi.python.org/pypi/aiogevent
+This works with any blocking Python library that can work with gevent.
 
-    Example::
+Using gevent requires you to install the ``aiogevent`` module,
+and you can install this as a bundle with Mode:
 
-        import aiogevent
-        import asyncio
-        asyncio.set_event_loop_policy(aiogevent.EventLoopPolicy())
-        import gevent.monkey
-        gevent.monkey.patch_all()
-        # if you use PostgreSQL with psycopg, make sure you also
-        # install psycogreen and call this pather:
-        #  import psycogreen.gevent
-        #  psycogreen.gevent.patch_psycopg()
+.. sourcecode:: console
 
-        # Import Django/Flask etc, stuff and use them with Mode.
+    $ pip install -U mode[gevent]
 
-- ``aioeventlet`` enables you to run Mode on top of eventlet:
+Then to actually use gevent as the event loop you have to
+execute the following in your entrypoint module (usually where you
+start the worker), before any other third party libraries are imported::
 
-    http://aioeventlet.readthedocs.io
+    #!/usr/bin/env python3
+    import mode.loop
+    mode.loop.use('gevent')
+    # execute program
 
-    Example::
+REMEMBER: It's very important this is at the very top of the module,
+and that it executes before you import libraries.
 
-        import aioeventlet
-        import asyncio
-        asyncio.set_event_loop_policy(aioeventlet.EventloopPolicy())
-        import eventlet
-        eventlet.monkey_patch()
-        # if you use PostgreSQL with psycopg, make sure you also
-        # install psycogreen and call this pather:
-        #  import psycogreen.eventlet
-        #  psycogreen.eventlet.patch_psycopg()
 
-        # Import Django/Flask etc, stuff and use them with Mode.
+Using ``eventlet``
+~~~~~~~~~~~~~~~~~~
+
+This works with any blocking Python library that can work with eventlet.
+
+Using eventlet requires you to install the ``aioeventlet`` module,
+and you can install this as a bundle with Mode:
+
+.. sourcecode:: console
+
+    $ pip install -U mode[eventlet]
+
+Then to actually use eventlet as the event loop you have to
+execute the following in your entrypoint module (usually where you
+start the worker), before any other third party libraries are imported::
+
+    #!/usr/bin/env python3
+    import mode.loop
+    mode.loop.use('eventlet')
+    # execute program
+
+REMEMBER: It's very important this is at the very top of the module,
+and that it executes before you import libraries.
 
 Can I use Mode with Tornado?
 ----------------------------
@@ -208,7 +221,7 @@ Yes! Use the ``tornado.platform.asyncio`` bridge:
 http://www.tornadoweb.org/en/stable/asyncio.html
 
 Can I use Mode with Twisted?
-----------------------------
+-----------------------------
 
 Yes! Use the asyncio reactor implementation:
 https://twistedmatrix.com/documents/17.1.0/api/twisted.internet.asyncioreactor.html
@@ -296,7 +309,7 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported by opening an issue or contacting one or more of the project maintainers.
 
 This Code of Conduct is adapted from the Contributor Covenant,
-version 1.3.0 available at http://contributor-covenant.org/version/1/2/0/.
+version 1.2.0 available at http://contributor-covenant.org/version/1/2/0/.
 
 .. |build-status| image:: https://secure.travis-ci.org/fauststream/mode.png?branch=master
     :alt: Build status
