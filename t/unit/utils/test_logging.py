@@ -4,7 +4,7 @@ from mode.utils.logging import get_logger
 import pytest
 
 
-class test_FeedController:
+class TestFeedController:
 
     def setup_method(self, method):
         self.extension_formatter_patch = patch(
@@ -63,3 +63,15 @@ class test_FeedController:
         logging._setup_logging(stream=Mock(), handlers=[mock_handler])
         self.logging.basicConfig.assert_called_once_with(
             handlers=[mock_handler, self.colorlog.StreamHandler()])
+
+    def test_setup_logging_no_log_handlers(self):
+        assert logging.setup_logging(loghandlers=[]) is None
+        self.logging.basicConfig.assert_called_once_with(
+            handlers=[self.colorlog.StreamHandler()], level=None)
+
+    def test_setup_logging(self):
+        mock_handler = Mock()
+        assert logging.setup_logging(
+            loglevel=5, loghandlers=[mock_handler]) == 5
+        self.logging.basicConfig.assert_called_once_with(
+            handlers=[mock_handler, self.colorlog.StreamHandler()], level=5)
