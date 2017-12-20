@@ -113,8 +113,8 @@ def setup_logging(
         loglevel: Union[str, int] = None,
         logfile: Union[str, IO] = None,
         logformat: str = None,
-        log_colors: Mapping[str, str] = DEFAULT_COLORS,
-        log_handlers: List[logging.StreamHandler] = None) -> int:
+        loghandlers: List[logging.StreamHandler] = None,
+        log_colors: Mapping[str, str] = DEFAULT_COLORS) -> int:
     """Setup logging to file/stream."""
     stream: IO = None
     _loglevel: int = level_number(loglevel)
@@ -134,7 +134,7 @@ def setup_logging(
         stream=stream,
         format=logformat or DEFAULT_FORMAT,
         log_colors=log_colors,
-        handlers=log_handlers,
+        handlers=loghandlers,
     )
     return _loglevel
 
