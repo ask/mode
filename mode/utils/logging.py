@@ -7,7 +7,7 @@ import threading
 import traceback
 from functools import singledispatch
 from pprint import pprint
-from typing import Any, Callable, IO, Mapping, Set, Union
+from typing import Any, Callable, IO, List, Mapping, Set, Union
 import colorlog
 
 __all__ = [
@@ -113,7 +113,8 @@ def setup_logging(
         loglevel: Union[str, int] = None,
         logfile: Union[str, IO] = None,
         logformat: str = None,
-        log_colors: Mapping[str, str] = DEFAULT_COLORS) -> int:
+        log_colors: Mapping[str, str] = DEFAULT_COLORS,
+        log_handlers: List[logging.StreamHandler] = None) -> int:
     """Setup logging to file/stream."""
     stream: IO = None
     _loglevel: int = level_number(loglevel)
@@ -133,6 +134,7 @@ def setup_logging(
         stream=stream,
         format=logformat or DEFAULT_FORMAT,
         log_colors=log_colors,
+        handlers=log_handlers,
     )
     return _loglevel
 
@@ -142,16 +144,30 @@ def _setup_logging(*,
                    stream: IO = None,
                    format: str = DEFAULT_FORMAT,
                    log_colors: Mapping[str, str] = DEFAULT_COLORS,
+                   handlers: List[logging.StreamHandler] = None,
                    **kwargs: Any) -> None:
     if filename:
         assert stream is None
         logging.basicConfig(filename=filename, **kwargs)
     if stream:
         assert filename is None
-        handler = colorlog.StreamHandler(stream)
-        formatter = ExtensionFormatter(format, log_colors=log_colors)
-        handler.setFormatter(formatter)
-        logging.basicConfig(handlers=[handler], **kwargs)
+        handlers = handlers or []
+        handlers.append(_setup_console_handler(
+            stream=stream,
+            format=format,
+            log_colors=log_colors,
+        ))
+        logging.basicConfig(handlers=handlers, **kwargs)
+
+
+def _setup_console_handler(*,
+                           stream: IO = None,
+                           format: str = DEFAULT_FORMAT,
+                           log_colors: Mapping[str, str] = DEFAULT_COLORS):
+    console_handler = colorlog.StreamHandler(stream)
+    formatter = ExtensionFormatter(format, log_colors=log_colors)
+    console_handler.setFormatter(formatter)
+    return console_handler
 
 
 class CompositeLogger:

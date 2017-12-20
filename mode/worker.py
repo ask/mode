@@ -5,7 +5,7 @@ import signal
 import sys
 import typing
 from contextlib import suppress
-from typing import Any, IO, Iterable, Tuple, Union, cast
+from typing import Any, IO, Iterable, List, Tuple, Union, cast
 from .services import Service
 from .types import ServiceT
 from .utils.compat import DummyContext
@@ -40,6 +40,7 @@ class Worker(Service):
     loglevel: Union[str, int]
     logfile: Union[str, IO]
     logformat: str
+    loghandlers: List[logging.StreamHandler]
 
     services: Iterable[ServiceT]
 
@@ -50,6 +51,7 @@ class Worker(Service):
             loglevel: Union[str, int] = None,
             logfile: Union[str, IO] = None,
             logformat: str = None,
+            loghandlers: List[logging.StreamHandler] = None,
             stdout: IO = sys.stdout,
             stderr: IO = sys.stderr,
             blocking_timeout: float = None,
@@ -61,6 +63,7 @@ class Worker(Service):
         self.loglevel = loglevel
         self.logfile = logfile
         self.logformat = logformat
+        self.loghandlers = loghandlers
         self.stdout = stdout
         self.stderr = stderr
         self.blocking_timeout = blocking_timeout
@@ -102,6 +105,7 @@ class Worker(Service):
                 loglevel=self.loglevel,
                 logfile=self.logfile,
                 logformat=self.logformat,
+                loghandlers=self.loghandlers,
             )
         self.on_setup_root_logger(logging.root, _loglevel)
 
