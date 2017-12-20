@@ -66,9 +66,10 @@ class Worker(Service):
         self.blocking_timeout = blocking_timeout
         super().__init__(loop=loop, **kwargs)
 
-        for service in self.services:
-            service.beacon.reattach(self.beacon)
-            assert service.beacon.root is self.beacon
+        if self.services:
+            for service in self.services:
+                service.beacon.reattach(self.beacon)
+                assert service.beacon.root is self.beacon
 
     def say(self, msg: str) -> None:
         """Write message to standard out."""
