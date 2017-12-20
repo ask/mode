@@ -186,8 +186,8 @@ start the worker), before any other third party libraries are imported::
     mode.loop.use('gevent')
     # execute program
 
-REMEMBER: It's very important this is at the very top of the module,
-and that it executes before you import libraries.
+REMEMBER: This must be located at the very top of the module,
+in such a way that it executes before you import other libraries.
 
 
 Using ``eventlet``
