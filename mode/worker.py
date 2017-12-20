@@ -105,7 +105,7 @@ class Worker(Service):
                 loglevel=self.loglevel,
                 logfile=self.logfile,
                 logformat=self.logformat,
-                loghandlers=self.loghandlers,
+                log_handlers=self.loghandlers,
             )
         self.on_setup_root_logger(logging.root, _loglevel)
 
