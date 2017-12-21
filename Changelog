@@ -4,6 +4,17 @@
  Change history
 ================
 
+.. _version-1.4.0:
+
+1.4.0
+=====
+:release-date: 2017-12-21 09:50 A.M PST
+:release-by: Ask Solem
+
+- Worker: Add support for parameterized logging handlers.
+
+    Contributed by Prithvi Narasimhan.
+
 .. _version-1.3.0:
 
 1.3.0
