@@ -284,6 +284,12 @@ class Service(ServiceBase):
         self._children.append(service)
         return service
 
+    async def add_runtime_dependency(self, service: ServiceT) -> ServiceT:
+        self.add_dependency(service)
+        if self._started.is_set():
+            await service.maybe_start()
+        return service
+
     def add_future(self, coro: Awaitable) -> asyncio.Future:
         """Add relationship to asyncio.Future.
 

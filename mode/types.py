@@ -103,6 +103,10 @@ class ServiceT(AsyncContextManager):
         ...
 
     @abc.abstractmethod
+    async def add_runtime_dependency(self, service: 'ServiceT') -> 'ServiceT':
+        ...
+
+    @abc.abstractmethod
     async def start(self) -> None:
         ...
 
