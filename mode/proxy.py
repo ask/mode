@@ -32,6 +32,9 @@ class ServiceProxy(ServiceBase):
     def add_dependency(self, service: ServiceT) -> ServiceT:
         return self._service.add_dependency(service)
 
+    async def add_runtime_dependency(self, service: ServiceT) -> ServiceT:
+        return await self._service.add_runtime_dependency(service)
+
     async def start(self) -> None:
         await self._service.start()
 
