@@ -8,7 +8,7 @@ import sys
 import typing
 from typing import Any, Mapping, NamedTuple, Sequence
 
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 __author__ = 'Robinhood Markets'
 __contact__ = 'opensource@robinhood.com'
 __homepage__ = 'https://github.com/fauststream/mode'
