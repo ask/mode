@@ -8,7 +8,6 @@ from contextlib import suppress
 from typing import Any, IO, Iterable, List, Tuple, Union, cast
 from .services import Service
 from .types import ServiceT
-from .utils.compat import DummyContext
 from .utils.logging import cry, get_logger, setup_logging
 from .utils.objects import cached_property
 
@@ -40,6 +39,7 @@ class Worker(Service):
     loglevel: Union[str, int]
     logfile: Union[str, IO]
     logformat: str
+    console_port: int
     loghandlers: List[logging.StreamHandler]
 
     services: Iterable[ServiceT]
@@ -54,6 +54,7 @@ class Worker(Service):
             loghandlers: List[logging.StreamHandler] = None,
             stdout: IO = sys.stdout,
             stderr: IO = sys.stderr,
+            console_port: int = 50101,
             blocking_timeout: float = None,
             loop: asyncio.AbstractEventLoop = None,
             **kwargs: Any) -> None:
@@ -66,6 +67,7 @@ class Worker(Service):
         self.loghandlers = loghandlers
         self.stdout = stdout
         self.stderr = stderr
+        self.console_port = console_port
         self.blocking_timeout = blocking_timeout
         super().__init__(loop=loop, **kwargs)
 
@@ -92,8 +94,9 @@ class Worker(Service):
     async def on_first_start(self) -> None:
         self._setup_logging()
         await self.on_execute()
-        with self._monitor():
-            self.install_signal_handlers()
+        if self.debug:
+            await self._add_monitor()
+        self.install_signal_handlers()
 
     async def on_execute(self) -> None:
         ...
@@ -196,12 +199,17 @@ class Worker(Service):
         await super().start()
         await self.wait_until_stopped()
 
-    def _monitor(self) -> Any:
-        if self.debug:
-            with suppress(ImportError):
-                import aiomonitor
-                return aiomonitor.start_monitor(loop=self.loop)
-        return DummyContext()
+    async def _add_monitor(self) -> Any:
+        try:
+            import aiomonitor
+        except ImportError:
+            self.log.warn('Cannot start console: aiomonitor is not installed')
+        else:
+            monitor = aiomonitor.start_monitor(
+                port=self.console_port,
+                loop=self.loop,
+            )
+            await self.add_context(monitor)
 
     def _repr_info(self) -> str:
         return _repr(self.services)

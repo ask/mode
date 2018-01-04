@@ -6,7 +6,8 @@ from typing import (
     MutableMapping, Set, Type, TypeVar, Union,
 )
 from weakref import ReferenceType
-from .utils.compat import AsyncContextManager
+from .utils.compat import AsyncContextManager, ContextManager
+from .utils.contexts import AsyncExitStack
 from .utils.times import Seconds
 from .utils.types.trees import NodeT
 
@@ -85,6 +86,7 @@ class ServiceT(AsyncContextManager):
 
     Diag: Type[DiagT]
     diag: DiagT
+    exit_stack: AsyncExitStack
 
     shutdown_timeout: float
     wait_for_shutdown = False
@@ -104,6 +106,11 @@ class ServiceT(AsyncContextManager):
 
     @abc.abstractmethod
     async def add_runtime_dependency(self, service: 'ServiceT') -> 'ServiceT':
+        ...
+
+    @abc.abstractmethod
+    async def add_context(
+            self, context: Union[AsyncContextManager, ContextManager]) -> Any:
         ...
 
     @abc.abstractmethod

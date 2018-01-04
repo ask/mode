@@ -1,6 +1,7 @@
 """Async I/O services that can be started/stopped/shutdown."""
 import asyncio
 import logging
+import sys
 from functools import wraps
 from time import monotonic
 from types import TracebackType
@@ -9,6 +10,8 @@ from typing import (
     MutableSequence, Optional, Sequence, Set, Type, Union, cast,
 )
 from .types import DiagT, ServiceT
+from .utils.compat import AsyncContextManager, ContextManager
+from .utils.contexts import AsyncExitStack
 from .utils.logging import CompositeLogger, get_logger
 from .utils.times import Seconds, want_seconds
 from .utils.trees import Node
@@ -251,6 +254,7 @@ class Service(ServiceBase):
         self._beacon = Node(self) if beacon is None else beacon.new(self)
         self._children = []
         self._futures = []
+        self.exit_stack = AsyncExitStack()
         self.on_init()
         super().__init__()
 
@@ -289,6 +293,10 @@ class Service(ServiceBase):
         if self._started.is_set():
             await service.maybe_start()
         return service
+
+    async def add_context(
+            self, context: Union[AsyncContextManager, ContextManager]) -> Any:
+        return await self.exit_stack.enter_context(context)
 
     def add_future(self, coro: Awaitable) -> asyncio.Future:
         """Add relationship to asyncio.Future.
@@ -373,15 +381,20 @@ class Service(ServiceBase):
         if not self.restart_count:
             self._children.extend(self.on_init_dependencies())
             await self.on_first_start()
-        self.log.info('Starting...')
-        await self.on_start()
-        for task in self._get_tasks():
-            self.add_future(task(self))
-        for child in self._children:
-            if child is not None:
-                await child.maybe_start()
-        self.log.debug('Started.')
-        await self.on_started()
+        await self.exit_stack.__aenter__()
+        try:
+            self.log.info('Starting...')
+            await self.on_start()
+            for task in self._get_tasks():
+                self.add_future(task(self))
+            for child in self._children:
+                if child is not None:
+                    await child.maybe_start()
+            self.log.debug('Started.')
+            await self.on_started()
+        except BaseException as exc:
+            await self.exit_stack.__aexit__(*sys.exc_info())
+            raise
 
     async def _execute_task(self, task: Awaitable) -> None:
         try:
@@ -444,6 +457,7 @@ class Service(ServiceBase):
                 )
                 self.log.debug('Shutting down now')
             await self._stop_futures()
+            await self.exit_stack.__aexit__(None, None, None)
             await self.on_shutdown()
             self.log.info('-Stopped!')
 

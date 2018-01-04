@@ -1,6 +1,8 @@
 import abc
+from typing import Any, Union
 from .services import ServiceBase
 from .types import ServiceT
+from .utils.compat import AsyncContextManager, ContextManager
 from .utils.types.trees import NodeT
 
 __all__ = ['ServiceProxy']
@@ -34,6 +36,10 @@ class ServiceProxy(ServiceBase):
 
     async def add_runtime_dependency(self, service: ServiceT) -> ServiceT:
         return await self._service.add_runtime_dependency(service)
+
+    async def add_context(
+            self, context: Union[AsyncContextManager, ContextManager]) -> Any:
+        return await self._service.add_context(context)
 
     async def start(self) -> None:
         await self._service.start()
