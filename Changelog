@@ -4,6 +4,34 @@
  Change history
 ================
 
+.. _version-1.5.0:
+
+1.5.0
+=====
+:release-date: 2018-01-04 03:43 P.M PST
+:release-by: Ask Solem
+
+- Service: Adds new ``await self.add_context(context)``
+
+    This adds a new context manager to be entered when the service starts,
+    and exited once the service exits.
+
+    The context manager can be either a :class:`typing.AsyncContextManager`
+    (:keyword:`async with`) or a
+    regular :class:`typing.ContextManager` (:keyword:`with`).
+
+- Service: Added ``await self.add_runtime_dependency()`` which unlike
+  ``add_dependency`` starts the dependent service if the self is already
+  started.
+
+- Worker: Now supports a new ``console_port`` argument to specify a port
+  for the :pypi:`aiomonitor` console, different than the default (50101).
+
+    .. note::
+
+        The aiomonitor console is only started when ``Worker(debug=True, ...)``
+        is set.
+
 .. _version-1.4.0:
 
 1.4.0
