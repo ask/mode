@@ -13,6 +13,7 @@ from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack
 from .utils.logging import CompositeLogger, get_logger
+from .utils.text import maybecat
 from .utils.times import Seconds, want_seconds
 from .utils.trees import Node
 from .utils.types.trees import NodeT
@@ -72,11 +73,10 @@ class ServiceBase(ServiceT):
         return None
 
     def __repr__(self) -> str:
-        info = self._repr_info()
         return '<{name}: {self.state}{info}>'.format(
             name=type(self).__name__,
             self=self,
-            info=' ' + info if info else '',
+            info=maybecat(self._repr_info(), prefix=' ') or '',
         )
 
     def _repr_info(self) -> str:
