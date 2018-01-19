@@ -26,7 +26,11 @@ DEFAULT_FORMAT: str = """\
 [%(asctime)s: %(levelname)s]: %(log_color)s%(message)s\
 """
 
-DEFAULT_COLORS = {**colorlog.default_log_colors, 'INFO': 'white'}
+DEFAULT_COLORS = {
+    **colorlog.default_log_colors,
+    'INFO': 'white',
+    'DEBUG': 'blue',
+}
 
 #: Set by ``setup_logging`` if logging target file is a TTY.
 LOG_ISATTY: bool = False
