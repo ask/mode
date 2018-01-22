@@ -3,6 +3,7 @@
 # :copyright: (c) 2017, Robinhood Markets
 #             All rights reserved.
 # :license:   BSD (3 Clause), see LICENSE for more details.
+import importlib
 import re
 import sys
 import typing
@@ -35,6 +36,11 @@ del(_temp)
 del(re)
 
 if typing.TYPE_CHECKING:
+    # These imports are here for static analyzers: It will not execute
+    # when `faust` is imported, so none of these are actually imported.
+
+    # We instead load these attributes lazily (below), so users only need to
+    # import what they need, not the whole library.
     from .services import Service                         # noqa: E402
     from .signals import Signal                           # noqa: E402
     from .supervisors import (                            # noqa: E402
@@ -67,9 +73,8 @@ __all__ = [
 
 # Lazy loading.
 # - See werkzeug/__init__.py for the rationale behind this.
-from types import ModuleType  # noqa
 
-all_by_module: Mapping[str, Sequence[str]] = {
+__all_by_module__: Mapping[str, Sequence[str]] = {
     'mode.services': ['Service'],
     'mode.signals': ['Signal'],
     'mode.supervisors': [
@@ -85,50 +90,75 @@ all_by_module: Mapping[str, Sequence[str]] = {
     'mode.worker': ['Worker'],
 }
 
-object_origins = {}
-for module, items in all_by_module.items():
+__origin__: Mapping[str, str] = {}
+for module, items in __all_by_module__.items():
     for item in items:
-        object_origins[item] = module
+        __origin__[item] = module
 
 
-class _module(ModuleType):
-    """Customized Python module."""
-
-    def __getattr__(self, name: str) -> Any:
-        if name in object_origins:
-            module = __import__(
-                object_origins[name], None, None, [name])
-            for extra_name in all_by_module[module.__name__]:
-                setattr(self, extra_name, getattr(module, extra_name))
-            return getattr(module, name)
-        return ModuleType.__getattribute__(self, name)
-
-    def __dir__(self) -> Sequence[str]:
-        result = list(new_module.__all__)
-        result.extend(('__file__', '__path__', '__doc__', '__all__',
-                       '__docformat__', '__name__', '__path__',
-                       'VERSION', 'version_info_t', 'version_info',
-                       '__package__', '__version__', '__author__',
-                       '__contact__', '__homepage__', '__docformat__'))
-        return result
+def _get_mode_attribute(
+        name: str,
+        obj: Any,
+        *,
+        symbols: Mapping[str, Sequence[str]] = __all_by_module__,
+        origins: Mapping[str, str] = __origin__) -> Any:
+    if name in origins:
+        module = importlib.import_module(origins[name])
+        for extra_name in symbols[module.__name__]:
+            setattr(obj, extra_name, getattr(module, extra_name))
+        return getattr(module, name)
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
 
-# keep a reference to this module so that it's not garbage collected
-old_module = sys.modules[__name__]
+def _get_mode_attributes() -> Sequence[str]:
+    return sorted(list(__all__) + [
+        '__file__', '__path__', '__doc__', '__all__',
+        '__docformat__', '__name__', 'VERSION', 'version_info_t',
+        'version_info', '__package__', '__version__', '__author__',
+        '__contact__', '__homepage__', '__docformat__',
+    ])
 
-new_module = sys.modules[__name__] = _module(__name__)
-new_module.__dict__.update({
-    '__file__': __file__,
-    '__path__': __path__,  # type: ignore
-    '__doc__': __doc__,
-    '__all__': tuple(object_origins),
-    '__version__': __version__,
-    '__author__': __author__,
-    '__contact__': __contact__,
-    '__homepage__': __homepage__,
-    '__docformat__': __docformat__,
-    '__package__': __package__,
-    'version_info_t': version_info_t,
-    'version_info': version_info,
-    'VERSION': VERSION,
-})
+
+if sys.version_info >= (3, 7):
+
+    def __getattr__(name: str) -> Any:
+        print('_GETATTR: %r' % (name,))
+        return _get_mode_attribute(name, sys.modules[__name__])
+
+    def __dir__() -> Sequence[str]:
+        return _get_mode_attributes()
+
+else:
+
+    from types import ModuleType  # noqa
+
+    class _module(ModuleType):
+        """Customized Python module."""
+
+        def __getattr__(self, name: str) -> Any:
+            try:
+                return _get_mode_attribute(name, self)
+            except AttributeError:
+                return ModuleType.__getattribute__(self, name)
+
+        def __dir__(self) -> Sequence[str]:
+            return _get_mode_attributes()
+
+    # keep a reference to this module so that it's not garbage collected
+    old_module = sys.modules[__name__]
+    new_module = sys.modules[__name__] = _module(__name__)
+    new_module.__dict__.update({
+        '__file__': __file__,
+        '__path__': __path__,  # type: ignore
+        '__doc__': __doc__,
+        '__all__': tuple(__origin__),
+        '__version__': __version__,
+        '__author__': __author__,
+        '__contact__': __contact__,
+        '__homepage__': __homepage__,
+        '__docformat__': __docformat__,
+        '__package__': __package__,
+        'version_info_t': version_info_t,
+        'version_info': version_info,
+        'VERSION': VERSION,
+    })
