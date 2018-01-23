@@ -13,6 +13,7 @@ from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack
 from .utils.logging import CompositeLogger, get_logger
+from .utils.objects import iter_mro_reversed
 from .utils.text import maybecat
 from .utils.times import Seconds, want_seconds
 from .utils.trees import Node
@@ -220,7 +221,7 @@ class Service(ServiceBase):
         if cls._tasks is None:
             cls._tasks = {}
         tasks: Set[str] = set()
-        for base in cls.__bases__ + (cls,):
+        for base in iter_mro_reversed(cls, stop=Service):
             tasks |= {
                 attr_name for attr_name, attr_value in vars(base).items()
                 if isinstance(attr_value, ServiceTask)
