@@ -387,7 +387,8 @@ class Service(ServiceBase):
         if not self.restart_count:
             self._children.extend(self.on_init_dependencies())
             await self.on_first_start()
-        await self.exit_stack.__aenter__()
+        self.exit_stack.__enter__()
+        await self.async_exit_stack.__aenter__()
         try:
             self.log.info('Starting...')
             await self.on_start()
@@ -399,7 +400,8 @@ class Service(ServiceBase):
             self.log.debug('Started.')
             await self.on_started()
         except BaseException as exc:
-            await self.exit_stack.__aexit__(*sys.exc_info())
+            self.exit_stack.__exit__(*sys.exc_info())
+            await self.async_exit_stack.__aexit__(*sys.exc_info())
             raise
 
     async def _execute_task(self, task: Awaitable) -> None:
@@ -463,7 +465,8 @@ class Service(ServiceBase):
                 )
                 self.log.debug('Shutting down now')
             await self._stop_futures()
-            await self.exit_stack.__aexit__(None, None, None)
+            self.exit_stack.__exit__(None, None, None)
+            await self.async_exit_stack.__aexit__(None, None, None)
             await self.on_shutdown()
             self.log.info('-Stopped!')
 
