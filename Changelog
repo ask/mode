@@ -4,6 +4,62 @@
  Change history
 ================
 
+.. _version-1.6.0:
+
+1.6.0
+=====
+:release-date: 2018-02-05 11:10 P.M PST
+:release-by: Ask Solem
+
+- Fixed bug where ``@Service.task`` background tasks were not started
+  in subclasses.
+
+- Service: Now has two exit stacks: ``.exit_stack`` & ``.async_exit_stack``.
+
+    This is a backward incompatible change, but probably nobody was accessing
+    ``.exit_stack`` directly.
+
+    Use ``await Service.enter_context(ctx)`` with both regular and
+    asynchronous context managers::
+
+        class X(Service):
+
+            async def on_start(self) -> None:
+                # works with both context manager types.
+                await self.enter_context(async_context)
+                await self.enter_context(context)
+
+- Adds :func:`~mode.utils.contextlib.asynccontextmanager`` decorator
+  from CPython 3.7b1.
+
+    This decorator works exactly the same as
+    :func:`contextlib.contextmanager`, but for :keyword:`async with`.
+
+    Import it from :mod:`mode.utils.contexts`::
+
+        from mode.utils.contexts import asynccontextmanager
+
+        @asynccontextmanager
+        async def connection_or_default(conn: Connection = None) -> Connection:
+            if connection is None:
+                async with connection_pool.acquire():
+                    yield
+            else:
+                yield connection
+
+        async def main():
+            async with connection_or_default() as connection:
+                ...
+
+- Adds :class:`~mode.utils.contexts.AsyncExitStack` from CPython 3.7b1
+
+    This works like :class:`contextlib.ExitStack`, but for asynchronous
+    context managers used with :keyword:`async with`.
+
+- Logging: Worker debug log messages are now colored blue when colors are
+  enabled.
+
+
 .. _version-1.5.0:
 
 1.5.0
