@@ -4,6 +4,25 @@
  Change history
 ================
 
+.. _version-1.7.0:
+
+1.7.0
+=====
+:release-date: 2018-02-05 12:28 P.M PST
+:release-by: Ask Solem
+
+- Adds :mod:`mode.utils.aiter` for missing ``aiter`` and ``anext`` functions.
+
+- Adds :mod:`mode.utils.futures` for :class:`asyncio.Task` related tools.
+
+- Adds :mod:`mode.utils.collections` for custom mapping/set and list
+  data structures.
+
+- Adds :mod:`mode.utils.imports` for importing modules at runtime,
+  as well as utilities for typed :mod:`setuptools` entry-points.
+
+- Adds :mod:`mode.utils.text` for fuzzy matching user input.
+
 .. _version-1.6.0:
 
 1.6.0
