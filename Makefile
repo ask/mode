@@ -1,6 +1,6 @@
 PROJ ?= mode
 PGPIDENT ?= "Faust Security Team"
-PYTHON ?= python3.6
+PYTHON ?= python
 PYTEST ?= py.test
 PIP ?= pip
 GIT ?= git
