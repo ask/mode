@@ -16,6 +16,7 @@ __all__ = [
 ]
 
 _T = TypeVar('_T')
+RT = TypeVar('RT')
 
 #: Mapping of attribute name to attribute type.
 FieldMapping = Mapping[str, Type]
@@ -242,7 +243,7 @@ def _unary_type_arg(typ: Type) -> Type:
     return typ.__args__[0] if typ.__args__ else Any
 
 
-class cached_property:
+class cached_property(Generic[RT]):
     """Cached property.
 
     A property descriptor that caches the return value
@@ -269,20 +270,20 @@ class cached_property:
     """
 
     def __init__(self,
-                 fget: Callable,
-                 fset: Callable = None,
-                 fdel: Callable = None,
+                 fget: Callable[[], RT],
+                 fset: Callable[[RT], None] = None,
+                 fdel: Callable[[RT], None] = None,
                  doc: str = None,
                  class_attribute: str = None) -> None:
-        self.__get = fget
-        self.__set = fset
-        self.__del = fdel
+        self.__get: Callable[[], RT] = fget
+        self.__set: Callable[[RT], None] = fset
+        self.__del: Callable[[RT], None] = fdel
         self.__doc__ = doc or fget.__doc__
         self.__name__ = fget.__name__
         self.__module__ = fget.__module__
-        self.class_attribute = class_attribute
+        self.class_attribute: str = class_attribute
 
-    def __get__(self, obj: Any, type: Type = None) -> Any:
+    def __get__(self, obj: Any, type: Type = None) -> RT:
         if obj is None:
             if type is not None and self.class_attribute:
                 return getattr(type, self.class_attribute)
@@ -293,7 +294,7 @@ class cached_property:
             value = obj.__dict__[self.__name__] = self.__get(obj)
             return value
 
-    def __set__(self, obj: Any, value: Any) -> None:
+    def __set__(self, obj: Any, value: RT) -> None:
         if self.__set is not None:
             value = self.__set(obj, value)
         obj.__dict__[self.__name__] = value
@@ -303,8 +304,8 @@ class cached_property:
         if self.__del is not None and value is not _sentinel:
             self.__del(obj, value)
 
-    def setter(self, fset: Callable) -> 'cached_property':
+    def setter(self, fset: Callable[[RT], None]) -> 'cached_property':
         return self.__class__(self.__get, fset, self.__del)
 
-    def deleter(self, fdel: Callable) -> 'cached_property':
+    def deleter(self, fdel: Callable[[RT], None]) -> 'cached_property':
         return self.__class__(self.__get, self.__set, fdel)
