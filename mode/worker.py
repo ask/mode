@@ -8,8 +8,8 @@ from contextlib import suppress
 from typing import Any, IO, Iterable, List, Tuple, Union, cast
 from .services import Service
 from .types import ServiceT
+from .utils.imports import symbol_by_name
 from .utils.logging import cry, get_logger, setup_logging
-from .utils.objects import cached_property
 
 if typing.TYPE_CHECKING:
     from .utils.debug import BlockingDetector
@@ -19,6 +19,8 @@ else:
 __all__ = ['Worker']
 
 logger = get_logger(__name__)
+
+BLOCK_DETECTOR = 'mode.utils.debug:BlockingDetector'
 
 
 class _TupleAsListRepr(reprlib.Repr):
@@ -43,6 +45,8 @@ class Worker(Service):
     loghandlers: List[logging.StreamHandler]
 
     services: Iterable[ServiceT]
+
+    _blocking_detector: BlockingDetector = None
 
     def __init__(
             self, *services: ServiceT,
@@ -119,7 +123,7 @@ class Worker(Service):
 
     async def maybe_start_blockdetection(self) -> None:
         if self.debug:
-            await self._blockdetect.maybe_start()
+            await self.blocking_detector.maybe_start()
 
     def install_signal_handlers(self) -> None:
         self.loop.add_signal_handler(signal.SIGINT, self._on_sigint)
@@ -214,11 +218,12 @@ class Worker(Service):
     def _repr_info(self) -> str:
         return _repr(self.services)
 
-    @cached_property
-    def _blockdetect(self) -> BlockingDetector:
-        from .utils import debug
-        return debug.BlockingDetector(
-            self.blocking_timeout,
-            beacon=self.beacon,
-            loop=self.loop,
-        )
+    @property
+    def blocking_detector(self) -> BlockingDetector:
+        if self._blocking_detector is None:
+            self._blocking_detector = symbol_by_name(BLOCK_DETECTOR)(
+                self.blocking_timeout,
+                beacon=self.beacon,
+                loop=self.loop,
+            )
+        return self._blocking_detector
