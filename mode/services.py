@@ -11,7 +11,7 @@ from typing import (
 )
 from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
-from .utils.contexts import AsyncExitStack
+from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.logging import CompositeLogger, get_logger
 from .utils.objects import iter_mro_reversed
 from .utils.text import maybecat
@@ -255,7 +255,8 @@ class Service(ServiceBase):
         self._beacon = Node(self) if beacon is None else beacon.new(self)
         self._children = []
         self._futures = []
-        self.exit_stack = AsyncExitStack()
+        self.async_exit_stack = AsyncExitStack()
+        self.exit_stack = ExitStack()
         self.on_init()
         super().__init__()
 
@@ -297,7 +298,11 @@ class Service(ServiceBase):
 
     async def add_context(
             self, context: Union[AsyncContextManager, ContextManager]) -> Any:
-        return await self.exit_stack.enter_context(context)
+        if isinstance(context, AsyncContextManager):
+            await self.async_exit_stack.enter_async_context(context)
+        elif isinstance(context, ContextManager):
+            return self.exit_stack.enter_context(context)
+        raise TypeError(f'Not a context/async context: {type(context)!r}')
 
     def add_future(self, coro: Awaitable) -> asyncio.Future:
         """Add relationship to asyncio.Future.

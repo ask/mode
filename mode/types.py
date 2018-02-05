@@ -7,7 +7,7 @@ from typing import (
 )
 from weakref import ReferenceType
 from .utils.compat import AsyncContextManager, ContextManager
-from .utils.contexts import AsyncExitStack
+from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.times import Seconds
 from .utils.types.trees import NodeT
 
@@ -86,7 +86,8 @@ class ServiceT(AsyncContextManager):
 
     Diag: Type[DiagT]
     diag: DiagT
-    exit_stack: AsyncExitStack
+    async_exit_stack: AsyncExitStack
+    exit_stack: ExitStack
 
     shutdown_timeout: float
     wait_for_shutdown = False
