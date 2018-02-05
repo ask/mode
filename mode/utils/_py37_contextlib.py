@@ -114,7 +114,7 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
 def asynccontextmanager(func):
     """@asynccontextmanager decorator.
 
-    Typical usage:
+    Typical usage::
 
         @asynccontextmanager
         async def some_async_generator(<arguments>):
@@ -124,12 +124,12 @@ def asynccontextmanager(func):
             finally:
                 <cleanup>
 
-    This makes this:
+    This makes this::
 
         async with some_async_generator(<arguments>) as <variable>:
             <body>
 
-    equivalent to this:
+    equivalent to this::
 
         <setup>
         try:
@@ -307,13 +307,18 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
     """Async context manager for dynamic management of a stack of exit
     callbacks.
 
-    For example:
-        async with AsyncExitStack() as stack:
-            connections = [await stack.enter_async_context(get_connection())
-                for i in range(5)]
-            # All opened connections will automatically be released at the
-            # end of the async with statement, even if attempts to open a
-            # connection later in the list raise an exception.
+    Examples:
+
+        .. code-block:: python
+
+            async with AsyncExitStack() as stack:
+                connections = [
+                    await stack.enter_async_context(get_connection())
+                    for i in range(5)
+                ]
+                # All opened connections will automatically be released at the
+                # end of the async with statement, even if attempts to open a
+                # connection later in the list raise an exception.
     """
 
     @staticmethod

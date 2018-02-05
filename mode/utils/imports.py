@@ -9,10 +9,18 @@ from typing import (
     Any, Callable, Generator, Generic, Iterable,
     Mapping, MutableMapping, NamedTuple, Set, Type, TypeVar, Union, cast,
 )
-from yarl import URL
 from .collections import FastUserDict
 from .objects import cached_property
 from .text import didyoumean
+
+try:
+    from yarl import URL
+except ImportError:
+    class URL:
+
+        def __init__(self, url: str) -> None:
+            assert '://' in url
+            self.scheme = url.split('://')[0]
 
 # - these are taken from kombu.utils.imports
 
