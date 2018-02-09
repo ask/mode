@@ -9,7 +9,6 @@ from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
     MutableSequence, Optional, Sequence, Set, Type, Union, cast,
 )
-from .signals import HasSignals
 from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack, ExitStack
@@ -29,7 +28,7 @@ __all__ = [
 FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
 
 
-class ServiceBase(ServiceT, HasSignals):
+class ServiceBase(ServiceT):
     """Base class for services."""
 
     abstract: ClassVar[bool] = True
@@ -44,7 +43,6 @@ class ServiceBase(ServiceT, HasSignals):
         if self.abstract:
             self.abstract = False
         self._init_subclass_logger()
-        self._init_subclass_signals()
 
     @classmethod
     def _init_subclass_logger(cls) -> None:
@@ -56,7 +54,6 @@ class ServiceBase(ServiceT, HasSignals):
 
     def __init__(self) -> None:
         self.log = CompositeLogger(self)
-        HasSignal.__init__(self)
 
     def _format_log(self, severity: int, msg: str,
                     *args: Any, **kwargs: Any) -> str:
@@ -209,7 +206,6 @@ class Service(ServiceBase):
         # to the class-local `_tasks` list.
         if self.abstract:
             self.abstract = False
-        self._init_subclass_signals()
         self._init_subclass_logger()
         self._init_subclass_tasks()
 
