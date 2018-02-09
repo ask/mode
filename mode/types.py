@@ -3,7 +3,7 @@ import asyncio
 import typing
 from typing import (
     Any, Awaitable, Callable, Generic,
-    MutableMapping, Set, Type, TypeVar, Union,
+    MutableMapping, MutableSet, Set, Type, TypeVar, Union,
 )
 from weakref import ReferenceType
 from .utils.compat import AsyncContextManager, ContextManager
@@ -12,6 +12,7 @@ from .utils.times import Seconds
 from .utils.types.trees import NodeT
 
 __all__ = [
+    'FilterReceiverMapping',
     'SignalHandlerT',
     'SignalHandlerRefT',
     'SignalT',
@@ -28,14 +29,36 @@ SignalHandlerT = Union[
 ]
 
 if typing.TYPE_CHECKING:
-    SignalHandlerRefT = Union[SignalHandlerT, ReferenceType[SignalHandlerT]]
+    SignalHandlerRefT = Union[
+        Callable[[], SignalHandlerT],
+        ReferenceType[SignalHandlerT]]
 else:
     SignalHandlerRefT = Any
+
+FilterReceiverMapping = MutableMapping[Any, MutableSet[SignalHandlerRefT]]
 
 
 class SignalT(Generic[T]):
     name: str
     owner: Type
+
+    @abc.abstractmethod
+    def __init__(self, *,
+                 name: str = None,
+                 owner: Type = None,
+                 loop: asyncio.AbstractEventLoop = None,
+                 default_sender: Any = None,
+                 receivers: MutableSet[SignalHandlerRefT] = None,
+                 filter_receivers: FilterReceiverMapping = None) -> None:
+        ...
+
+    @abc.abstractmethod
+    def clone(self, **kwargs: Any) -> 'SignalT':
+        ...
+
+    @abc.abstractmethod
+    def with_default_sender(self, sender: Any = None) -> 'SignalT':
+        ...
 
     @abc.abstractmethod
     def connect(self, fun: SignalHandlerT, **kwargs: Any) -> Callable:

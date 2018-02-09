@@ -3,26 +3,57 @@ from collections import defaultdict
 from functools import partial
 from types import MethodType
 from typing import (
-    Any, Awaitable, Callable, MutableMapping,
+    Any, Awaitable, Callable, Mapping, MutableMapping,
     MutableSet, Optional, Set, Tuple, Type, cast,
 )
 from weakref import ReferenceType, WeakMethod, ref
-from .types import SignalHandlerRefT, SignalHandlerT, SignalT, T_contra
+from .types import (
+    FilterReceiverMapping, SignalHandlerRefT,
+    SignalHandlerT, SignalT, T_contra,
+)
+
+DEFAULT_SENDER: Any = object()
 
 
 class Signal(SignalT):
     _receivers: MutableSet[SignalHandlerRefT] = None
-    _filter_receivers: MutableMapping[Any, MutableSet[SignalHandlerRefT]]
+    _filter_receivers: FilterReceiverMapping = None
 
     def __init__(self, *,
                  name: str = None,
                  owner: Type = None,
-                 loop: asyncio.AbstractEventLoop = None) -> None:
+                 loop: asyncio.AbstractEventLoop = None,
+                 default_sender: Any = None,
+                 receivers: MutableSet[SignalHandlerRefT] = None,
+                 filter_receivers: FilterReceiverMapping = None) -> None:
         self.name = name
         self.owner = owner
         self.loop = loop
-        self._receivers = set()
-        self._filter_receivers = defaultdict(set)
+        self.default_sender = default_sender
+        self._receivers = receivers if receivers is not None else set()
+        self._filter_receivers = filter_receivers
+        if self._filter_receivers is None:
+            self._filter_receivers = defaultdict(set)
+
+    def asdict(self) -> Mapping[str, Any]:
+        return {
+            'name': self.name,
+            'owner': self.owner,
+            'loop': self.loop,
+            'default_sender': self.default_sender,
+        }
+
+    def clone(self, **kwargs: Any) -> SignalT:
+        return type(self)(**{**self.asdict(), **kwargs})
+
+    def with_default_sender(self, sender: Any = None) -> SignalT:
+        if sender is None:
+            sender = self.default_sender
+        return self.clone(
+            default_sender=sender,
+            receivers=self._receivers,
+            filter_receivers=self._filter_receivers,
+        )
 
     def __set_name__(self, owner: Type, name: str) -> None:
         # If signal is an attribute of a class, we use __set_name__
@@ -46,8 +77,11 @@ class Signal(SignalT):
     def _connect(self, fun: SignalHandlerT,
                  *,
                  weak: bool = True,
-                 sender: Any = None) -> SignalHandlerT:
-            ref: SignalHandlerRefT = self._create_ref(fun) if weak else fun
+                 sender: Any = DEFAULT_SENDER) -> SignalHandlerT:
+            ref: SignalHandlerRefT
+            ref = self._create_ref(fun) if weak else lambda: fun
+            if sender is DEFAULT_SENDER:
+                sender = self.default_sender
             if sender is None:
                 self._receivers.add(ref)
             else:
@@ -57,8 +91,10 @@ class Signal(SignalT):
     def disconnect(self, fun: SignalHandlerT,
                    *,
                    weak: bool = True,
-                   sender: Any = None) -> None:
-        ref: SignalHandlerRefT = self._create_ref(fun) if weak else fun
+                   sender: Any = DEFAULT_SENDER) -> None:
+        ref: SignalHandlerRefT = self._create_ref(fun) if weak else lambda: fun
+        if sender is DEFAULT_SENDER:
+            sender = self.default_sender
         if sender is None:
             self._receivers.discard(ref)
         else:
@@ -67,12 +103,14 @@ class Signal(SignalT):
             except ValueError:
                 pass
 
-    async def __call__(self, sender: T_contra,
+    async def __call__(self, sender: T_contra = None,
                        *args: Any, **kwargs: Any) -> None:
         await self.send(sender, *args, **kwargs)
 
-    async def send(self, sender: T_contra,
+    async def send(self, sender: T_contra = DEFAULT_SENDER,
                    *args: Any, **kwargs: Any) -> None:
+        if sender is DEFAULT_SENDER:
+            sender = self.default_sender
         if self._receivers or self._filter_receivers:
             r = self._update_receivers(self._receivers)
             if sender is not None:
@@ -81,7 +119,7 @@ class Signal(SignalT):
                     self._filter_receivers[sender_id]))
             for receiver in r:
                 ret = receiver(sender, *args, signal=self, **kwargs)
-                return await ret if isinstance(ret, Awaitable) else ret
+                await ret if isinstance(ret, Awaitable) else ret
 
     def _update_receivers(
             self, r: MutableSet[SignalHandlerRefT]) -> Set[SignalHandlerT]:
@@ -109,7 +147,7 @@ class Signal(SignalT):
         if isinstance(ref, ReferenceType):
             value = ref()
             return (True, value) if value is not None else (False, None)
-        return True, ref
+        return True, ref()
 
     def _create_ref(self, fun: SignalHandlerT) -> SignalHandlerRefT:
         if hasattr(fun, '__func__') and hasattr(fun, '__self__'):
@@ -131,3 +169,33 @@ class Signal(SignalT):
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__}: {self.ident}>'
+
+
+class HasSignals:
+    _signals: MutableMapping[str, SignalT] = {}
+
+    def __init_subclass__(self, **kwargs: Any) -> None:
+        self._init_subclass_signals()
+
+    @classmethod
+    def _init_subclass_signals(cls) -> None:
+        cls._signals = {k: sig.clone() for k, sig in cls._signals.items()}
+        for key, value in vars(cls).items():
+            if isinstance(value, SignalT):
+                cls._signals[key] = value
+        for signame, sig in cls._signals.items():
+            try:
+                actual = cls.__dict__[signame]
+            except KeyError:
+                pass
+            else:
+                if not isinstance(actual, SignalT):
+                    sig.connect(actual, weak=False)
+
+    def __init__(self) -> None:
+        self._init_signals()
+
+    def _init_signals(self) -> None:
+        for signame, sig in self._signals.items():
+            setattr(self, signame, sig.with_default_sender(self))
+
