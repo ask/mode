@@ -9,8 +9,7 @@ from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
     MutableSequence, Optional, Sequence, Set, Type, Union, cast,
 )
-from .signals import HasSignals
-from .types import DiagT, ServiceT
+from .types import HasSignals, DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.logging import CompositeLogger, get_logger
@@ -29,7 +28,7 @@ __all__ = [
 FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
 
 
-class ServiceBase(ServiceT, HasSignals):
+class ServiceBase(ServiceT):
     """Base class for services."""
 
     abstract: ClassVar[bool] = True

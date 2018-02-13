@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import Mock
-from mode.signals import HasSignals, Signal, SignalT
+from mode.signals import Signal, SignalT
+from mode.types import HasSignals
 
 
 
