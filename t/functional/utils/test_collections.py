@@ -8,8 +8,10 @@ class test_FastUserDict:
     @pytest.fixture()
     def d(self):
         class X(FastUserDict):
+
             def __init__(self):
                 self.data = {}
+
         return X()
 
     def test_setgetdel(self, d):

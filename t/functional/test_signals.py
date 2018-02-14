@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import Mock
 from mode.signals import Signal, SignalT
+import pytest
 
 
 class X:
@@ -21,11 +21,12 @@ async def test_signals():
     x, y = X(), Y()
 
     on_stopped_mock = Mock()
+    on_started_mock = Mock()
+
     @y.on_stopped.connect
     async def my_on_stopped(self, value, **kwargs):
         on_stopped_mock(self, value)
 
-    on_started_mock = Mock()
     @y.on_started.connect
     async def my_on_started(self, value, **kwargs):
         on_started_mock(self, value)
