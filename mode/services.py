@@ -111,7 +111,34 @@ class ServiceTask:
         return repr(self.fun)
 
 
-class Service(ServiceBase):
+class ServiceCallbacks:
+
+    async def on_first_start(self) -> None:
+        """Callback to be called the first time the service is started."""
+        ...
+
+    async def on_start(self) -> None:
+        """Callback to be called every time the service is started."""
+        ...
+
+    async def on_started(self) -> None:
+        """Callback to be called once the service is started/restarted."""
+        ...
+
+    async def on_stop(self) -> None:
+        """Callback to be called when the service is signalled to stop."""
+        ...
+
+    async def on_shutdown(self) -> None:
+        """Callback to be called when the service is shut down."""
+        ...
+
+    async def on_restart(self) -> None:
+        """Callback to be called when the service is restarted."""
+        ...
+
+
+class Service(ServiceBase, ServiceCallbacks):
     """An asyncio service that can be started/stopped/restarted.
 
     Notes:
@@ -329,30 +356,6 @@ class Service(ServiceBase):
                 await self.crash(exc)
         for service in reversed(services):
             await service.stop()
-
-    async def on_first_start(self) -> None:
-        """Callback to be called the first time the service is started."""
-        ...
-
-    async def on_start(self) -> None:
-        """Callback to be called every time the service is started."""
-        ...
-
-    async def on_started(self) -> None:
-        """Callback to be called once the service is started/restarted."""
-        ...
-
-    async def on_stop(self) -> None:
-        """Callback to be called when the service is signalled to stop."""
-        ...
-
-    async def on_shutdown(self) -> None:
-        """Callback to be called when the service is shut down."""
-        ...
-
-    async def on_restart(self) -> None:
-        """Callback to be called when the service is restarted."""
-        ...
 
     async def sleep(self, n: Seconds) -> None:
         """Sleep for ``n`` seconds, or until service stopped."""
