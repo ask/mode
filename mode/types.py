@@ -12,13 +12,14 @@ from .utils.times import Seconds
 from .utils.types.trees import NodeT
 
 __all__ = [
-    'HasSignals',
     'FilterReceiverMapping',
     'SignalHandlerT',
     'SignalHandlerRefT',
     'SignalT',
     'DiagT',
     'ServiceT',
+    'T',
+    'T_contra',
 ]
 
 T = TypeVar('T')
@@ -101,36 +102,7 @@ class DiagT(abc.ABC):
         ...
 
 
-class HasSignals:
-    _signals: MutableMapping[str, 'SignalT'] = {}
-
-    def __init_subclass__(self, **kwargs: Any) -> None:
-        self._init_subclass_signals()
-
-    @classmethod
-    def _init_subclass_signals(cls) -> None:
-        cls._signals = {k: sig.clone() for k, sig in cls._signals.items()}
-        for key, value in vars(cls).items():
-            if isinstance(value, SignalT):
-                cls._signals[key] = value
-        for signame, sig in cls._signals.items():
-            try:
-                actual = cls.__dict__[signame]
-            except KeyError:
-                pass
-            else:
-                if not isinstance(actual, SignalT):
-                    sig.connect(actual, weak=False)
-
-    def __init__(self) -> None:
-        self._init_signals()
-
-    def _init_signals(self) -> None:
-        for signame, sig in self._signals.items():
-            setattr(self, signame, sig.with_default_sender(self))
-
-
-class ServiceT(AsyncContextManager, HasSignals):
+class ServiceT(AsyncContextManager):
     """Abstract type for an asynchronous service that can be started/stopped.
 
     See Also:

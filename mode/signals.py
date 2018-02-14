@@ -3,19 +3,19 @@ from collections import defaultdict
 from functools import partial
 from types import MethodType
 from typing import (
-    Any, Awaitable, Callable, Mapping, MutableMapping,
+    Any, Awaitable, Callable, Mapping,
     MutableSet, Optional, Set, Tuple, Type, cast,
 )
 from weakref import ReferenceType, WeakMethod, ref
 from .types import (
     FilterReceiverMapping, SignalHandlerRefT,
-    SignalHandlerT, SignalT, T_contra,
+    SignalHandlerT, SignalT, T, T_contra,
 )
 
 DEFAULT_SENDER: Any = object()
 
 
-class Signal(SignalT):
+class Signal(SignalT[T]):
     _receivers: MutableSet[SignalHandlerRefT] = None
     _filter_receivers: FilterReceiverMapping = None
 

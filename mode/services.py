@@ -9,7 +9,7 @@ from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
     MutableSequence, Optional, Sequence, Set, Type, Union, cast,
 )
-from .types import HasSignals, DiagT, ServiceT
+from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.logging import CompositeLogger, get_logger
@@ -43,7 +43,6 @@ class ServiceBase(ServiceT):
         if self.abstract:
             self.abstract = False
         self._init_subclass_logger()
-        self._init_subclass_signals()
 
     @classmethod
     def _init_subclass_logger(cls) -> None:
@@ -55,7 +54,6 @@ class ServiceBase(ServiceT):
 
     def __init__(self) -> None:
         self.log = CompositeLogger(self)
-        HasSignals.__init__(self)
 
     def _format_log(self, severity: int, msg: str,
                     *args: Any, **kwargs: Any) -> str:
@@ -208,7 +206,6 @@ class Service(ServiceBase):
         # to the class-local `_tasks` list.
         if self.abstract:
             self.abstract = False
-        self._init_subclass_signals()
         self._init_subclass_logger()
         self._init_subclass_tasks()
 
