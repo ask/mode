@@ -12,8 +12,6 @@ from .types import (
     SignalHandlerT, SignalT, T, T_contra,
 )
 
-DEFAULT_SENDER: Any = object()
-
 
 class Signal(SignalT[T]):
     _receivers: MutableSet[SignalHandlerRefT] = None
@@ -77,10 +75,10 @@ class Signal(SignalT[T]):
     def _connect(self, fun: SignalHandlerT,
                  *,
                  weak: bool = True,
-                 sender: Any = DEFAULT_SENDER) -> SignalHandlerT:
+                 sender: Any = None) -> SignalHandlerT:
             ref: SignalHandlerRefT
             ref = self._create_ref(fun) if weak else lambda: fun
-            if sender is DEFAULT_SENDER:
+            if self.default_sender is not None:
                 sender = self.default_sender
             if sender is None:
                 self._receivers.add(ref)
@@ -91,9 +89,9 @@ class Signal(SignalT[T]):
     def disconnect(self, fun: SignalHandlerT,
                    *,
                    weak: bool = True,
-                   sender: Any = DEFAULT_SENDER) -> None:
+                   sender: Any = None) -> None:
         ref: SignalHandlerRefT = self._create_ref(fun) if weak else lambda: fun
-        if sender is DEFAULT_SENDER:
+        if self.default_sender is not None:
             sender = self.default_sender
         if sender is None:
             self._receivers.discard(ref)
@@ -107,10 +105,13 @@ class Signal(SignalT[T]):
                        *args: Any, **kwargs: Any) -> None:
         await self.send(sender, *args, **kwargs)
 
-    async def send(self, sender: T_contra = DEFAULT_SENDER,
-                   *args: Any, **kwargs: Any) -> None:
-        if sender is DEFAULT_SENDER:
-            sender = self.default_sender
+    async def send(self, *args: Any, **kwargs: Any) -> None:
+        if self.default_sender is None:
+            return await self._send(*args, **kwargs)
+        return await self._send(self.default_sender, *args, **kwargs)
+
+    async def _send(self, sender: T_contra,
+                    *args: Any, **kwargs: Any) -> None:
         if self._receivers or self._filter_receivers:
             r = self._update_receivers(self._receivers)
             if sender is not None:
