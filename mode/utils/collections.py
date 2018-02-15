@@ -1,11 +1,19 @@
 """Custom data structures."""
+import abc
+import collections
 import threading
 from collections import OrderedDict, UserDict, UserList
 from typing import (
-    Any, ContextManager, Dict, ItemsView, Iterator, KeysView,
+    Any, ContextManager, Dict, ItemsView, Iterable, Iterator, KeysView,
     Mapping, MutableMapping, MutableSet, Tuple, TypeVar, ValuesView, cast,
 )
 from mode.utils.compat import DummyContext
+
+try:
+    from django.utils.functional import LazyObject, LazySettings
+except ImportError:
+    class LazyObject: ...  # noqa
+    class LazySettings: ...  # noqa
 
 __all__ = [
     'FastUserDict',
@@ -14,6 +22,10 @@ __all__ = [
     'LRUCache',
     'ManagedUserDict',
     'ManagedUserSet',
+    'AttributeDict',
+    'AttributeDictMixin',
+    'DictAttribute',
+    'force_mapping',
 ]
 
 KT = TypeVar('KT')
@@ -101,34 +113,49 @@ class FastUserList(UserList):
     """Proxy to list."""
 
 
-class LRUCacheKeysView(KeysView):
+class MappingViewProxy(abc.ABC):
 
-    def __init__(self, store: 'LRUCache') -> None:
-        self._mapping = store
+    @abc.abstractmethod
+    def _keys(self) -> Iterable[KT]:
+        ...
 
-    def __iter__(self) -> Iterator:
-        yield from self._mapping._keys()
+    @abc.abstractmethod
+    def _values(self) -> Iterable[VT]:
+        ...
+
+    @abc.abstractmethod
+    def _items(self) -> Iterable[Tuple[KT, VT]]:
+        ...
 
 
-class LRUCacheValuesView(ValuesView):
+class ProxyKeysView(KeysView):
 
-    def __init__(self, store: 'LRUCache') -> None:
-        self._mapping = store
+    def __init__(self, mapping: MappingViewProxy) -> None:
+        self._mapping = mapping
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[KT]:
+        return self._mapping._keys()
+
+
+class ProxyValuesView(ValuesView):
+
+    def __init__(self, mapping: MappingViewProxy) -> None:
+        self._mapping = mapping
+
+    def __iter__(self) -> Iterator[VT]:
         yield from self._mapping._values()
 
 
-class LRUCacheItemsView(ItemsView):
+class ProxyItemsView(ItemsView):
 
-    def __init__(self, store: 'LRUCache') -> None:
-        self._mapping = store
+    def __init__(self, mapping: MappingViewProxy) -> None:
+        self._mapping = mapping
 
     def __iter__(self) -> Iterator[Tuple[KT, VT]]:
         yield from self._mapping._items()
 
 
-class LRUCache(FastUserDict, MutableMapping[KT, VT]):
+class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
     """LRU Cache implementation using a doubly linked list to track access.
 
     Arguments:
@@ -182,7 +209,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT]):
         return iter(self.data)
 
     def keys(self) -> KeysView[KT]:
-        return LRUCacheKeysView(self)
+        return ProxyKeysView(self)
 
     def _keys(self) -> Iterator[KT]:
         # userdict.keys in py3k calls __getitem__
@@ -190,7 +217,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT]):
             yield from self.data.keys()
 
     def values(self) -> ValuesView[VT]:
-        return LRUCacheValuesView(self)
+        return ProxyValuesView(self)
 
     def _values(self) -> Iterator[VT]:
         with self._mutex:
@@ -201,7 +228,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT]):
                     pass
 
     def items(self) -> ItemsView[KT, VT]:
-        return LRUCacheItemsView(self)
+        return ProxyItemsView(self)
 
     def _items(self) -> Iterator[Tuple[KT, VT]]:
         with self._mutex:
@@ -314,3 +341,99 @@ class ManagedUserDict(FastUserDict):
 
     def raw_update(self, *args: Any, **kwargs: Any) -> None:
         self.data.update(*args, **kwargs)
+
+
+class AttributeDictMixin:
+    """Mixin for Mapping interface that adds attribute access.
+
+    I.e., `d.key -> d[key]`).
+    """
+
+    def __getattr__(self, k: str) -> Any:
+        """`d.key -> d[key]`."""
+        try:
+            return self[k]
+        except KeyError:
+            raise AttributeError(
+                f'{type(self).__name__!r} object has no attribute {k!r}')
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """`d[key] = value -> d.key = value`."""
+        self[key] = value
+
+
+class AttributeDict(dict, AttributeDictMixin):
+    """Dict subclass with attribute access."""
+    ...
+
+
+class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
+    """Dict interface to attributes.
+
+    `obj[k] -> obj.k`
+    `obj[k] = val -> obj.k = val`
+    """
+
+    obj: Any = None
+
+    def __init__(self, obj: Any) -> None:
+        object.__setattr__(self, 'obj', obj)
+
+    def __getattr__(self, key: Any) -> Any:
+        return getattr(self.obj, key)
+
+    def __setattr__(self, key: Any, value: Any) -> None:
+        return setattr(self.obj, key, value)
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        # type: (Any, Any) -> Any
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def setdefault(self, key: Any, default: Any = None) -> Any:
+        if key in self:
+            return self[key]
+        self[key] = default
+        return default
+
+    def __getitem__(self, key: Any) -> Any:
+        try:
+            return getattr(self.obj, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        setattr(self.obj, key, value)
+
+    def __contains__(self, key: Any) -> bool:
+        return hasattr(self.obj, key)
+
+    def __iter__(self) -> Iterable[KT]:
+        return self._keys()
+
+    def _keys(self) -> Iterator[KT]:
+        for key in dir(self.obj):
+            yield key
+
+    def _values(self) -> Iterator[VT]:
+        # type: () -> Iterable
+        obj = self.obj
+        for key in self:
+            yield getattr(obj, key)
+
+    def _items(self) -> Iterator[Tuple[KT, VT]]:
+        # type: () -> Iterable
+        obj = self.obj
+        for key in self:
+            yield key, getattr(obj, key)
+collections.MutableMapping.register(DictAttribute)  # noqa: E305
+
+
+def force_mapping(m: Any) -> Mapping:
+    # type: (Any) -> Mapping
+    """Wrap object into supporting the mapping interface if necessary."""
+    if isinstance(m, (LazyObject, LazySettings)):
+        m = m._wrapped
+    return DictAttribute(m) if not isinstance(m, Mapping) else m
