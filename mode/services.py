@@ -7,7 +7,7 @@ from time import monotonic
 from types import TracebackType
 from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
-    MutableSequence, Optional, Sequence, Set, Type, Union, cast,
+    MutableSequence, NamedTuple, Optional, Sequence, Set, Type, Union, cast,
 )
 from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
@@ -26,6 +26,13 @@ __all__ = [
 ]
 
 FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
+
+WaitArgT = Union[FutureT, asyncio.Event]
+
+
+class WaitResult(NamedTuple):
+    result: Any
+    stopped: bool
 
 
 class ServiceBase(ServiceT):
@@ -365,23 +372,65 @@ class Service(ServiceBase, ServiceCallbacks):
         except (asyncio.CancelledError, asyncio.TimeoutError):
             pass
 
-    async def wait(self, *coros: FutureT, timeout: Seconds = None) -> None:
-        """Wait for coroutines to complete, or until the service stops."""
-        await self._wait_first(
-            self._crashed.wait(),
-            self._stopped.wait(),
-            *coros,
-            timeout=timeout,
-        )
+    async def wait_for_stopped(self, *coros: WaitArgT,
+                               timeout: Seconds = None) -> bool:
+        return (await self.wait(*coros, timeout=timeout)).stopped
 
-    async def _wait_first(
-            self, *coros: FutureT, timeout: Seconds = None) -> None:
-        await asyncio.wait(
-            coros,
-            timeout=want_seconds(timeout) if timeout is not None else None,
+    async def wait(self, *coros: WaitArgT,
+                   timeout: Seconds = None) -> WaitResult:
+        """Wait for coroutines to complete, or until the service stops."""
+        if coros:
+            assert len(coros) == 1
+            return await self._wait_one(coros[0], timeout=timeout)
+        else:
+            await self._wait_stopped(timeout=timeout)
+            return WaitResult(None, True)
+
+    async def _wait_one(self, coro: WaitArgT,
+                        *,
+                        timeout: Seconds = None) -> WaitResult:
+        fut: FutureT
+        timeout = want_seconds(timeout) if timeout is not None else None
+        stopped = self._stopped.wait()
+        crashed = self._crashed.wait()
+
+        fut = coro.wait() if isinstance(coro, asyncio.Event) else coro
+        fut = asyncio.ensure_future(fut, loop=self.loop)
+        try:
+            done, pending = await asyncio.wait(
+                (fut, stopped, crashed),
+                return_when=asyncio.FIRST_COMPLETED,
+                timeout=timeout,
+                loop=self.loop,
+            )
+            for f in done:
+                f.result()  # propagate exceptions
+            for f in pending:
+                f.cancel()
+            if fut.done():
+                return WaitResult(fut.result(), False)
+            else:
+                assert self._crashed.is_set() or self._stopped.is_set()
+                return WaitResult(None, True)
+        finally:
+            if not fut.done():
+                fut.cancel()
+
+    async def _wait_stopped(self, timeout: Seconds = None) -> None:
+        timeout = want_seconds(timeout) if timeout is not None else None
+        stopped = self._stopped.wait()
+        crashed = self._crashed.wait()
+        done, pending = await asyncio.wait(
+            [stopped, crashed],
             return_when=asyncio.FIRST_COMPLETED,
+            timeout=timeout,
             loop=self.loop,
         )
+        for fut in done:
+            fut.result()  # propagate exceptions
+        for fut in pending:
+            fut.cancel()
+        assert self._crashed.is_set() or self._stopped.is_set()
 
     async def start(self) -> None:
         """Start the service."""
