@@ -1,6 +1,6 @@
 from typing import AsyncContextManager, Generic
 from mode import Service, ServiceT
-from mode.services import ServiceBase
+from mode.services import ServiceBase, ServiceCallbacks
 from mode.utils.objects import cached_property, iter_mro_reversed
 import pytest
 
@@ -27,7 +27,7 @@ class A(B):
     (C, Service, [D, C]),
     (D, Service, [D]),
     (A, object, [
-        Generic, AsyncContextManager,
+        ServiceCallbacks, Generic, AsyncContextManager,
         ServiceT, ServiceBase, Service,
         D, C, B, A,
     ]),
