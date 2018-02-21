@@ -4,6 +4,87 @@
  Change history
 ================
 
+.. _version-1.8.0:
+
+1.8.0
+=====
+:release-date: 2018-02-20 04:01 P.M PST
+:release-by: Ask Solem
+
+Backward Incompatible Changes
+-----------------------------
+
+- API Change to fix memory leak in ``Service.wait``.
+
+    The ``Service.wait(*futures)`` method was added to be able to wait for
+    this list of futures but also stop waiting if the service is stopped or
+    crashed::
+
+        import asyncio
+        from mode import Service
+
+        class X(Service):
+            on_thing_ready: asyncio.Event
+
+            def on_init(self):
+                self.on_thing_ready = asyncio.Event(loop=loop)
+
+            @Service.task
+            async def _my_background_task(self):
+                while not self.should_stop:
+                    # wait for flag to be set (or service stopped/crashed)
+                    await self.wait(self.on_thing_ready.wait())
+                    print('FLAG SET')
+
+    The problem with this was
+
+    1) The wait flag would return None and not raise an exception if the
+       service is stopped/crashed.
+    2) Futures would be scheduled on the event loop but not properly cleaned
+       up, creating a very slow memory leak.
+    3) No return value was returned for succesful feature.
+
+    So to properly implement this we had to change the API of the ``wait``
+    method to return a tuple instead, and to only allow a single coroutine to
+    be passed to wait:
+
+        @Service.task
+        async def _my_background_task(self):
+            while not self.should_stop:
+                # wait for flag to be set (or service stopped/crashed)
+                result, stopped = await self.wait(self.on_thing_ready)
+                if not stopped:
+                    print('FLAG SET')
+
+    This way the user can provide an alternate path when the service is
+    stopped/crashed while waiting for this event.
+
+    A new shortcut method ``wait_for_stopped(fut)`` was also added::
+
+        # wait for flag to be set (or service stopped/crashed)
+        if not await self.wait_for_stopped(self.on_thing_ready):
+            print('FLAG SET')
+
+    Moreover, you can now pass :class:`asyncio.Event` objects directly to
+    ``wait()``.
+
+News
+----
+
+- Added :class:`mode.utils.collections.DictAttribute`.
+
+- Added :class:`mode.utils.collections.AttributeDict`.
+
+Bugs
+----
+
+- Signals can create clone of signal with default sender already set
+
+    .. code-block:: python
+
+        signal: Signal[int] = Signal()
+        signal = signal.with_default_sender(obj)
+
 .. _version-1.7.0:
 
 1.7.0
