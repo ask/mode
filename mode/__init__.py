@@ -36,23 +36,28 @@ del(re)
 
 if typing.TYPE_CHECKING:
     from .services import Service                         # noqa: E402
-    from .signals import Signal                           # noqa: E402
+    from .signals import BaseSignal, Signal, SyncSignal   # noqa: E402
     from .supervisors import (                            # noqa: E402
         OneForAllSupervisor,
         OneForOneSupervisor,
         SupervisorStrategy,
         CrashingSupervisor,
     )
-    from .types import ServiceT, SignalT, SupervisorStrategyT  # noqa: E402
+    from .types import ServiceT, SupervisorStrategyT      # noqa: E402
+    from .types import BaseSignalT, SignalT, SyncSignalT  # noqa: E402
     from .utils.times import Seconds, want_seconds        # noqa: E402
     from .utils.logging import get_logger, setup_logging  # noqa: E402
     from .utils.objects import label, shortlabel          # noqa: E402
     from .worker import Worker                            # noqa: E402
 
 __all__ = [
+    'BaseSignal',
+    'BaseSignalT',
     'Service',
     'Signal',
     'SignalT',
+    'SyncSignal',
+    'SyncSignalT',
     'OneForAllSupervisor',
     'OneForOneSupervisor',
     'SupervisorStrategy',

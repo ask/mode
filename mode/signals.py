@@ -3,17 +3,21 @@ from collections import defaultdict
 from functools import partial
 from types import MethodType
 from typing import (
-    Any, Awaitable, Callable, Mapping,
-    MutableSet, Optional, Set, Tuple, Type, cast,
+    Any, Callable, Iterable, Mapping, MutableSet,
+    Optional, Set, Tuple, Type, cast, no_type_check,
 )
 from weakref import ReferenceType, WeakMethod, ref
+
 from .types import (
-    FilterReceiverMapping, SignalHandlerRefT,
-    SignalHandlerT, SignalT, T, T_contra,
+    BaseSignalT, FilterReceiverMapping, SignalHandlerRefT,
+    SignalHandlerT, SignalT, SyncSignalT, T, T_contra,
 )
+from .utils.futures import maybe_async
+
+__all__ = ['BaseSignal', 'Signal', 'SyncSignal']
 
 
-class Signal(SignalT[T]):
+class BaseSignal(BaseSignalT[T]):
     _receivers: MutableSet[SignalHandlerRefT] = None
     _filter_receivers: FilterReceiverMapping = None
 
@@ -41,10 +45,16 @@ class Signal(SignalT[T]):
             'default_sender': self.default_sender,
         }
 
-    def clone(self, **kwargs: Any) -> SignalT:
+    def clone(self, **kwargs: Any) -> BaseSignalT:
+        return self._clone(**kwargs)
+
+    def with_default_sender(self, sender: Any = None) -> BaseSignalT:
+        return self._with_default_sender(sender)
+
+    def _clone(self, **kwargs: Any) -> BaseSignalT:
         return type(self)(**{**self.asdict(), **kwargs})
 
-    def with_default_sender(self, sender: Any = None) -> SignalT:
+    def _with_default_sender(self, sender: Any = None) -> BaseSignalT:
         if sender is None:
             sender = self.default_sender
         return self.clone(
@@ -66,6 +76,17 @@ class Signal(SignalT[T]):
             self.name = name
         if self.owner is None:
             self.owner = owner
+
+    def unpack_sender_from_args(self, *args: Any) -> Tuple[T, Tuple[Any, ...]]:
+        sender = self.default_sender
+        if sender is None:
+            if not args:
+                raise TypeError('Signal.send requires at least one argument')
+            if len(args) > 1:
+                sender, *args = args
+            else:
+                sender, args = args[0], ()
+        return sender, args
 
     def connect(self, fun: SignalHandlerT = None, **kwargs: Any) -> Callable:
         if fun is not None:
@@ -101,17 +122,7 @@ class Signal(SignalT[T]):
             except ValueError:
                 pass
 
-    async def __call__(self, sender: T_contra = None,
-                       *args: Any, **kwargs: Any) -> None:
-        await self.send(sender, *args, **kwargs)
-
-    async def send(self, *args: Any, **kwargs: Any) -> None:
-        if self.default_sender is None:
-            return await self._send(*args, **kwargs)
-        return await self._send(self.default_sender, *args, **kwargs)
-
-    async def _send(self, sender: T_contra,
-                    *args: Any, **kwargs: Any) -> None:
+    def iter_receivers(self, sender: T_contra) -> Iterable[SignalHandlerT]:
         if self._receivers or self._filter_receivers:
             r = self._update_receivers(self._receivers)
             if sender is not None:
@@ -119,8 +130,7 @@ class Signal(SignalT[T]):
                 r.update(self._update_receivers(
                     self._filter_receivers[sender_id]))
             for receiver in r:
-                ret = receiver(sender, *args, signal=self, **kwargs)
-                await ret if isinstance(ret, Awaitable) else ret
+                yield receiver
 
     def _update_receivers(
             self, r: MutableSet[SignalHandlerRefT]) -> Set[SignalHandlerT]:
@@ -170,3 +180,43 @@ class Signal(SignalT[T]):
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__}: {self.ident}>'
+
+
+class Signal(BaseSignal[T], SignalT[T]):
+
+    async def __call__(self, sender: T_contra = None,
+                       *args: Any, **kwargs: Any) -> None:
+        await self.send(sender, *args, **kwargs)
+
+    async def send(self, *args: Any, **kwargs: Any) -> None:
+        sender, args = self.unpack_sender_from_args(*args)
+        for receiver in self.iter_receivers(sender):
+            await maybe_async(receiver(sender, *args, signal=self, **kwargs))
+
+    @no_type_check
+    def clone(self, **kwargs: Any) -> SignalT:
+        return cast(Signal, self._clone(**kwargs))
+
+    @no_type_check
+    def with_default_sender(self, sender: Any = None) -> SignalT:
+        return cast(Signal, self._with_default_sender(sender))
+
+
+class SyncSignal(BaseSignal[T], SyncSignalT[T]):
+
+    def __call__(self, sender: T_contra = None,
+                 *args: Any, **kwargs: Any) -> None:
+        self.send(sender, *args, **kwargs)
+
+    def send(self, *args: Any, **kwargs: Any) -> None:
+        sender, args = self.unpack_sender_from_args(*args)
+        for receiver in self.iter_receivers(sender):
+            receiver(sender, *args, signal=self, **kwargs)
+
+    @no_type_check
+    def clone(self, **kwargs: Any) -> SyncSignalT:
+        return cast(SyncSignal, self._clone(**kwargs))
+
+    @no_type_check
+    def with_default_sender(self, sender: Any = None) -> SyncSignalT:
+        return cast(SyncSignal, self._with_default_sender(sender))

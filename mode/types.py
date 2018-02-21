@@ -3,7 +3,7 @@ import asyncio
 import typing
 from typing import (
     Any, Awaitable, Callable, Generic,
-    MutableMapping, MutableSet, Set, Type, TypeVar, Union,
+    MutableMapping, MutableSet, Set, Type, TypeVar, Union, no_type_check,
 )
 from weakref import ReferenceType
 from .utils.compat import AsyncContextManager, ContextManager
@@ -40,7 +40,7 @@ else:
 FilterReceiverMapping = MutableMapping[Any, MutableSet[SignalHandlerRefT]]
 
 
-class SignalT(Generic[T]):
+class BaseSignalT(Generic[T]):
     name: str
     owner: Type
 
@@ -55,11 +55,11 @@ class SignalT(Generic[T]):
         ...
 
     @abc.abstractmethod
-    def clone(self, **kwargs: Any) -> 'SignalT':
+    def clone(self, **kwargs: Any) -> 'BaseSignalT':
         ...
 
     @abc.abstractmethod
-    def with_default_sender(self, sender: Any = None) -> 'SignalT':
+    def with_default_sender(self, sender: Any = None) -> 'BaseSignalT':
         ...
 
     @abc.abstractmethod
@@ -73,14 +73,47 @@ class SignalT(Generic[T]):
                    weak: bool = True) -> None:
         ...
 
+
+class SignalT(BaseSignalT[T]):
+
     @abc.abstractmethod
     async def __call__(self, sender: T_contra,
                        *args: Any, **kwargs: Any) -> None:
         ...
 
     @abc.abstractmethod
-    async def send(self, sender: T_contra,
-                   *args: Any, **kwargs: Any) -> None:
+    async def send(self, sender: T_contra, *args: Any, **kwargs: Any) -> None:
+        ...
+
+    @no_type_check
+    @abc.abstractmethod
+    def clone(self, **kwargs: Any) -> 'SignalT':
+        ...
+
+    @no_type_check
+    @abc.abstractmethod
+    def with_default_sender(self, sender: Any = None) -> 'SignalT':
+        ...
+
+
+class SyncSignalT(BaseSignalT[T]):
+
+    @abc.abstractmethod
+    def __call__(self, sender: T_contra, *args: Any, **kwargs: Any) -> None:
+        ...
+
+    @abc.abstractmethod
+    def send(self, sender: T_contra, *args: Any, **kwargs: Any) -> None:
+        ...
+
+    @no_type_check
+    @abc.abstractmethod
+    def clone(self, **kwargs: Any) -> 'SyncSignalT':
+        ...
+
+    @no_type_check
+    @abc.abstractmethod
+    def with_default_sender(self, sender: Any = None) -> 'SyncSignalT':
         ...
 
 
