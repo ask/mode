@@ -76,14 +76,20 @@ from types import ModuleType  # noqa
 
 all_by_module: Mapping[str, Sequence[str]] = {
     'mode.services': ['Service'],
-    'mode.signals': ['Signal'],
+    'mode.signals': ['BaseSignal', 'Signal', 'SyncSignal'],
     'mode.supervisors': [
         'OneForAllSupervisor',
         'OneForOneSupervisor',
         'SupervisorStrategy',
         'CrashingSupervisor',
     ],
-    'mode.types': ['ServiceT', 'SignalT', 'SupervisorStrategyT'],
+    'mode.types': [
+        'BaseSignalT',
+        'ServiceT',
+        'SignalT',
+        'SupervisorStrategyT',
+        'SyncSignalT',
+    ],
     'mode.utils.times': ['Seconds', 'want_seconds'],
     'mode.utils.logging': ['get_logger', 'setup_logging'],
     'mode.utils.objects': ['label', 'shortlabel'],
