@@ -6,7 +6,7 @@ import warnings
 from contextlib import contextmanager, suppress
 from types import ModuleType
 from typing import (
-    Any, Callable, Generator, Generic, Iterable,
+    Any, Callable, Generator, Generic, Iterable, Iterator,
     Mapping, MutableMapping, NamedTuple, Set, Type, TypeVar, Union, cast,
 )
 from .collections import FastUserDict
@@ -71,6 +71,11 @@ class FactoryMapping(FastUserDict, Generic[_T]):
     def __init__(self, *args: Mapping, **kwargs: str) -> None:
         self.aliases = dict(*args, **kwargs)  # type: ignore
         self.namespaces = set()
+
+    def iterate(self) -> Iterator[_T]:
+        self._maybe_finalize()
+        for name in self.aliases:
+            yield self.by_name(name)
 
     def by_url(self, url: Union[str, URL]) -> _T:
         """Get class associated with URL (scheme is used as alias key)."""
