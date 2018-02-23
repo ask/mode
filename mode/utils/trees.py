@@ -1,5 +1,6 @@
 from contextlib import suppress
 from typing import Any, Iterator, List, cast
+
 from .compat import Deque
 from .graphs import DependencyGraph
 from .objects import shortlabel

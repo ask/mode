@@ -2,12 +2,12 @@
 import abc
 import collections
 import typing
+import _collections_abc
 from types import TracebackType
 from typing import (
     Any, AnyStr, ContextManager, Dict, Generic, IO, KT,
     MutableMapping, MutableSequence, Optional, T, T_co, Type, VT,
 )
-import _collections_abc
 
 __all__ = [
     'AsyncContextManager',

@@ -7,7 +7,8 @@ from typing import (
     Any, ContextManager, Dict, ItemsView, Iterable, Iterator, KeysView,
     Mapping, MutableMapping, MutableSet, Tuple, TypeVar, ValuesView, cast,
 )
-from mode.utils.compat import DummyContext
+
+from .compat import DummyContext
 
 try:
     from django.utils.functional import LazyObject, LazySettings

@@ -1,11 +1,12 @@
 import abc
 import sys
 import types
+import _collections_abc
 from collections import deque
 from contextlib import AbstractContextManager
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, Tuple, Type, Union
-import _collections_abc
+
 from .compat import AsyncContextManager, ContextManager, Deque
 
 __all__ = [

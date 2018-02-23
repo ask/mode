@@ -1,4 +1,5 @@
 from typing import Any, Mapping
+
 from ..objects import label
 from ..types.graphs import GraphFormatterT, _T
 

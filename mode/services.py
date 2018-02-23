@@ -9,6 +9,7 @@ from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
     MutableSequence, NamedTuple, Optional, Sequence, Set, Type, Union, cast,
 )
+
 from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack, ExitStack

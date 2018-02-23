@@ -3,7 +3,9 @@ from typing import (
     Any, Callable, IO, ItemsView, Iterable, Iterator,
     List, MutableMapping, Sequence, Set, cast,
 )
+
 from .formatter import GraphFormatter
+
 from ..compat import Counter
 from ..types.graphs import DependencyGraphT, GraphFormatterT, _T
 

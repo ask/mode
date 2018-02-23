@@ -11,6 +11,7 @@ import sys
 import traceback
 from concurrent.futures import Executor
 from typing import Any
+
 from .services import Service
 
 __all__ = ['ServiceThread']

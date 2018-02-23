@@ -9,6 +9,7 @@ from typing import (
     Any, Callable, Generator, Generic, Iterable, Iterator,
     Mapping, MutableMapping, NamedTuple, Set, Type, TypeVar, Union, cast,
 )
+
 from .collections import FastUserDict
 from .objects import cached_property
 from .text import didyoumean

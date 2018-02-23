@@ -1,5 +1,6 @@
 import abc
 from typing import Any, Generic, Iterator, List, TypeVar
+
 from .graphs import DependencyGraphT
 
 __all__ = ['NodeT']
