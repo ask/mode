@@ -21,7 +21,7 @@ apparent that we needed a way to manage the different services running in the
 program.  Questions such as "how do we shutdown the event loop" is frequently
 answered by telling users to "wait for all coroutines in
 asyncio.Task.all_tasks", but we needed more control over what services
-where stopped, in what order and what services can we safely shutdown without
+were stopped, in what order and what services can we safely shutdown without
 waiting for current operations to complete.
 
 So for us the answer was to create a generic ``Service`` class that handles
