@@ -33,6 +33,7 @@ __all__ = [
     'load_extension_classes',
     'cwd_in_path',
     'import_from_cwd',
+    'smart_import',
 ]
 
 _T = TypeVar('_T')
@@ -291,3 +292,20 @@ def import_from_cwd(module: str,
         imp = importlib.import_module
     with cwd_in_path():
         return imp(module, package=package)
+
+
+def smart_import(path: str, imp: Any = None) -> Any:
+    """Import module if module, otherwise same as :func:`symbol_by_name`."""
+    imp = importlib.import_module if imp is None else imp
+    if ':' in path:
+        # Path includes attribute so can just jump
+        # here (e.g., ``os.path:abspath``).
+        return symbol_by_name(path, imp=imp)
+
+    # Not sure if path is just a module name or if it includes an
+    # attribute name (e.g., ``os.path``, vs, ``os.path.abspath``).
+    try:
+        return imp(path)
+    except ImportError:
+        # Not a module name, so try module + attribute.
+        return symbol_by_name(path, imp=imp)
