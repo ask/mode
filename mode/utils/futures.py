@@ -36,8 +36,11 @@ class StampedeWrapper:
         fut = self.fut
         if fut is None:
             fut = self.fut = asyncio.Future(loop=self.loop)
-            result = await self.fun(*self.args, **self.kwargs)
-            fut.set_result(result)
+            try:
+                result = await self.fun(*self.args, **self.kwargs)
+                fut.set_result(result)
+            finally:
+                self.fut = None
             return result
         else:
             if fut.done():
