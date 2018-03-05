@@ -8,6 +8,7 @@ import traceback
 from functools import singledispatch
 from pprint import pprint
 from typing import Any, Callable, IO, List, Mapping, Set, Union
+
 import colorlog
 
 __all__ = [

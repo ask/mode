@@ -1,7 +1,7 @@
 from typing import Any, Mapping
 
-from ..objects import label
-from ..types.graphs import GraphFormatterT, _T
+from mode.utils.objects import label
+from mode.utils.types.graphs import GraphFormatterT, _T
 
 
 def dedent_initial(s: str, n: int = 4) -> str:

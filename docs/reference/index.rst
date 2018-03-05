@@ -14,6 +14,7 @@ Mode
     :maxdepth: 1
 
     mode
+    mode.debug
     mode.exceptions
     mode.proxy
     mode.services
@@ -44,7 +45,6 @@ Utils
     mode.utils.collections
     mode.utils.compat
     mode.utils.contexts
-    mode.utils.debug
     mode.utils.futures
     mode.utils.graphs
     mode.utils.imports

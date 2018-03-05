@@ -4,9 +4,10 @@ import traceback
 from types import FrameType
 from typing import Any, Type
 
+from mode.services import Service
+
 from .logging import get_logger
 from .times import Seconds, want_seconds
-from ..services import Service
 
 __all__ = ['Blocking', 'BlockingDetector']
 

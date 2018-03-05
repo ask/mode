@@ -13,7 +13,7 @@ from .utils.imports import symbol_by_name
 from .utils.logging import cry, get_logger, setup_logging
 
 if typing.TYPE_CHECKING:
-    from .utils.debug import BlockingDetector
+    from .debug import BlockingDetector
 else:
     class BlockingDetector: ...  # noqa
 
@@ -21,7 +21,7 @@ __all__ = ['Worker']
 
 logger = get_logger(__name__)
 
-BLOCK_DETECTOR = 'mode.utils.debug:BlockingDetector'
+BLOCK_DETECTOR = 'mode.debug:BlockingDetector'
 
 
 class _TupleAsListRepr(reprlib.Repr):

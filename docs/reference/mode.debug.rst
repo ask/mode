@@ -1,11 +1,11 @@
 =====================================================
- ``mode.utils.debug``
+ ``mode.debug``
 =====================================================
 
 .. contents::
     :local:
-.. currentmodule:: mode.utils.debug
+.. currentmodule:: mode.debug
 
-.. automodule:: mode.utils.debug
+.. automodule:: mode.debug
     :members:
     :undoc-members:
