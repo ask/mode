@@ -4,6 +4,15 @@
  Change history
 ================
 
+.. _version-1.9.1:
+
+1.9.1
+=====
+:release-date: 2018-03-05 11:51 P.M PST
+:release-by: Ask Solem
+
+- No longer depends on :pypi:`terminaltables`.
+
 .. _version-1.9.0:
 
 1.9.0
