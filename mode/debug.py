@@ -4,12 +4,13 @@ import traceback
 from types import FrameType
 from typing import Any, Type
 
-from mode.services import Service
-
-from .logging import get_logger
-from .times import Seconds, want_seconds
+from .services import Service
+from .utils.logging import get_logger
+from .utils.times import Seconds, want_seconds
 
 __all__ = ['Blocking', 'BlockingDetector']
+
+logger = get_logger(__name__)
 
 if hasattr(signal, 'setitimer'):
     def arm_alarm(seconds: float) -> None:
@@ -23,9 +24,6 @@ else:
     else:
         def arm_alarm(seconds: float) -> None:
             return itimer(seconds)
-
-
-logger = get_logger(__name__)
 
 
 class Blocking(RuntimeError):
