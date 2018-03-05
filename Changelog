@@ -4,6 +4,49 @@
  Change history
 ================
 
+.. _version-1.9.0:
+
+1.9.0
+=====
+:release-date: 2018-03-05 11:33 P.M PST
+:release-by: Ask Solem
+
+Backward Incompatible Changes
+=============================
+
+- Module ``mode.utils.debug`` renamed to :mod:`mode.debug`.
+
+    This is unlikely to affect users as this module is only used by mode
+    internally.
+
+    This module had to move because it imports ``mode.Service``, and
+    the :mod:`mode.utils` package is not allowed to import from the
+    :mod:`mode` package at all.
+
+News
+====
+
+- Added function :func:`mode.utils.import.smart_import`.
+
+- Added non-async version of :class:`mode.Signal`: :class:`mode.SyncSignal`.
+
+    The signal works exactly the same as the asynchronous version, except
+    ``Signal.send`` must not be :keyword:`await`-ed::
+
+        on_configured = SyncSignal()
+        on_configured.send(sender=obj)
+
+
+- Added method ``iterate`` to :class:`mode.utils.imports.FactoryMapping`.
+
+    This enables you to iterate over the extensions added to a
+    :mod:`setuptools` entrypoint.
+
+Fixes
+=====
+
+- ``StampedeWrapper`` now correctly clears flag when original call done.
+
 .. _version-1.8.0:
 
 1.8.0
