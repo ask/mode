@@ -156,11 +156,14 @@ class FlowControlEvent:
         _queues: WeakSet['FlowControlQueue']
     _queues = None
 
-    def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
+    def __init__(self, *,
+                 initially_suspended: bool = True,
+                 loop: asyncio.AbstractEventLoop = None) -> None:
         self.loop = loop or asyncio.get_event_loop()
         self._resume = asyncio.Event(loop=self.loop)
         self._suspend = asyncio.Event(loop=self.loop)
-        self._suspend.set()
+        if initially_suspended:
+            self._suspend.set()
         self._queues = WeakSet()
 
     def manage_queue(self, queue: 'FlowControlQueue') -> None:
