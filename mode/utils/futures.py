@@ -160,6 +160,7 @@ class FlowControlEvent:
         self.loop = loop or asyncio.get_event_loop()
         self._resume = asyncio.Event(loop=self.loop)
         self._suspend = asyncio.Event(loop=self.loop)
+        self._suspend.set()
         self._queues = WeakSet()
 
     def manage_queue(self, queue: 'FlowControlQueue') -> None:
