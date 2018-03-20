@@ -179,6 +179,9 @@ class FlowControlEvent:
         """Resume production into queues managed by this event."""
         self._suspend.clear()
         self._resume.set()
+        self.clear()
+
+    def clear(self) -> None:
         for queue in self._queues:
             queue.clear()
 
