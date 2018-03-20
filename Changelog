@@ -4,6 +4,24 @@
  Change history
 ================
 
+.. _version-1.9.2:
+
+1.9.2
+=====
+:release-date: 2018-03-20 10:17 P.M PST
+:release-by: Ask Solem
+
+- Adds ``FlowControlEvent.clear()`` to clear all contents of flow
+  controlled queues.
+
+- :class:`~mode.utils.futures.FlowControlEvent` now starts in a suspended
+  state.
+
+    To disable this pass ``FlowControlEvent(initially_suspended=False))``.
+
+- Adds ``Service.service_reset`` method to reset service
+  start/stopped/crashed/etc., flags
+
 .. _version-1.9.1:
 
 1.9.1
