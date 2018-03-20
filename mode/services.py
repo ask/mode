@@ -552,14 +552,17 @@ class Service(ServiceBase, ServiceCallbacks):
         """Restart this service."""
         self.restart_count += 1
         await self.stop()
+        self.service_reset()
+        await self.on_restart()
+        await self.start()
+
+    def service_reset(self) -> None:
         for ev in (self._started,
                    self._stopped,
                    self._shutdown,
                    self._crashed):
             ev.clear()
         self._crash_reason = None
-        await self.on_restart()
-        await self.start()
 
     async def wait_until_stopped(self) -> None:
         """Wait until the service is signalled to stop."""

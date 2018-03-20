@@ -190,6 +190,10 @@ class ServiceT(AsyncContextManager):
         ...
 
     @abc.abstractmethod
+    def service_reset(self) -> None:
+        ...
+
+    @abc.abstractmethod
     async def restart(self) -> None:
         ...
 

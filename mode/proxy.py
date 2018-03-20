@@ -53,6 +53,9 @@ class ServiceProxy(ServiceBase):
     async def stop(self) -> None:
         await self._service.stop()
 
+    def service_reset(self) -> None:
+        self._service.service_reset()
+
     async def restart(self) -> None:
         await self._service.restart()
 
