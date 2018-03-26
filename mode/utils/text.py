@@ -34,7 +34,7 @@ def title(s: str) -> str:
     return ' '.join(
         p.capitalize()
         for p in s.replace('-', ' ')
-                  .replace('_', '').split())
+                  .replace('_', ' ').split())
 
 
 def didyoumean(haystack: Iterable[str], needle: str,
@@ -150,7 +150,6 @@ def _abbr_word_boundary(s: str, max: int, suffix: str) -> str:
 
 def _abbr_abrupt(s: str, max: int, suffix: str = '...') -> str:
     # hard limit (can cut off in the middle of a word).
-    print((s, max, suffix))
     if max and len(s) >= max:
         return s[:max].rsplit(' ', 1)[0] + suffix
     return s
