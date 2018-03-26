@@ -18,9 +18,8 @@ def test_want_seconds(input, expected):
 async def test_rate_limit():
     time_start = monotonic()
     x = 0
-    for i in range(20):
+    for _ in range(20):
         async with rate_limit(10, 1.0):
             x += 1
     spent = monotonic() - time_start
     assert spent > 1.8
-
