@@ -99,10 +99,11 @@ class Bucket(AsyncContextManager):
         return self.rate
 
     async def __aenter__(self) -> 'Bucket':
-        if not self.pour():
+        if self.pour():
             if self.raises:
                 raise self.raises()
-            await asyncio.sleep(self.expected_time(), loop=self.loop)
+            expected_time = self.expected_time()
+            await asyncio.sleep(expected_time, loop=self.loop)
         return self
 
     async def __aexit__(self,
