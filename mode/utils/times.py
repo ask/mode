@@ -161,7 +161,3 @@ def want_seconds(s: float) -> float:
 @want_seconds.register(timedelta)
 def _(s: timedelta) -> float:
     return s.total_seconds()
-
-
-__flake8_TracebackType_is_used: TracebackType  # XXX flake8 bug
-__flake8_Type_is_used: Type

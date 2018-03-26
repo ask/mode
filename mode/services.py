@@ -623,6 +623,3 @@ class Service(ServiceBase, ServiceCallbacks):
     @beacon.setter
     def beacon(self, beacon: NodeT) -> None:
         self._beacon = beacon
-
-
-__flake8_Set_is_used: Set  # XXX flake8 bug

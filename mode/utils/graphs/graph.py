@@ -212,7 +212,3 @@ class DependencyGraph(DependencyGraphT):
                 output.extend(
                     self._repr_node(other, level + 1).split('\n')[1:])
         return '\n'.join(output)
-
-
-__flake8_List_is_used: List  # XXX flake8 bug
-__flake8_Set_is_used: Set
