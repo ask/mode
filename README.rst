@@ -124,7 +124,7 @@ Proxy
     subclass anything, but we want the app to be reusable in projects
     and keep it possible to start multiple apps at the same time.
 
-    If we create apps at module scope, for example:
+    If we create apps at module scope, for example::
 
         # example/app.py
         from our_library import App
@@ -134,65 +134,65 @@ Proxy
     the ``asyncio`` event loop is created too early.
 
     For services that are defined at module level we can create a
-    ``ServiceProxy``:
+    ``ServiceProxy``::
 
-    from typing import Any
+        from typing import Any
 
-    from mode import Service, ServiceProxy, ServiceT
-    from mode.utils.objects import cached_property
+        from mode import Service, ServiceProxy, ServiceT
+        from mode.utils.objects import cached_property
 
-    class AppService(Service):
-        # the "real" service that App.start() will run
+        class AppService(Service):
+            # the "real" service that App.start() will run
 
-        def __init__(self, app: 'App', **kwargs: Any) -> None:
-            self.app = app
-            super().__init__(**kwargs)
+            def __init__(self, app: 'App', **kwargs: Any) -> None:
+                self.app = app
+                super().__init__(**kwargs)
 
-        def on_init_dependencies(self) -> None:
-            return [
-                self.app.websockets,
-                self.app.webserver,
-                self.app.user_cache,
-            ]
+            def on_init_dependencies(self) -> None:
+                return [
+                    self.app.websockets,
+                    self.app.webserver,
+                    self.app.user_cache,
+                ]
 
-        async def on_start(self) -> None:
-            print('App is starting')
+            async def on_start(self) -> None:
+                print('App is starting')
 
-    class App(ServiceProxy):
+        class App(ServiceProxy):
 
-        def __init__(self,
-                     web_port: int = 8000,
-                     web_bind: str = None,
-                     websocket_port: int = 8001,
-                     **kwargs: Any) -> None:
-            self.web_port = web_port
-            self.web_bind = web_bind
-            self.websocket_port = websocket_port
+            def __init__(self,
+                         web_port: int = 8000,
+                         web_bind: str = None,
+                         websocket_port: int = 8001,
+                         **kwargs: Any) -> None:
+                self.web_port = web_port
+                self.web_bind = web_bind
+                self.websocket_port = websocket_port
 
-        @cached_property
-        def _service(self) -> ServiceT:
-            return AppService(self)
+            @cached_property
+            def _service(self) -> ServiceT:
+                return AppService(self)
 
-        @cached_property
-        def websockets(self) -> Websockets:
-            return Websockets(
-                port=self.websocket_port,
-                loop=self.loop,
-                beacon=self.beacon,
-            )
+            @cached_property
+            def websockets(self) -> Websockets:
+                return Websockets(
+                    port=self.websocket_port,
+                    loop=self.loop,
+                    beacon=self.beacon,
+                )
 
-        @cached_property
-        def webserver(self) -> Webserver:
-            return Webserver(
-                port=self.web_port,
-                bind=self.web_bind,
-                loop=self.loop,
-                beacon=self.beacon,
-            )
+            @cached_property
+            def webserver(self) -> Webserver:
+                return Webserver(
+                    port=self.web_port,
+                    bind=self.web_bind,
+                    loop=self.loop,
+                    beacon=self.beacon,
+                )
 
-        @cached_property
-        def user_cache(self) -> UserCache:
-            return UserCache(loop=self.loop, beacon=self.beacon)
+            @cached_property
+            def user_cache(self) -> UserCache:
+                return UserCache(loop=self.loop, beacon=self.beacon)
 
 Worker
     To start your service on the command-line, add an
