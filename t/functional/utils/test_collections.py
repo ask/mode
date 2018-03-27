@@ -1,6 +1,10 @@
 from unittest.mock import Mock, call
-from mode.utils.collections import FastUserDict, ManagedUserDict
 import pytest
+from mode.utils.collections import (
+    FastUserDict,
+    FastUserSet,
+    ManagedUserDict,
+)
 
 
 class test_FastUserDict:
@@ -81,6 +85,50 @@ class test_FastUserDict:
         assert list(d.values()) == list(src.values())
 
 
+class test_FastUserSet:
+
+    @pytest.fixture()
+    def d(self):
+        class X(FastUserSet):
+
+            def __init__(self):
+                self.data = set()
+
+        return X()
+
+    def test_setgetdel(self, d):
+        assert 'foo' not in d
+        d.add('foo')
+        assert 'foo' in d
+        d.discard('foo')
+        assert 'foo' not in d
+
+    def test_len(self, d):
+        assert not d
+        d.add('foo')
+        assert len(d) == 1
+        d.add('bar')
+        assert len(d) == 2
+
+    def test_iter(self, d):
+        d.update({1, 2, 3})
+        assert list(iter(d)) == [1, 2, 3]
+
+    def test_contains(self, d):
+        assert 'foo' not in d
+        d.add('foo')
+        assert 'foo' in d
+
+    def test_clear(self, d):
+        d.update({1, 2, 3})
+        assert d.issubset({1, 2, 3})
+        assert len(d) == 3
+        d.clear()
+        assert not d
+        for k in 'a', 'b', 'c':
+            assert k not in d
+
+
 class test_ManagedUserDict:
 
     @pytest.fixture
@@ -139,7 +187,7 @@ class test_ManagedUserDict:
             call('c', 3),
         ])
 
-    def test_cleaer(self, d):
+    def test_clear(self, d):
         d.update(a=1, b=2, c=3)
         assert len(d) == 3
         d.clear()

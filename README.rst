@@ -49,7 +49,7 @@ Graph
     If we fill out the rest of this code to implement the additional
     services.
 
-    First the Websocket server service could look like this:
+    First the Websocket server service could look like this::
 
         class Websockets(Service):
 
@@ -294,7 +294,7 @@ Or you can use ``mode.Worker`` (or a subclass of this) to start your
 services-based asyncio program from the console::
 
     if __name__ == '__main__':
-        imoport mode
+        import mode
         worker = mode.Worker(MyService(), loglevel='INFO', logfile=None)
         worker.execute_from_commandline()
 
