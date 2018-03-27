@@ -18,12 +18,250 @@ asyncio.Task.all_tasks", but we needed more control over what services
 where stopped, in what order and what services can we safely shutdown without
 waiting for current operations to complete.
 
-So for us the answer was to create a generic ``Service`` class that handles
-this for us, including creating pretty graphs of active services in the
-system, and what they are currently doing.
+The result is Mode and its generic ``Service`` class.
 
-Heavily inspired by Celery/RabbitMQ bootsteps, you could say it's a less
-formal version of that, where the graph is built at runtime.
+Services
+    Programs in Mode are built out of one or more services, where the
+    services organizes themselves at runtime into a dependency graph.
+
+    In practice this means services may start other services, that
+    when told to stop, does so in the correct order::
+
+        class App(Service):
+
+            def on_init_dependencies(self) -> None:
+                return [
+                    self.websockets,
+                    self.webserver,
+                    self.user_cache,
+                ]
+
+            async def on_start(self) -> None:
+                print('App is starting')
+
+Graph
+    If we fill out the rest of this code to implement the additional
+    services.
+
+    First the Websocket server service could look like this:
+
+        class Websockets(Service):
+
+            def __init__(self, port: int = 8081, **kwargs: Any) -> None:
+                self.port = 8081
+                self._server = None
+                super().__init__(**kwargs)
+
+            async def on_start(self) -> None:
+                self._server = websockets.run()
+
+            async def on_stop(self) -> None:
+                if self._server is not None:
+                    self._server.close()
+
+    Second, the web server we want to run in a separate thread
+    so we use ``ServiceThread`` instead::
+
+        from aiohttp.web import Application
+        from mode.threads import ServiceThread
+
+        class Webserver(ServiceThread):
+
+            def __init__(self,
+                         port: int = 8000,
+                         bind: str = None,
+                         **kwargs: Any) -> None:
+                self._app = Application()
+                self.port = port
+                self.bind = bind
+                self._handler = None
+                self._srv = None
+                super().__init__(**kwargs)
+
+            async def on_start(self) -> None:
+                handler = self._handler = self._app.make_handler()
+                # self.loop is the event loop in this thread
+                #   self.parent_loop is the loop that created this thread.
+                self._srv = await self.loop.create_server(
+                    handler, self.bind, self.port)
+                self.log.info('Serving on port %s', self.port)
+
+            async def on_thread_stop(self) -> None:
+                # see examples/tutorial.py for an actual example
+                self._srv.stop()
+
+    Third, our user cache, which has a background coroutine used to
+    remove old expired items from the cache::
+
+        class UserCache(Service):
+            _cache: MutableMapping[str, User]
+
+            def on_init(self):
+                self._cache = {}
+
+            async def lookup(self, user_id: str) -> User:
+                try:
+                    return self._cache[user_id]
+                except KeyError:
+                    user = self._cache[user_id] = await User.objects.get(user_id)
+                    return user
+
+            @Service.timer(10)  # execute every 10 seconds.
+            def _remove_expired(self):
+                remove_expired_users(self._cache)
+
+Proxy
+    Now we just need to create these services in our "App" class.
+
+    In our little tutorial example the "app" is the entrypoint for
+    our program.  Mode does not have a concept of apps, so we don't
+    subclass anything, but we want the app to be reusable in projects
+    and keep it possible to start multiple apps at the same time.
+
+    If we create apps at module scope, for example:
+
+        # example/app.py
+        from our_library import App
+        app = App(web_port=6066)
+
+    It is very important to instantiate services lazily, otherwise
+    the :mod:`asyncio` event loop is created too early.
+
+    For services that are defined at module level we can create a
+    ``ServiceProxy``:
+
+    from typing import Any
+
+    from mode import Service, ServiceProxy, ServiceT
+    from mode.utils.objects import cached_property
+
+    class AppService(Service):
+        # the "real" service that App.start() will run
+
+        def __init__(self, app: 'App', **kwargs: Any) -> None:
+            self.app = app
+            super().__init__(**kwargs)
+
+        def on_init_dependencies(self) -> None:
+            return [
+                self.app.websockets,
+                self.app.webserver,
+                self.app.user_cache,
+            ]
+
+        async def on_start(self) -> None:
+            print('App is starting')
+
+    class App(ServiceProxy):
+
+        def __init__(self,
+                     web_port: int = 8000,
+                     web_bind: str = None,
+                     websocket_port: int = 8001,
+                     **kwargs: Any) -> None:
+            self.web_port = web_port
+            self.web_bind = web_bind
+            self.websocket_port = websocket_port
+
+        @cached_property
+        def _service(self) -> ServiceT:
+            return AppService(self)
+
+        @cached_property
+        def websockets(self) -> Websockets:
+            return Websockets(
+                port=self.websocket_port,
+                loop=self.loop,
+                beacon=self.beacon,
+            )
+
+        @cached_property
+        def webserver(self) -> Webserver:
+            return Webserver(
+                port=self.web_port,
+                bind=self.web_bind,
+                loop=self.loop,
+                beacon=self.beacon,
+            )
+
+        @cached_property
+        def user_cache(self) -> UserCache:
+            return UserCache(loop=self.loop, beacon=self.beacon)
+
+Worker
+    To start your service on the command-line, add an
+    entrypoint for a ``Worker`` to start it::
+
+        app = App()
+
+        if __name__ == '__main__':
+            from mode import Worker
+            Worker(app, loglevel="info").execute_from_commandline()
+
+    Then execute your program to start the worker::
+
+        $ python examples/tutorial.py
+        [2018-03-27 15:47:12,159: INFO]: [^Worker]: Starting...
+        [2018-03-27 15:47:12,160: INFO]: [^-AppService]: Starting...
+        [2018-03-27 15:47:12,160: INFO]: [^--Websockets]: Starting...
+        STARTING WEBSOCKET SERVER
+        [2018-03-27 15:47:12,161: INFO]: [^--UserCache]: Starting...
+        [2018-03-27 15:47:12,161: INFO]: [^--Webserver]: Starting...
+        [2018-03-27 15:47:12,164: INFO]: [^--Webserver]: Serving on port 8000
+        REMOVING EXPIRED USERS
+        REMOVING EXPIRED USERS
+
+    To stop it hit :kbd:`Control-c`::
+
+        [2018-03-27 15:55:08,084: INFO]: [^Worker]: Stopping on signal received...
+        [2018-03-27 15:55:08,084: INFO]: [^Worker]: Stopping...
+        [2018-03-27 15:55:08,084: INFO]: [^-AppService]: Stopping...
+        [2018-03-27 15:55:08,084: INFO]: [^--UserCache]: Stopping...
+        REMOVING EXPIRED USERS
+        [2018-03-27 15:55:08,085: INFO]: [^Worker]: Gathering service tasks...
+        [2018-03-27 15:55:08,085: INFO]: [^--UserCache]: -Stopped!
+        [2018-03-27 15:55:08,085: INFO]: [^--Webserver]: Stopping...
+        [2018-03-27 15:55:08,085: INFO]: [^Worker]: Gathering all futures...
+        [2018-03-27 15:55:08,085: INFO]: [^--Webserver]: Closing server
+        [2018-03-27 15:55:08,086: INFO]: [^--Webserver]: Waiting for server to close handle
+        [2018-03-27 15:55:08,086: INFO]: [^--Webserver]: Shutting down web application
+        [2018-03-27 15:55:08,086: INFO]: [^--Webserver]: Waiting for handler to shut down
+        [2018-03-27 15:55:08,086: INFO]: [^--Webserver]: Cleanup
+        [2018-03-27 15:55:08,086: INFO]: [^--Webserver]: -Stopped!
+        [2018-03-27 15:55:08,086: INFO]: [^--Websockets]: Stopping...
+        [2018-03-27 15:55:08,086: INFO]: [^--Websockets]: -Stopped!
+        [2018-03-27 15:55:08,087: INFO]: [^-AppService]: -Stopped!
+        [2018-03-27 15:55:08,087: INFO]: [^Worker]: -Stopped!
+
+Beacons
+    The ``beacon`` object that we pass to services keeps track of the services
+    in a graph.
+
+    They are not stricly required, but can be used to visualize a running
+    system, for example we can render it as a pretty graph.
+
+    This requires you to have the ``pydot`` library and GraphViz
+    installed::
+
+        $ pip install pydot
+
+    Let's change the app service class to dump the graph to an image
+    at startup.
+
+        class AppService(Service):
+
+            async def on_start(self) -> None:
+                print('APP STARTING')
+                import pydot
+                import io
+                o = io.StringIO()
+                beacon = self.app.beacon.root or self.app.beacon
+                beacon.as_graph().to_dot(o)
+                graph, = pydot.graph_from_dot_data(o.getvalue())
+                print('WRITING GRAPH TO image.png')
+                with open('image.png', 'wb') as fh:
+                    fh.write(graph.create_png())
+
 
 Creating a Service
 ==================
