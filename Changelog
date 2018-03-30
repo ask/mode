@@ -4,6 +4,28 @@
  Change history
 ================
 
+.. _version-1.10.0:
+
+1.10.0
+======
+:release-date: 2018-03-30 12:36 P.M PST
+:release-by: Ask Solem
+
+- New supervisor: :class:`~mode.supervisors.ForfeitOneForOneSupervisor`.
+
+    If a service in the group crashes we give up on that service
+    and don't start it again.
+
+- New supervisor: :class:`~mode.supervisor.ForfeitOneForAllSupervisor`.
+
+    If a service in the group crashes we give up on it, but also
+    stop all services in the group and give up on them also.
+
+- Service Logging: Renamed ``self.log.crit`` to ``self.log.critical``.
+
+    The old name is still available and is not deprecated at this time.
+
+
 .. _version-1.9.2:
 
 1.9.2
