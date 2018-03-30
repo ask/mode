@@ -38,6 +38,8 @@ if typing.TYPE_CHECKING:
     from .services import Service                         # noqa: E402
     from .signals import BaseSignal, Signal, SyncSignal   # noqa: E402
     from .supervisors import (                            # noqa: E402
+        ForfeitOneForAllSupervisor,
+        ForfeitOneForOneSupervisor,
         OneForAllSupervisor,
         OneForOneSupervisor,
         SupervisorStrategy,
@@ -58,6 +60,8 @@ __all__ = [
     'SignalT',
     'SyncSignal',
     'SyncSignalT',
+    'ForfeitOneForAllSupervisor',
+    'ForfeitOneForOneSupervisor',
     'OneForAllSupervisor',
     'OneForOneSupervisor',
     'SupervisorStrategy',
@@ -78,6 +82,8 @@ all_by_module: Mapping[str, Sequence[str]] = {
     'mode.services': ['Service'],
     'mode.signals': ['BaseSignal', 'Signal', 'SyncSignal'],
     'mode.supervisors': [
+        'ForfeitOneForAllSupervisor',
+        'ForfeitOneForOneSupervisor',
         'OneForAllSupervisor',
         'OneForOneSupervisor',
         'SupervisorStrategy',

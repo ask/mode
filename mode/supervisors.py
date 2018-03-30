@@ -9,6 +9,8 @@ from .utils.logging import get_logger
 from .utils.times import Bucket, Seconds, rate_limit, want_seconds
 
 __all__ = [
+    'ForfeitOneForAllSupervisor',
+    'ForfeitOneForOneSupervisor',
     'SupervisorStrategy',
     'OneForOneSupervisor',
     'OneForAllSupervisor',
@@ -145,6 +147,13 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
         for service in services:
             await self.restart_service(service)
 
+    async def stop_services(self, services: List[ServiceT]) -> None:
+        # Stop them all simultaneously.
+        await asyncio.gather(
+            *[service.stop() for service in services],
+            loop=self.loop,
+        )
+
     async def restart_service(self, service: ServiceT) -> None:
         self.log.info('Restarting dead %r! Last crash reason: %r',
                       service, cast(Service, service)._crash_reason)
@@ -168,14 +177,31 @@ class OneForAllSupervisor(SupervisorStrategy):
         # we ignore the list of actual crashed services,
         # and restart all of them
         if services:
-            # Stop them all simultaneously.
-            await asyncio.gather(
-                *[service.stop() for service in self._services],
-                loop=self.loop,
-            )
+            # Stop them all concurrently
+            self.stop_services(self._services)
             # Then restart them one by one.
             for service in self._services:
                 await self.restart_service(service)
+
+
+class ForfeitOneForOneSupervisor(SupervisorStrategy):
+    """Supervisor that if a service crashes, we do not restart it."""
+
+    async def restart_services(self, services: List[ServiceT]) -> None:
+        if services:
+            self.log.critical('Giving up on crashed services: %r', services)
+
+
+class ForfeitOneForAllSupervisor(SupervisorStrategy):
+    """If one service in the group crashes, we give up on all of them."""
+
+    async def restart_services(self, services: List[ServiceT]) -> None:
+        if services:
+            self.log.critical(
+                'Giving up on all services in group because %r crashed',
+                services,
+            )
+            self.stop_services(self._services)
 
 
 class CrashingSupervisor(SupervisorStrategy):
