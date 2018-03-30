@@ -184,7 +184,7 @@ class Worker(Service):
             self.log.info('Closing event loop')
             self.loop.close()
             if self._crash_reason:
-                self.log.crit(
+                self.log.critical(
                     'We experienced a crash! Reraising original exception...')
                 raise self._crash_reason from self._crash_reason
 

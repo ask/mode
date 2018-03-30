@@ -200,6 +200,9 @@ class CompositeLogger:
     def crit(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.CRITICAL, msg, *args, **kwargs)
 
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.CRITICAL, msg, *args, **kwargs)
+
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.ERROR, msg, *args, exc_info=1, **kwargs)
 

@@ -226,7 +226,7 @@ The ``self.log`` delegate contains shortcuts for logging:
             self.log.warn('This is a warning message')
             self.log.error('This is a error message')
             self.log.exception('This is a error message with traceback')
-            self.log.crit('This is a critical message')
+            self.log.critical('This is a critical message')
 
             self.log.debug('I can also include templates: %r %d %s',
                            [1, 2, 3], 303, 'string')
