@@ -1,7 +1,6 @@
 # This is code for the tutorial in README.rst
 from typing import Any, MutableMapping
 
-import websockets
 from aiohttp.web import Application
 from mode import Service, ServiceT
 from mode.proxy import ServiceProxy
@@ -20,7 +19,7 @@ def remove_expired_users(d):
 
 async def run_websocket_server():
     print('STARTING WEBSOCKET SERVER')
-    ... # implement yourself
+    ...  # implement yourself
 
 
 class Websockets(Service):
