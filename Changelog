@@ -4,9 +4,18 @@
  Change history
 ================
 
-.. _version-1.10.11:
+.. _version-1.10.2:
 
-1.10.11
+1.10.2
+======
+:release-date: 2018-04-03 4:50 P.M PST
+:release-by: Ask Solem
+
+- Fixed wrong version number in Changelog.
+
+.. _version-1.10.1:
+
+1.10.1
 =======
 :release-date: 2018-04-03 4:43 P.M PST
 :release-by: Ask Solem
