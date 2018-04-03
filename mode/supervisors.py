@@ -157,14 +157,17 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
     async def restart_service(self, service: ServiceT) -> None:
         self.log.info('Restarting dead %r! Last crash reason: %r',
                       service, cast(Service, service)._crash_reason)
-        async with self._bucket:
-            if self.replacement:
-                index = self._index[service]
-                new_service = await self.replacement(service, index)
-                new_service.supervisor = self
-                self.insert(index, new_service)
-            else:
-                await service.restart()
+        try:
+            async with self._bucket:
+                if self.replacement:
+                    index = self._index[service]
+                    new_service = await self.replacement(service, index)
+                    new_service.supervisor = self
+                    self.insert(index, new_service)
+                else:
+                    await service.restart()
+        except MaxRestartsExceeded as exc:
+            self.log.warn('Max restarts exceeded: %r', exc, exc_info=1)
 
 
 class OneForOneSupervisor(SupervisorStrategy):
