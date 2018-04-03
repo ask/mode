@@ -4,6 +4,16 @@
  Change history
 ================
 
+.. _version-1.10.11:
+
+1.10.11
+=======
+:release-date: 2018-04-03 4:43 P.M PST
+:release-by: Ask Solem
+
+- Service.wait: If the future we are waiting for is cancelled we must
+                propagate :exc:`CancelledError`.
+
 .. _version-1.10.0:
 
 1.10.0
