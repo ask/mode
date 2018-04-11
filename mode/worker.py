@@ -152,6 +152,8 @@ class Worker(Service):
         try:
             with suppress(asyncio.CancelledError):
                 self.loop.run_until_complete(self.start())
+        except Exception as exc:
+            self.log.exception('Error: %r', exc)
         finally:
             self.stop_and_shutdown()
 
@@ -193,7 +195,7 @@ class Worker(Service):
 
     def _gather_all(self) -> None:
         # sleeps for at most 40 * 0.1s
-        for _ in range(40):
+        for _ in range(1):
             if not len(asyncio.Task.all_tasks(loop=self.loop)):
                 break
             self.loop.run_until_complete(asyncio.sleep(0.1))

@@ -1,3 +1,11 @@
+"""Supervisors.
+
+Naming here is taken from Erlang ;-)
+
+Don't know supervisors? Read about them them here:
+http://learnyousomeerlang.com/supervisors
+
+"""
 import asyncio
 from typing import Any, Awaitable, Callable, Dict, List, Type, cast
 
@@ -20,10 +28,16 @@ logger = get_logger(__name__)
 
 
 class SupervisorStrategy(Service, SupervisorStrategyT):
-    _please_wakeup: asyncio.Future
-    _services: List[ServiceT]
-    _bucket: Bucket
-    _index: Dict[ServiceT, int]
+    _please_wakeup: asyncio.Future  # set to wakeup supervisor.
+    _services: List[ServiceT]       # the services we manage.
+    _bucket: Bucket                 # rate limit state.
+    _index: Dict[ServiceT, int]     # what index is service at?
+                                    # -- if we have 10 services for
+                                    #    example, and one of them crash - we
+                                    #    want to know the position of the
+                                    #    service we are restarting.
+                                    #    This is needed for Faust and
+                                    #    the @app.agent(concurrency=n) feature.
 
     def __init__(self,
                  *services: ServiceT,
@@ -91,25 +105,18 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
         services = self._services
 
         while not self.should_stop:
-            # Start the bait, so anything that wants to wake us up
-            # can simply fulfill the promise by calling `p.set_result(None)`.
+            # other coroutines may set this future to wake us up using
+            # notify(self._please_wakeup)
             self._please_wakeup = asyncio.Future(loop=self.loop)
             try:
-                # For safety, we will also timeout after five seconds.
-                # Just in case nobody wakes us up.
+                # we'll also timeout after five seconds,
+                # just in case nobody wakes us up.
                 await asyncio.wait_for(self._please_wakeup, timeout=5.0)
             except asyncio.TimeoutError:
                 pass
             finally:
                 self._please_wakeup = None
 
-            # We gather lists of services that should be started or restarted.
-            # The only reason we do this, is to preserve thread-safety when
-            # iterating over `services` and modifying it at the same time.
-            # The restart_services method may actually replace the List index
-            # where the service resides with a new service object.
-            # This is ddecided by the ``replacement`` keyword-argument,
-            # an optional function with signature: ``(service, index)``.
             to_start: List[ServiceT] = []
             to_restart: List[ServiceT] = []
             for service in services:
@@ -180,7 +187,7 @@ class OneForAllSupervisor(SupervisorStrategy):
         # we ignore the list of actual crashed services,
         # and restart all of them
         if services:
-            # Stop them all concurrently
+            # Stop them all, and wait for all of them to stop (concurrently).
             self.stop_services(self._services)
             # Then restart them one by one.
             for service in self._services:
@@ -210,8 +217,14 @@ class ForfeitOneForAllSupervisor(SupervisorStrategy):
 class CrashingSupervisor(SupervisorStrategy):
 
     def _contribute_to_service(self, service: ServiceT) -> None:
-        # We don't do anything here, which means service.supervisor
-        # will not be set, which in turns means that if service.crash() is
-        # called the whole program will go down (it will propagates down to
-        # every node in the tree, all the way down to the Worker).
+        # The service.crash() method will wakeup service.supervisor if it has
+        # one, but if it does not have one the exception will propagate.
+        # Doing nothing here, means service.supervisor will not be set.
+        #
+        # A crashing supervisor will propagate by reraising the exception.
+        #   - if that means the process exits:
+        #       the operating system supervisor will have to take over
+        #       (systemd/supervisord/etc.)
+        #   - if the exception is handled by another supervisor
+        #       that supervisor decides what to do with it.
         pass
