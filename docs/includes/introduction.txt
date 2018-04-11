@@ -12,9 +12,9 @@ in Python 3.6 to define your program as a set of services.
 
 When writing projects using ``asyncio``, a pattern emerged where we'd base
 our program on one or more services. These behave much like actors in Erlang,
-if you are familiar with that, but  implemented as classes:
+but implemented as classes:
 
-A service may manage state, and define methods -- it's just a class::
+A service is just a class::
 
     class PageViewCache(Service):
         redis: Redis = None
@@ -25,13 +25,12 @@ A service may manage state, and define methods -- it's just a class::
         async def update(self, url: str, n: int = 1) -> int:
             return await self.redis.incr(url, n)
 
-        async def get(self) -> int:
+        async def get(self, url: str) -> int:
             return await self.redis.get(url)
 
 
-
-Services are started, stopped and restarted; this way they can start other
-services, define background tasks, timers, and much more::
+Services are started, stopped and restarted; and they can
+start other services, define background tasks, timers, and more::
 
     class App(Service):
         page_view_cache: PageViewCache = None
@@ -42,7 +41,6 @@ services, define background tasks, timers, and much more::
         @cached_property
         def page_view_cache(self) -> PageViewCache:
             return PageViewCache()
-
 
 
 Services
