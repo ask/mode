@@ -10,22 +10,43 @@ What is Mode?
 Mode is a library for Python AsyncIO, using the new ``async/await`` syntax
 in Python 3.6 to define your program as a set of services.
 
-When starting a larger project using ``asyncio``, it immediately became
-apparent that we needed a way to manage the different services running in the
-program.  Questions such as "how do we shutdown the event loop" is frequently
-answered by telling users to "wait for all coroutines in
-asyncio.Task.all_tasks", but we needed more control over what services
-where stopped, in what order and what services can we safely shutdown without
-waiting for current operations to complete.
+When writing projects using ``asyncio``, a pattern emerged where we'd base
+our program on one or more services. These behave much like actors in Erlang,
+if you are familiar with that, but  implemented as classes:
 
-The result is Mode and its generic ``Service`` class.
+A service may manage state, and define methods -- it's just a class::
+
+    class PageViewCache(Service):
+        redis: Redis = None
+
+        async def on_start(self) -> None:
+            self.redis = connect_to_redis()
+
+        async def update(self, url: str, n: int = 1) -> int:
+            return await self.redis.incr(url, n)
+
+        async def get(self) -> int:
+            return await self.redis.get(url)
+
+
+
+Services are started, stopped and restarted; this way they can start other
+services, define background tasks, timers, and much more::
+
+    class App(Service):
+        page_view_cache: PageViewCache = None
+
+        async def on_start(self) -> None:
+            await self.add_runtime_dependency(self.page_view_cache)
+
+        @cached_property
+        def page_view_cache(self) -> PageViewCache:
+            return PageViewCache()
+
+
 
 Services
-    Programs in Mode are built out of one or more services, where the
-    services organizes themselves at runtime into a dependency graph.
-
-    In practice this means services may start other services, that
-    when told to stop, does so in the correct order::
+    can depend on other services::
 
         class App(Service):
 
