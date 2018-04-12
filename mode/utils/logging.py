@@ -133,6 +133,8 @@ def setup_logging(
         except AttributeError:
             pass
 
+    logging.root.handlers.clear()
+
     _setup_logging(
         level=_loglevel,
         filename=logfile,
