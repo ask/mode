@@ -62,7 +62,7 @@ Graph
     If we fill out the rest of this code to implement the additional
     services.
 
-    First the Websocket server service could look like this::
+    A service managing our websocket server:
 
         class Websockets(Service):
 
@@ -78,8 +78,7 @@ Graph
                 if self._server is not None:
                     self._server.close()
 
-    Second, the web server we want to run in a separate thread
-    so we use ``ServiceThread`` instead::
+    Then a web server, run in a separate thread using ``ServiceThread``::
 
         from aiohttp.web import Application
         from mode.threads import ServiceThread
