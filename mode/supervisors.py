@@ -28,16 +28,20 @@ logger = get_logger(__name__)
 
 
 class SupervisorStrategy(Service, SupervisorStrategyT):
-    _please_wakeup: asyncio.Future  # set to wakeup supervisor.
-    _services: List[ServiceT]       # the services we manage.
-    _bucket: Bucket                 # rate limit state.
-    _index: Dict[ServiceT, int]     # what index is service at?
-                                    # -- if we have 10 services for
-                                    #    example, and one of them crash - we
-                                    #    want to know the position of the
-                                    #    service we are restarting.
-                                    #    This is needed for Faust and
-                                    #    the @app.agent(concurrency=n) feature.
+    # set this future to wakeup supervisor
+    _please_wakeup: asyncio.Future
+
+    #: the services we manage
+    _services: List[ServiceT]
+
+    # rate limit state
+    _bucket: Bucket
+
+    # what index is service at?
+    # if we have 10 services for example, and one of the crash,
+    #  we want to know the position of the service we are restarting.
+    # This is needed for Faust and the @app.agent(concurrency=n) feature.
+    _index: Dict[ServiceT, int]
 
     def __init__(self,
                  *services: ServiceT,
