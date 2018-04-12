@@ -4,13 +4,14 @@ import reprlib
 import signal
 import sys
 import typing
+import warnings
 from contextlib import suppress
-from typing import Any, IO, Iterable, List, Tuple, Union, cast
+from typing import Any, Dict, IO, Iterable, List, Tuple, Union, cast
 
 from .services import Service
 from .types import ServiceT
 from .utils.imports import symbol_by_name
-from .utils.logging import cry, get_logger, setup_logging
+from .utils.logging import cry, get_logger, setup_logging, configure_logging
 
 if typing.TYPE_CHECKING:
     from .debug import BlockingDetector
@@ -39,6 +40,7 @@ class Worker(Service):
     debug: bool
     quiet: bool
     blocking_timeout: float
+    logging_config: Dict
     loglevel: Union[str, int]
     logfile: Union[str, IO]
     logformat: str
@@ -53,6 +55,7 @@ class Worker(Service):
             self, *services: ServiceT,
             debug: bool = False,
             quiet: bool = False,
+            logging_config: Dict = None,
             loglevel: Union[str, int] = None,
             logfile: Union[str, IO] = None,
             logformat: str = None,
@@ -66,6 +69,7 @@ class Worker(Service):
         self.services = services
         self.debug = debug
         self.quiet = quiet
+        self.logging_config = logging_config
         self.loglevel = loglevel
         self.logfile = logfile
         self.logformat = logformat
@@ -107,15 +111,17 @@ class Worker(Service):
         ...
 
     def _setup_logging(self) -> None:
-        _loglevel: int = None
         if self.loglevel:
+            warnings.warn("deprecated", DeprecationWarning)
             _loglevel = setup_logging(
                 loglevel=self.loglevel,
                 logfile=self.logfile,
                 logformat=self.logformat,
                 loghandlers=self.loghandlers,
             )
-        self.on_setup_root_logger(logging.root, _loglevel)
+            self.on_setup_root_logger(logging.root, _loglevel)
+        else:
+            configure_logging(self.logging_config)
 
     def on_setup_root_logger(self,
                              logger: logging.Logger,

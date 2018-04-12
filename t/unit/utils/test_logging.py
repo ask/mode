@@ -1,3 +1,4 @@
+import logging as sys_logging
 from unittest.mock import Mock, patch
 from mode.utils import logging
 from mode.utils.logging import get_logger
@@ -75,3 +76,42 @@ class TestFeedController:
             loglevel=5, loghandlers=[mock_handler]) == 5
         self.logging.basicConfig.assert_called_once_with(
             handlers=[mock_handler, self.colorlog.StreamHandler()], level=5)
+
+    @pytest.mark.parametrize("logging_config", [
+        {
+            'version': 1,
+            'disable_existing_loggers': True,
+            'formatters': {
+                'simple': {
+                    'format': '[%(asctime)s: %(levelname)s]: %(message)s'
+                },
+                'colored': {
+                    '()': 'colorlog.ColoredFormatter',
+                    'format': "%(log_color)s%(levelname)-8s%(reset)s %(white)s%(message)s",
+                },
+            },
+            'handlers': {
+                'console': {
+                    'level': 'INFO',
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'simple',
+                },
+                'mode.worker': {
+                    'level': 'INFO',
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'colored',
+                },
+            },
+            'loggers': {
+                'mode.worker': {
+                    'handlers': ['console', 'mode.worker'],
+                    'level': 'INFO',
+                    'propagate': False,
+                }
+            }
+        }
+    ])
+    def test_configure_logging(self, logging_config):
+        logging.configure_logging(logging_config)
+        worker_logger = sys_logging.getLogger("mode.worker")
+        assert len(worker_logger.handlers) == 1

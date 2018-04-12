@@ -1,13 +1,14 @@
 """Logging utilities."""
 import asyncio
 import logging
+import logging.config
 import os
 import sys
 import threading
 import traceback
 from functools import singledispatch
 from pprint import pprint
-from typing import Any, Callable, IO, List, Mapping, Set, Union
+from typing import Any, Callable, Dict, IO, List, Mapping, Set, Union
 
 import colorlog
 
@@ -31,6 +32,44 @@ DEFAULT_COLORS = {
     **colorlog.default_log_colors,
     'INFO': 'white',
     'DEBUG': 'blue',
+}
+
+DEFAULT_LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True, # disable existing loggers from other modules
+    'formatters': {
+        'simple': {
+            'format': '[%(asctime)s: %(levelname)s]: %(message)s'
+        },
+        'colored': {
+            '()': 'colorlog.ColoredFormatter',
+            'format': "%(log_color)s%(levelname)-8s%(reset)s %(white)s%(message)s",
+            'log_colors': DEFAULT_COLORS,
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'mode.worker': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'colored',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'mode.worker': {
+            'handlers': ['mode.worker'],
+            'level': 'INFO',
+            'propagate' : False,
+        }
+    }
 }
 
 #: Set by ``setup_logging`` if logging target file is a TTY.
@@ -111,6 +150,12 @@ def level_number(loglevel: int) -> int:
 @level_number.register(str)
 def _(loglevel: str) -> int:
     return logging.getLevelName(loglevel.upper())  # type: ignore
+
+
+def configure_logging(logging_config: Dict) -> None:
+    if logging_config is None:
+        logging_config = DEFAULT_LOGGING
+    logging.config.dictConfig(logging_config)
 
 
 def setup_logging(
