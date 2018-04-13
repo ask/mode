@@ -167,7 +167,8 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
 
     async def restart_service(self, service: ServiceT) -> None:
         self.log.info('Restarting dead %r! Last crash reason: %r',
-                      service, cast(Service, service)._crash_reason)
+                      service, cast(Service, service)._crash_reason,
+                      exc_info=1)
         try:
             async with self._bucket:
                 if self.replacement:
