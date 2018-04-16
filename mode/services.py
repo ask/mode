@@ -483,9 +483,9 @@ class Service(ServiceBase, ServiceCallbacks):
 
     async def crash(self, reason: BaseException) -> None:
         """Crash the service and all child services."""
+        self.log.exception('Crashed reason=%r', reason)
         if not self._crashed.is_set():
             # We record the stack by raising the exception.
-            self.log.exception('Crashed reason=%r', reason)
 
             if not self.supervisor:
                 # Only if the service has no supervisor do we go ahead
