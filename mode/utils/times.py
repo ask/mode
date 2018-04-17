@@ -99,7 +99,7 @@ class Bucket(AsyncContextManager):
         return self.rate
 
     async def __aenter__(self) -> 'Bucket':
-        if self.pour():
+        if not self.pour():
             if self.raises:
                 raise self.raises()
             expected_time = self.expected_time()
@@ -123,11 +123,10 @@ class TokenBucket(Bucket):
     def pour(self, tokens: int = 1) -> bool:
         need = tokens
         have = self.tokens
-        need_to_wait = False
-        if need <= have:
-            self._tokens -= need
-            need_to_wait = True
-        return need_to_wait
+        if have < need:
+            return False
+        self._tokens -= tokens
+        return True
 
     def expected_time(self, tokens: int = 1) -> float:
         have = self._tokens
@@ -138,10 +137,12 @@ class TokenBucket(Bucket):
     @property
     def tokens(self) -> float:
         now = monotonic()
+        if now < self._last_pour:
+            return self._tokens
         if self._tokens < self.capacity:
             delta = self.fill_rate * (now - self._last_pour)
             self._tokens = min(self.capacity, self._tokens + delta)
-        self._last_pour = now
+            self._last_pour = now
         return self._tokens
 
 

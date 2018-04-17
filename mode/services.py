@@ -491,8 +491,10 @@ class Service(ServiceBase, ServiceCallbacks):
         if not self._crashed.is_set():
             # We record the stack by raising the exception.
 
-            if not self.supervisor:
-                # Only if the service has no supervisor do we go ahead
+            if self.supervisor:
+                self.supervisor.wakeup()
+            else:
+                # if the service has no supervisor we go ahead
                 # and mark parent nodes as crashed as well.
                 root = self.beacon.root
                 seen: Set[NodeT] = set()
@@ -574,6 +576,9 @@ class Service(ServiceBase, ServiceCallbacks):
                    self._crashed):
             ev.clear()
         self._crash_reason = None
+        for child in self._children:
+            if child is not None:
+                child.service_reset()
 
     async def wait_until_stopped(self) -> None:
         """Wait until the service is signalled to stop."""

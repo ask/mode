@@ -193,7 +193,7 @@ class OneForAllSupervisor(SupervisorStrategy):
         # and restart all of them
         if services:
             # Stop them all, and wait for all of them to stop (concurrently).
-            self.stop_services(self._services)
+            await self.stop_services(self._services)
             # Then restart them one by one.
             for service in self._services:
                 await self.restart_service(service)
@@ -205,6 +205,7 @@ class ForfeitOneForOneSupervisor(SupervisorStrategy):
     async def restart_services(self, services: List[ServiceT]) -> None:
         if services:
             self.log.critical('Giving up on crashed services: %r', services)
+            await self.stop_services(services)
 
 
 class ForfeitOneForAllSupervisor(SupervisorStrategy):
@@ -216,7 +217,7 @@ class ForfeitOneForAllSupervisor(SupervisorStrategy):
                 'Giving up on all services in group because %r crashed',
                 services,
             )
-            self.stop_services(self._services)
+            await self.stop_services(self._services)
 
 
 class CrashingSupervisor(SupervisorStrategy):
