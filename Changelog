@@ -4,6 +4,21 @@
  Change history
 ================
 
+.. _version-1.11.0:
+
+1.11.0
+======
+:release-date: 2018-04-17 1:23 P.M PST
+:release-by: Ask Solem
+
+- Supervisor: Fixes bug with max restart triggering too early.
+
+- Supervisor: Also restart child services.
+
+- Service: Now supports ``__post_init__`` like Python 3.7 dataclasses.
+
+- Service: Crash is logged even if crashed multiple times.
+
 .. _version-1.10.4:
 
 1.10.4
