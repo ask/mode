@@ -293,6 +293,7 @@ class Service(ServiceBase, ServiceCallbacks):
         self.async_exit_stack = AsyncExitStack()
         self.exit_stack = ExitStack()
         self.on_init()
+        self.__post_init__()
         super().__init__()
 
     def _new_started_event(self) -> asyncio.Event:
@@ -348,9 +349,12 @@ class Service(ServiceBase, ServiceCallbacks):
         self._futures.append(fut)
         return fut
 
-    def on_init(self) -> None:
+    def __post_init__(self) -> None:
         """Callback to be called on instantiation."""
         ...
+
+    def on_init(self) -> None:
+        ...  # deprecated: use __post_init__
 
     def on_init_dependencies(self) -> Iterable[ServiceT]:
         """Callback to be used to add service dependencies."""

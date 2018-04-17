@@ -82,7 +82,7 @@ class Webserver(ServiceThread):
 class UserCache(Service):
     _cache: MutableMapping[str, User]
 
-    def on_init(self):
+    def __post_init__(self):
         self._cache = {}
 
     async def lookup(self, user_id: str) -> User:

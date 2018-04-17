@@ -191,6 +191,9 @@ class FlowControlEvent:
     async def acquire(self) -> None:
         """Wait until flow control is resumed."""
         if self._suspend.is_set():
+            print('WAITING FOR RESUME')
+            import traceback
+            traceback.print_stack()
             await self._resume.wait()
 
 

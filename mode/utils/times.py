@@ -74,9 +74,9 @@ class Bucket(AsyncContextManager):
         self.raises = raises
         self.loop = loop
         self._tokens = self.capacity
-        self.on_init()
+        self.__post_init__()
 
-    def on_init(self) -> None:
+    def __post_init__(self) -> None:
         ...
 
     @abc.abstractmethod
@@ -117,7 +117,7 @@ class TokenBucket(Bucket):
     _tokens: float
     _last_pour: float
 
-    def on_init(self) -> None:
+    def __post_init__(self) -> None:
         self._last_pour = monotonic()
 
     def pour(self, tokens: int = 1) -> bool:

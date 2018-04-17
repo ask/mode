@@ -6,7 +6,7 @@ import pytest
 
 class S(Service):
 
-    def on_init(self):
+    def __post_init__(self):
         self.on_started_log = Mock()
         self.on_stopped_log = Mock()
         self.on_shutdown_log = Mock()
@@ -56,6 +56,7 @@ async def test_aenter():
 async def test_interface():
     s = Service()
     s.on_init()
+    s.__post_init__()
     await s.on_start()
     await s.on_stop()
     await s.on_shutdown()
@@ -71,7 +72,7 @@ async def test_subclass_can_override_Service_task():
     class ATaskService(Service):
         values = []
 
-        def on_init(self):
+        def __post_init__(self):
             self.event = asyncio.Event(loop=self.loop)
 
         @Service.task
