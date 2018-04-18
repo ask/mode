@@ -68,7 +68,7 @@ Graph
     If we fill out the rest of this code to implement the additional
     services.
 
-    A service managing our websocket server:
+    A service managing our websocket server::
 
         class Websockets(Service):
 
@@ -120,7 +120,7 @@ Graph
         class UserCache(Service):
             _cache: MutableMapping[str, User]
 
-            def on_init(self):
+            def __post_init__(self):
                 self._cache = {}
 
             async def lookup(self, user_id: str) -> User:
@@ -325,7 +325,7 @@ Services can start other services, coroutines, and background tasks.
 
     class MyService(Service):
 
-        def on_init(self) -> None:
+        def __post_init__(self) -> None:
            self.add_dependency(OtherService(loop=self.loop))
 
 2) Start a list of services using ``on_init_dependencies``::

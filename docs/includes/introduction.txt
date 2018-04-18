@@ -62,7 +62,7 @@ Graph
     If we fill out the rest of this code to implement the additional
     services.
 
-    A service managing our websocket server:
+    A service managing our websocket server::
 
         class Websockets(Service):
 
