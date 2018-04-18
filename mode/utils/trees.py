@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 
-class Node(NodeT):
+class Node(NodeT[_T]):
     """Tree node.
 
     Notes:
@@ -22,7 +22,7 @@ class Node(NodeT):
             - the ``.parent`` node (if this is a child node).
             - a list of children
 
-        A Node may have ``.data`` associated with it, and arbitrary
+        A Node may have arbitrary ``.data`` associated with it, and arbitrary
         data may also be stored in ``.children``.
 
     Arguments:
@@ -34,18 +34,18 @@ class Node(NodeT):
         children (List[NodeT]): List of child nodes.
     """
 
-    _root: NodeT = None
-    _parent: NodeT = None
+    _root: NodeT[_T] = None
+    _parent: NodeT[_T] = None
 
     @classmethod
-    def _new_node(cls, data: _T, **kwargs: Any) -> NodeT:
+    def _new_node(cls, data: _T, **kwargs: Any) -> NodeT[_T]:
         return cls(data, **kwargs)  # type: ignore
 
     def __init__(self, data: _T,
                  *,
                  root: NodeT = None,
                  parent: NodeT = None,
-                 children: List[NodeT] = None) -> None:
+                 children: List[NodeT[_T]] = None) -> None:
         self.data = data
         self.root = root
         self.parent = parent
@@ -61,7 +61,7 @@ class Node(NodeT):
         self.children.append(node)
         return node
 
-    def reattach(self, parent: NodeT) -> NodeT:
+    def reattach(self, parent: NodeT[_T]) -> NodeT[_T]:
         """Attach this node to `parent` node."""
         self.root = parent.root if parent.root is not None else parent
         self.parent = parent
@@ -78,9 +78,9 @@ class Node(NodeT):
         with suppress(ValueError):
             self.children.remove(data)
 
-    def traverse(self) -> Iterator[NodeT]:
+    def traverse(self) -> Iterator[NodeT[_T]]:
         """Iterator traversing the tree in BFS order."""
-        stack: Deque[NodeT] = Deque([self])
+        stack: Deque[NodeT[_T]] = Deque([self])
         while stack:
             node = stack.popleft()
             yield node
@@ -90,12 +90,12 @@ class Node(NodeT):
                 else:
                     yield child
 
-    def walk(self) -> Iterator[NodeT]:
+    def walk(self) -> Iterator[NodeT[_T]]:
         """Iterate over hierarchy backwards.
 
         This will yield parent nodes all the way up to the root.
         """
-        node: NodeT = self
+        node: NodeT[_T] = self
         while node:
             yield node
             node = node.parent
