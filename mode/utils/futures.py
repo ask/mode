@@ -39,6 +39,9 @@ class StampedeWrapper:
             try:
                 result = await self.fun(*self.args, **self.kwargs)
                 fut.set_result(result)
+            except asyncio.CancelledError:
+                fut.cancel()
+                raise
             finally:
                 self.fut = None
             return result
