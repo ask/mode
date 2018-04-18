@@ -180,8 +180,10 @@ def _setup_console_handler(*,
 class CompositeLogger:
     logger: logging.Logger
 
-    def __init__(self, obj: Any) -> None:
-        self._obj: Any = obj
+    def __init__(self, logger: logging.Logger,
+                 formatter: Callable[..., str] = None) -> None:
+        self.logger = logger
+        self.formatter: Callable[..., str] = formatter
 
     def dev(self, msg: str, *args: Any, **kwargs: Any) -> None:
         if DEVLOG:
@@ -208,14 +210,17 @@ class CompositeLogger:
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.ERROR, msg, *args, exc_info=1, **kwargs)
 
-    def log(self, severity: int, msg: str, *args: Any, **kwargs: Any) -> None:
-        self._obj._log(
-            severity, self.format(severity, msg, *args, **kwargs),
-            *args, **kwargs)
+    def log(self, severity: int, msg: str,
+            *args: Any, **kwargs: Any) -> None:
+        self.logger.log(severity,
+                        self.format(severity, msg, *args, **kwargs),
+                        *args, **kwargs)
 
     def format(self, severity: int, msg: str,
                *args: Any, **kwargs: Any) -> str:
-        return self._obj._format_log(severity, msg, *args, **kwargs)
+        if self.formatter:
+            return self.formatter(severity, msg, *args, **kwargs)
+        return msg
 
 
 def cry(file: IO,
