@@ -4,6 +4,20 @@
  Change history
 ================
 
+.. _version-1.11.2:
+
+1.11.2
+======
+:release-date: 2018-04-18 4:42 P.M PST
+:release-by: Ask Solem
+
+- Service: ``add_future()`` now maintains futures in a set and futures
+  are automatically removed from it when done.
+
+- Cry handler (`kill -USR1`) now shows name of Service.task background tasks.
+
+- Stampede: Now propagates cancellation.
+
 .. _version-1.11.1:
 
 1.11.1
