@@ -89,7 +89,7 @@ class Complex(mode.Service):
 
 @pytest.mark.asyncio
 async def test_start_stop_simple():
-    async with X() as service:
+    async with X():
         ...
 
 
