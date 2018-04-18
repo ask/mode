@@ -87,9 +87,7 @@ async def test_subclass_can_override_Service_task():
             self.values.append(2)
             self.event.set()
 
-    service = BTaskService()
-    await service.start()
-    await service.event.wait()
-    await service.stop()
+    async with BTaskService() as service:
+        await service.event.wait()
 
     assert ATaskService.values == [2]

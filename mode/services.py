@@ -684,6 +684,8 @@ class Service(ServiceBase, ServiceCallbacks):
     def _crash(self, reason: BaseException) -> None:
         self._crashed.set()
         self._crash_reason = reason
+        for node in self._children:
+            node._crash(reason)
 
     async def stop(self) -> None:
         """Stop the service."""

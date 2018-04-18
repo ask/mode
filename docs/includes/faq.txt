@@ -107,3 +107,24 @@ Will you support Python 2?
 
 There are no plans to support Python 2, but you are welcome to contribute to
 the project (details in question above is relevant also for Python 2).
+
+
+At Shutdown I get lots of warnings, what is this about?
+-------------------------------------------------------
+
+If you get warnings such as this at shutdown:
+
+.. sourcecode:: text
+
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Service._execute_task() running at /opt/devel/mode/mode/services.py:643> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x1100a7468>()]>>
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Service._execute_task() running at /opt/devel/mode/mode/services.py:643> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x1100a72e8>()]>>
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Service._execute_task() running at /opt/devel/mode/mode/services.py:643> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x1100a7678>()]>>
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Event.wait() running at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/locks.py:269> cb=[_release_waiter(<Future pendi...1100a7468>()]>)() at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/tasks.py:316]>
+    Task was destroyed but it is pending!
+        task: <Task pending coro=<Event.wait() running at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/locks.py:269> cb=[_release_waiter(<Future pendi...1100a7678>()]>)() at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/tasks.py:316]>
+
+It usually means you forgot to stop a service before the process exited.

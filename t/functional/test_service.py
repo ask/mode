@@ -89,108 +89,146 @@ class Complex(mode.Service):
 
 @pytest.mark.asyncio
 async def test_start_stop_simple():
-    service = X()
-    await service.start()
-    await service.stop()
+    async with X() as service:
+        ...
 
 
 @pytest.mark.asyncio
 async def test_start_stop_restart_complex():
-    service = Complex()
-    await service.start()
-    assert service.y.sync_context.acquires == 1
-    assert service.y.async_context.acquires == 1
-    assert service.y.z.x._started.is_set()
-    await service.sleep(0.6)
-    await service.stop()
-    assert service.y.z.x._stopped.is_set()
-    assert service.y.sync_context.releases == 1
-    assert service.y.async_context.releases == 1
-    assert service.y.z.background_wakeup
-    assert service.y.z.did_set_shutdown
+    async with Complex() as service:
+        assert service.y.sync_context.acquires == 1
+        assert service.y.async_context.acquires == 1
+        assert service.y.z.x._started.is_set()
+        await service.sleep(0.6)
+        await service.stop()
+        assert service.y.z.x._stopped.is_set()
+        assert service.y.sync_context.releases == 1
+        assert service.y.async_context.releases == 1
+        assert service.y.z.background_wakeup
+        assert service.y.z.did_set_shutdown
 
-    await service.restart()
-    assert not service.y.z.did_set_shutdown
-    assert not service.y.z.background_wakeup
-    assert service.y.z.x._started.is_set()
-    assert service.y.sync_context.acquires == 1
-    assert service.y.async_context.acquires == 1
-    await service.sleep(0.6)
-    await service.stop()
-    assert service.y.z.x._stopped.is_set()
-    assert service.y.sync_context.releases == 1
-    assert service.y.async_context.releases == 1
-    assert service.y.z.background_wakeup
-    assert service.y.z.did_set_shutdown
-    assert service.y.z.x._started.is_set()
+        await service.restart()
+        assert not service.y.z.did_set_shutdown
+        assert not service.y.z.background_wakeup
+        assert service.y.z.x._started.is_set()
+        assert service.y.sync_context.acquires == 1
+        assert service.y.async_context.acquires == 1
+        await service.sleep(0.6)
+        await service.stop()
+        assert service.y.z.x._stopped.is_set()
+        assert service.y.sync_context.releases == 1
+        assert service.y.async_context.releases == 1
+        assert service.y.z.background_wakeup
+        assert service.y.z.did_set_shutdown
+        assert service.y.z.x._started.is_set()
+
+
+async def crash(service, exc):
+    try:
+        raise exc
+    except type(exc) as thrown_exc:
+        await service.crash(thrown_exc)
+        return thrown_exc
+
+
+@pytest.mark.asyncio
+async def test_crash_leaf():
+    async with Complex() as service:
+        error = None
+        error = await crash(service.y.z, KeyError('foo'))
+
+        # crash propagates up chain
+        assert service.y.z.x._crash_reason is error
+        assert service.y.z._crash_reason is error
+        assert service.y._crash_reason is error
+        assert service.x._crash_reason is error
+        assert service._crash_reason is error
+
+
+@pytest.mark.asyncio
+async def test_crash_middle():
+    async with Complex() as service:
+        error = await crash(service.y, KeyError('foo'))
+        assert service.y.z.x._crash_reason is error
+        assert service.y.z._crash_reason is error
+        assert service.y._crash_reason is error
+        assert service.x._crash_reason is error
+        assert service._crash_reason is error
+
+
+@pytest.mark.asyncio
+async def test_crash_head():
+    async with Complex() as service:
+        error = await crash(service, KeyError('foo'))
+        assert service.y.z.x._crash_reason is error
+        assert service.y.z._crash_reason is error
+        assert service.y._crash_reason is error
+        assert service.x._crash_reason is error
+        assert service._crash_reason is error
 
 
 @pytest.mark.asyncio
 async def test_wait():
-    service = X()
-    await service.start()
-    await service.wait(asyncio.sleep(0.1))
+    async with X() as service:
+        await service.wait(asyncio.sleep(0.1))
 
 
 @pytest.mark.asyncio
 async def test_wait__future_cancelled():
-    service = X()
-    await service.start()
+    async with X() as service:
 
-    async def sleeper():
-        await asyncio.sleep(10)
+        async def sleeper():
+            await asyncio.sleep(10)
 
-    fut = asyncio.ensure_future(sleeper())
+        fut = asyncio.ensure_future(sleeper())
 
-    async def canceller():
-        await asyncio.sleep(0.1)
-        fut.cancel()
+        async def canceller():
+            await asyncio.sleep(0.1)
+            fut.cancel()
 
-    fut2 = asyncio.ensure_future(canceller())
-    with pytest.raises(asyncio.CancelledError):
-        await service.wait(fut)
+        fut2 = asyncio.ensure_future(canceller())
+        with pytest.raises(asyncio.CancelledError):
+            await service.wait(fut)
 
-    fut2.cancel()
+        fut2.cancel()
 
 
 @pytest.mark.asyncio
 async def test_wait__when_stopped():
-    service = X()
-    await service.start()
+    async with X() as service:
 
-    async def sleeper():
-        await asyncio.sleep(10)
+        async def sleeper():
+            await asyncio.sleep(10)
 
-    fut = asyncio.ensure_future(sleeper())
+        fut = asyncio.ensure_future(sleeper())
 
-    async def stopper():
-        await asyncio.sleep(0.1)
-        await service.stop()
+        async def stopper():
+            await asyncio.sleep(0.1)
+            await service.stop()
 
-    fut2 = asyncio.ensure_future(stopper())
-    assert (await service.wait(fut)).stopped
+        fut2 = asyncio.ensure_future(stopper())
+        assert (await service.wait(fut)).stopped
 
-    fut2.cancel()
+        fut2.cancel()
 
 
 @pytest.mark.asyncio
 async def test_wait__when_crashed():
-    service = X()
-    await service.start()
+    async with X() as service:
 
-    async def sleeper():
-        await asyncio.sleep(10)
+        async def sleeper():
+            await asyncio.sleep(10)
 
-    fut = asyncio.ensure_future(sleeper())
+        fut = asyncio.ensure_future(sleeper())
 
-    async def crasher():
-        await asyncio.sleep(0.1)
-        try:
-            raise RuntimeError('foo')
-        except RuntimeError as exc:
-            await service.crash(exc)
+        async def crasher():
+            await asyncio.sleep(0.1)
+            try:
+                raise RuntimeError('foo')
+            except RuntimeError as exc:
+                await service.crash(exc)
 
-    fut2 = asyncio.ensure_future(crasher())
-    assert await service.wait_for_stopped(fut)
+        fut2 = asyncio.ensure_future(crasher())
+        assert await service.wait_for_stopped(fut)
 
-    fut2.cancel()
+        fut2.cancel()
