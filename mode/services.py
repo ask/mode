@@ -24,6 +24,8 @@ __all__ = [
     'ServiceBase',
     'Service',
     'Diag',
+    'task',
+    'timer',
 ]
 
 #: Future type: Different types of awaitables.
@@ -807,3 +809,7 @@ class Service(ServiceBase, ServiceCallbacks):
     @beacon.setter
     def beacon(self, beacon: NodeT) -> None:
         self._beacon = beacon
+
+
+task = Service.task
+timer = Service.timer

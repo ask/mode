@@ -35,7 +35,7 @@ del(_temp)
 del(re)
 
 if typing.TYPE_CHECKING:
-    from .services import Service                         # noqa: E402
+    from .services import Service, task, timer            # noqa: E402
     from .signals import BaseSignal, Signal, SyncSignal   # noqa: E402
     from .supervisors import (                            # noqa: E402
         ForfeitOneForAllSupervisor,
@@ -71,6 +71,8 @@ __all__ = [
     'get_logger', 'setup_logging',
     'label', 'shortlabel',
     'Worker',
+    'task',
+    'timer',
 ]
 
 
@@ -79,7 +81,7 @@ __all__ = [
 from types import ModuleType  # noqa
 
 all_by_module: Mapping[str, Sequence[str]] = {
-    'mode.services': ['Service'],
+    'mode.services': ['Service', 'task', 'timer'],
     'mode.signals': ['BaseSignal', 'Signal', 'SyncSignal'],
     'mode.supervisors': [
         'ForfeitOneForAllSupervisor',

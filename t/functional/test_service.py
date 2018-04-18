@@ -1,11 +1,11 @@
 import asyncio
 from typing import ContextManager
 from mode.utils.compat import AsyncContextManager
+import mode
 import pytest
-from mode import Service
 
 
-class X(Service):
+class X(mode.Service):
     ...
 
 
@@ -33,14 +33,14 @@ class AsyncContext(AsyncContextManager):
         self.releases += 1
 
 
-class Z(Service):
+class Z(mode.Service):
     x: X = None
 
     wait_for_shutdown = True
     did_set_shutdown = False
     background_wakeup = 0
 
-    @Service.task
+    @mode.task
     async def _shutdown_setter(self):
         try:
             while not self.should_stop:
@@ -65,7 +65,7 @@ class Z(Service):
         await asyncio.sleep(10000000000000000000.0)
 
 
-class Y(Service):
+class Y(mode.Service):
     z: Z
     sync_context = None
     async_context = None
@@ -78,7 +78,7 @@ class Y(Service):
         self.async_context = await self.add_context(AsyncContext())
 
 
-class Complex(Service):
+class Complex(mode.Service):
     x: X
     y: Y
 
