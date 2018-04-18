@@ -516,7 +516,7 @@ class Service(ServiceBase, ServiceCallbacks):
         The future will be joined when this service is stopped.
         """
         fut = asyncio.ensure_future(self._execute_task(coro), loop=self.loop)
-        fut.__wrapped__ = coro
+        fut.__wrapped__ = coro  # type: ignore
         fut.add_done_callback(self._on_future_done)
         self._futures.add(fut)
         return fut
