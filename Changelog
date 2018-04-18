@@ -4,6 +4,15 @@
  Change history
 ================
 
+.. _version-1.11.3:
+
+1.11.3
+======
+:release-date: 2018-04-18 4:48 P.M PST
+:release-by: Ask Solem
+
+- Fixed race condition in _gather_futures after change in 1.11.2.
+
 .. _version-1.11.2:
 
 1.11.2
