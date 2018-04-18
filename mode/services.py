@@ -503,7 +503,7 @@ class Service(ServiceBase, ServiceCallbacks):
     async def add_context(
             self, context: Union[AsyncContextManager, ContextManager]) -> Any:
         if isinstance(context, AsyncContextManager):
-            await self.async_exit_stack.enter_async_context(context)
+            return await self.async_exit_stack.enter_async_context(context)
         elif isinstance(context, ContextManager):
             return self.exit_stack.enter_context(context)
         raise TypeError(f'Not a context/async context: {type(context)!r}')
