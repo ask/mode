@@ -4,6 +4,19 @@
  Change history
 ================
 
+.. _version-1.11.1:
+
+1.11.1
+======
+:release-date: 2018-04-18 11:08 P.M PST
+:release-by: Ask Solem
+
+- Service.add_context: Now works with AsyncContextManager.
+
+- CI now runs functional tests.
+
+- Added supervisor and service tests.
+
 .. _version-1.11.0:
 
 1.11.0
