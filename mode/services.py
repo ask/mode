@@ -734,6 +734,13 @@ class Service(ServiceBase, ServiceCallbacks):
                 ))
             except asyncio.CancelledError:
                 continue
+            except ValueError:
+                if self._futures:
+                    raise
+                # race condition:
+                # _futures non-empty when loop starts,
+                # but empty when asyncio.wait receives it.
+                break
             else:
                 break
         self._futures.clear()
