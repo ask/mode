@@ -345,7 +345,7 @@ class Service(ServiceBase, ServiceCallbacks):
     #: Note: Unlike ``add_dependency`` these futures will not be
     # restarted with the service: if you want that to happen make sure
     # calling service.start() again will add the future again.
-    _futures: List[asyncio.Future]
+    _futures: Set[asyncio.Future]
 
     #: The ``@Service.task`` decorator adds names of attributes
     #: that are ServiceTasks to this list (which is a class variable).
@@ -459,7 +459,7 @@ class Service(ServiceBase, ServiceCallbacks):
         self._crash_reason = None
         self._beacon = Node(self) if beacon is None else beacon.new(self)
         self._children = []
-        self._futures = []
+        self._futures = set()
         self.async_exit_stack = AsyncExitStack()
         self.exit_stack = ExitStack()
         self.on_init()
@@ -516,8 +516,12 @@ class Service(ServiceBase, ServiceCallbacks):
         The future will be joined when this service is stopped.
         """
         fut = asyncio.ensure_future(self._execute_task(coro), loop=self.loop)
-        self._futures.append(fut)
+        fut.add_done_callback(self._on_future_done)
+        self._futures.add(fut)
         return fut
+
+    def _on_future_done(self, fut: asyncio.Future) -> None:
+        self._futures.discard(fut)
 
     def __post_init__(self) -> None:
         """Callback to be called on instantiation."""
@@ -647,7 +651,7 @@ class Service(ServiceBase, ServiceCallbacks):
             if 'Event loop is closed' in str(exc):
                 self.log.info('Cancelled task %r: %s', task, exc)
         except BaseException as exc:
-            # the exception will be reraised by the main thread.
+            # the exception will be re-raised by the main thread.
             await self.crash(exc)
 
     async def maybe_start(self) -> None:
@@ -714,7 +718,7 @@ class Service(ServiceBase, ServiceCallbacks):
                 await child.stop()
 
     async def _stop_futures(self) -> None:
-        for future in reversed(self._futures):
+        for future in self._futures:
             future.cancel()
         await self._gather_futures()
 
