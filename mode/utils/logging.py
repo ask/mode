@@ -6,9 +6,29 @@ import sys
 import threading
 import traceback
 from functools import singledispatch
+from itertools import count
 from pprint import pformat, pprint
-from typing import Any, Callable, IO, List, Mapping, Set, Union
-from .text import abbr
+from time import asctime
+from types import TracebackType
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    ContextManager,
+    Dict,
+    IO,
+    Iterable,
+    List,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
+from .text import abbr, title
+from .times import Seconds, want_seconds
 
 import colorlog
 
@@ -21,6 +41,7 @@ __all__ = [
     'level_name',
     'level_number',
     'setup_logging',
+    'flight_recorder',
 ]
 
 DEVLOG: bool = bool(os.environ.get('DEVLOG', ''))
@@ -178,13 +199,7 @@ def _setup_console_handler(*,
     return console_handler
 
 
-class CompositeLogger:
-    logger: logging.Logger
-
-    def __init__(self, logger: logging.Logger,
-                 formatter: Callable[..., str] = None) -> None:
-        self.logger = logger
-        self.formatter: Callable[..., str] = formatter
+class LogSeverityMixin:
 
     def dev(self, msg: str, *args: Any, **kwargs: Any) -> None:
         if DEVLOG:
@@ -210,6 +225,15 @@ class CompositeLogger:
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.ERROR, msg, *args, exc_info=1, **kwargs)
+
+
+class CompositeLogger(LogSeverityMixin):
+    logger: logging.Logger
+
+    def __init__(self, logger: logging.Logger,
+                 formatter: Callable[..., str] = None) -> None:
+        self.logger = logger
+        self.formatter: Callable[..., str] = formatter
 
     def log(self, severity: int, msg: str,
             *args: Any, **kwargs: Any) -> None:
@@ -281,3 +305,86 @@ def cry(file: IO,
                             print(f'  {k!r} = {vals}', file=file)  # noqa: T003
                     print('\n', file=file)
             print('\n', file=file)                               # noqa: T003
+
+
+class flight_recorder(ContextManager, LogSeverityMixin):
+    _id_source: ClassVar[Iterable[int]] = count(1)
+
+    logger: logging.Logger
+    timeout: float
+    loop: asyncio.AbstractEventLoop
+    started_at_date: str
+
+    _fut: asyncio.Future
+    _logs: List[Tuple[int, str, Tuple[Any], Dict[str, Any]]]
+
+    class LogMessage(NamedTuple):
+        severity: int
+        message: str
+        asctime: str
+        args: Tuple[Any, ...]
+        kwargs: Dict[str, Any]
+
+    def __init__(self, logger: logging.Logger, *, timeout: Seconds,
+                 loop: asyncio.AbstractEventLoop = None) -> None:
+        self.id = next(self._id_source)
+        self.logger = logger
+        self.timeout = want_seconds(timeout)
+        self.loop = loop or asyncio.get_event_loop()
+        self.started_at_date = None
+        self._fut = None
+        self._logs = []
+
+    def activate(self) -> None:
+        if self._fut:
+            raise RuntimeError('{type(self).__name__} already activated')
+        self.started_at_date = asctime()
+        self._fut = asyncio.ensure_future(self._waiting(), loop=self.loop)
+
+    def cancel(self) -> None:
+        fut, self._fut = self._fut, None
+        self._logs.clear()
+        if fut is not None:
+            fut.cancel()
+
+    def log(self, severity: int, message: str,
+            *args: Any, **kwargs: Any) -> None:
+        if self._fut:
+            self._logs.append(
+                self.LogMessage(severity, message, asctime(), args, kwargs))
+        else:
+            self.logger.log(severity, message, *args, **kwargs)
+
+    async def _waiting(self) -> None:
+        try:
+            await asyncio.sleep(self.timeout)
+        except asyncio.CancelledError:
+            pass
+        else:
+            logger = self.logger
+            ident = self._ident()
+            logger.warn('Warning: Task timed out!')
+            logger.warn('Please make sure it is hanging before restarting.')
+            if self._logs:
+                logger.info('[%s] (started at %s) Replaying logs...',
+                            ident, self.started_at_date)
+                for severity, message, datestr, args, kwargs in self._logs:
+                    msg = f'[%s] (%s) {message}'
+                    logger.log(severity, msg, ident, datestr, *args, **kwargs)
+                logger.info('[%s] -End of log-', ident)
+
+    def _ident(self) -> str:
+        return f'{title(type(self).__name__)}-{self.id}'
+
+    def __repr__(self) -> str:
+        return f'<{self._ident()} @{id(self):#x}>'
+
+    def __enter__(self) -> 'flight_recorder':
+        self.activate()
+        return self
+
+    def __exit__(self,
+                 exc_type: Type[BaseException] = None,
+                 exc_val: BaseException = None,
+                 exc_tb: TracebackType = None) -> Optional[bool]:
+        self.cancel()
