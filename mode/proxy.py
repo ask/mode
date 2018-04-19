@@ -50,6 +50,9 @@ class ServiceProxy(ServiceBase):
     async def crash(self, reason: BaseException) -> None:
         await self._service.crash(reason)
 
+    def _crash(self, reason: BaseException) -> None:
+        self._service._crash(reason)
+
     async def stop(self) -> None:
         await self._service.stop()
 
