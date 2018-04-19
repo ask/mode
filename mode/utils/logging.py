@@ -308,6 +308,69 @@ def cry(file: IO,
 
 
 class flight_recorder(ContextManager, LogSeverityMixin):
+    """Flight Recorder context for use with :keyord:`with` statement.
+
+    This is a logging utility to log stuff only when something
+    times out.
+
+    For example if you have a background thread that is sometimes
+    hanging::
+
+        class RedisCache(mode.Service):
+
+            @mode.timer(1.0)
+            def _background_refresh(self) -> None:
+                self._users = await self.redis_client.get(USER_KEY)
+                self._posts = await self.redis_client.get(POSTS_KEY)
+
+    You want to figure out on what line this is hanging, but logging
+    all the time will provide way too much output, and will even change
+    how fast the program runs and that can mask race conditions, so that
+    they never happen.
+
+    Use the flight recorder to save the logs and only log when it times out:
+
+    .. sourcecode:: python
+
+        logger = mode.get_logger(__name__)
+
+        class RedisCache(mode.Service):
+
+            @mode.timer(1.0)
+            def _background_refresh(self) -> None:
+                with mode.flight_recorder(logger, timeout=10.0) as on_timeout:
+                    on_timeout.info(f'+redis_client.get({USER_KEY!r})')
+                    await self.redis_client.get(USER_KEY)
+                    on_timeout.info(f'-redis_client.get({USER_KEY!r})')
+
+                    on_timeout.info(f'+redis_client.get({POSTS_KEY!r})')
+                    await self.redis_client.get(POSTS_KEY)
+                    on_timeout.info(f'-redis_client.get({POSTS_KEY!r})')
+
+    If the body of this :keyword:`with` statement completes before the
+    timeout, the logs are forgotten about and never emitted -- if it
+    takes more than ten seconds to complete, we will see these messages
+    in the log:
+
+    .. sourcecode:: text
+
+        [2018-04-19 09:43:55,877: WARNING]: Warning: Task timed out!
+        [2018-04-19 09:43:55,878: WARNING]:
+            Please make sure it is hanging before restarting.
+        [2018-04-19 09:43:55,878: INFO]: [Flight Recorder-1]
+            (started at Thu Apr 19 09:43:45 2018) Replaying logs...
+        [2018-04-19 09:43:55,878: INFO]: [Flight Recorder-1]
+            (Thu Apr 19 09:43:45 2018) +redis_client.get('user')
+        [2018-04-19 09:43:55,878: INFO]: [Flight Recorder-1]
+            (Thu Apr 19 09:43:49 2018) -redis_client.get('user')
+        [2018-04-19 09:43:55,878: INFO]: [Flight Recorder-1]
+            (Thu Apr 19 09:43:46 2018) +redis_client.get('posts')
+        [2018-04-19 09:43:55,878: INFO]: [Flight Recorder-1] -End of log-
+
+    Now we know this ``redis_client.get`` call can take too long to complete,
+    and should consider adding a timeout to it.
+    """
+
     _id_source: ClassVar[Iterable[int]] = count(1)
 
     logger: logging.Logger
@@ -350,10 +413,14 @@ class flight_recorder(ContextManager, LogSeverityMixin):
     def log(self, severity: int, message: str,
             *args: Any, **kwargs: Any) -> None:
         if self._fut:
-            self._logs.append(
-                self.LogMessage(severity, message, asctime(), args, kwargs))
+            self._buffer_log(severity, message, args, kwargs)
         else:
             self.logger.log(severity, message, *args, **kwargs)
+
+    def _buffer_log(self, severity: int, message: str,
+                    *args: Any, **kwargs: Any) -> None:
+        log = self.LogMessage(severity, message, asctime(), args, kwargs)
+        self._logs.append(log)
 
     async def _waiting(self) -> None:
         try:
