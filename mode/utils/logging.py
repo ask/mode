@@ -418,7 +418,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
             self.logger.log(severity, message, *args, **kwargs)
 
     def _buffer_log(self, severity: int, message: str,
-                    *args: Any, **kwargs: Any) -> None:
+                    args: Any, kwargs: Any) -> None:
         log = self.LogMessage(severity, message, asctime(), args, kwargs)
         self._logs.append(log)
 
