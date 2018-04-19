@@ -17,7 +17,6 @@ async def call_commit(x):
     return await x.commit()
 
 
-
 @pytest.mark.asyncio
 async def test_stampede():
     x = X()

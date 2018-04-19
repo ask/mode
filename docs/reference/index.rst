@@ -50,6 +50,7 @@ Utils
     mode.utils.imports
     mode.utils.logging
     mode.utils.objects
+    mode.utils.queues
     mode.utils.text
     mode.utils.times
     mode.utils.trees
