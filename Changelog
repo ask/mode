@@ -4,11 +4,22 @@
  Change history
 ================
 
+.. _version-1.11.3:
+
+1.11.3
+======
+:release-date: 2018-04-18 5:22 P.M PST
+:relese-by: Ask Solem
+
+- Cry handler (`kill -USR1`): Truncate huge data in stack frames.
+
+- ServiceProxy: Now supports ``_crash`` method.
+
 .. _version-1.11.2:
 
 1.11.2
 ======
-:release-date: 2018-04-18 4:42 P.M PST
+:release-date: 2018-04-18 5:02 P.M PST
 :release-by: Ask Solem
 
 - Service: ``add_future()`` now maintains futures in a set and futures
