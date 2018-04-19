@@ -217,7 +217,7 @@ Backward Incompatible Changes
 
     So to properly implement this we had to change the API of the ``wait``
     method to return a tuple instead, and to only allow a single coroutine to
-    be passed to wait:
+    be passed to wait::
 
         @Service.task
         async def _my_background_task(self):

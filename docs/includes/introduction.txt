@@ -264,7 +264,7 @@ Beacons
         $ pip install pydot
 
     Let's change the app service class to dump the graph to an image
-    at startup.
+    at startup::
 
         class AppService(Service):
 

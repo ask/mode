@@ -4,8 +4,20 @@ import collections
 import threading
 from collections import OrderedDict, UserDict, UserList
 from typing import (
-    Any, ContextManager, Dict, ItemsView, Iterable, Iterator, KeysView,
-    Mapping, MutableMapping, MutableSet, Tuple, TypeVar, ValuesView, cast,
+    Any,
+    ContextManager,
+    Dict,
+    ItemsView,
+    Iterable,
+    Iterator,
+    KeysView,
+    Mapping,
+    MutableMapping,
+    MutableSet,
+    Tuple,
+    TypeVar,
+    ValuesView,
+    cast,
 )
 
 from .compat import DummyContext

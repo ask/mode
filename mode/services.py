@@ -6,8 +6,21 @@ from functools import wraps
 from time import monotonic
 from types import TracebackType
 from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
-    MutableSequence, NamedTuple, Optional, Sequence, Set, Type, Union, cast,
+    Any,
+    Awaitable,
+    Callable,
+    ClassVar,
+    Dict,
+    Generator,
+    Iterable,
+    MutableSequence,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Set,
+    Type,
+    Union,
+    cast,
 )
 
 from .types import DiagT, ServiceT

@@ -4,9 +4,24 @@ from contextlib import suppress
 from functools import singledispatch, total_ordering
 from pathlib import Path
 from typing import (
-    AbstractSet, Any, Callable, Dict, FrozenSet, Generic,
-    Iterable, List, Mapping, MutableMapping, MutableSequence,
-    MutableSet, Sequence, Set, Tuple, Type, TypeVar, cast,
+    AbstractSet,
+    Any,
+    Callable,
+    Dict,
+    FrozenSet,
+    Generic,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
 )
 
 __all__ = [
