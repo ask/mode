@@ -6,8 +6,9 @@ import sys
 import threading
 import traceback
 from functools import singledispatch
-from pprint import pprint
+from pprint import pformat, pprint
 from typing import Any, Callable, IO, List, Mapping, Set, Union
+from .text import abbr
 
 import colorlog
 
@@ -275,6 +276,8 @@ def cry(file: IO,
                         print(sep3, file=file)                   # noqa: T003
                         print('  LOCAL VARIABLES', file=file)    # noqa: T003
                         print(f'  {sep3}', file=file)            # noqa: T003
-                        pprint(frame.f_locals, stream=file)
+                        for k, val in frame.f_locals.items():
+                            vals = abbr(pformat(val), 2000, suffix='[...]')
+                            print(f'   {k!r} = {val}', file=file)  # noqa: T003
                     print('\n', file=file)
             print('\n', file=file)                               # noqa: T003
