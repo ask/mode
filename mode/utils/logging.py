@@ -308,7 +308,7 @@ def cry(file: IO,
 
 
 class flight_recorder(ContextManager, LogSeverityMixin):
-    """Flight Recorder context for use with :keyord:`with` statement.
+    """Flight Recorder context for use with :keyword:`with` statement.
 
     This is a logging utility to log stuff only when something
     times out.
