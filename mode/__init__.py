@@ -48,7 +48,11 @@ if typing.TYPE_CHECKING:
     from .types import ServiceT, SupervisorStrategyT      # noqa: E402
     from .types import BaseSignalT, SignalT, SyncSignalT  # noqa: E402
     from .utils.times import Seconds, want_seconds        # noqa: E402
-    from .utils.logging import get_logger, setup_logging  # noqa: E402
+    from .utils.logging import (                          # noqa: E402
+        flight_recorder,
+        get_logger,
+        setup_logging,
+    )
     from .utils.objects import label, shortlabel          # noqa: E402
     from .worker import Worker                            # noqa: E402
 
@@ -73,6 +77,7 @@ __all__ = [
     'Worker',
     'task',
     'timer',
+    'flight_recorder',
 ]
 
 
@@ -99,7 +104,7 @@ all_by_module: Mapping[str, Sequence[str]] = {
         'SyncSignalT',
     ],
     'mode.utils.times': ['Seconds', 'want_seconds'],
-    'mode.utils.logging': ['get_logger', 'setup_logging'],
+    'mode.utils.logging': ['flight_recorder', 'get_logger', 'setup_logging'],
     'mode.utils.objects': ['label', 'shortlabel'],
     'mode.worker': ['Worker'],
 }
