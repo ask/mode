@@ -4,11 +4,24 @@
  Change history
 ================
 
+.. _version-1.11.5:
+
+1.11.5
+======
+:release-date: 2018-04-19 3:12 P.M PST
+:release-by: Ask Solem
+
++ FlowControlQueue now available in ``mode.utils.queues``.
+
+    This is a backward compatible change.
+
++ Tests for FlowControlQueue
+
 .. _version-1.11.4:
 
 1.11.4
 ======
-:release-date: 2018-04-19 9:36 P.M PST
+:release-date: 2018-04-19 9:36 A.M PST
 :release-by: Ask Solem
 
 + Adds :class:`mode.flight_recorder`
