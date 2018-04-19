@@ -278,6 +278,6 @@ def cry(file: IO,
                         print(f'  {sep3}', file=file)            # noqa: T003
                         for k, val in frame.f_locals.items():
                             vals = abbr(pformat(val), 2000, suffix='[...]')
-                            print(f'   {k!r} = {val}', file=file)  # noqa: T003
+                            print(f'  {k!r} = {vals}', file=file)  # noqa: T003
                     print('\n', file=file)
             print('\n', file=file)                               # noqa: T003
