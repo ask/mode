@@ -116,6 +116,10 @@ class FastUserSet(MutableSet):
     def discard(self, key: Any) -> None:
         self.data.pop(key, None)
 
+    def update(self, d: Iterable) -> None:
+        for item in d:
+            self.add(item)
+
     # Rest is fast versions of generic slow MutableSet methods.
 
     def clear(self) -> None:
