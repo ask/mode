@@ -595,13 +595,14 @@ class Service(ServiceBase, ServiceCallbacks):
         crashed_fut = asyncio.ensure_future(crashed, loop=self.loop)
         try:
             done, pending = await asyncio.wait(
-                (fut, stopped, crashed),
+                (fut, stopped_fut, crashed_fut),
                 return_when=asyncio.FIRST_COMPLETED,
                 timeout=timeout,
                 loop=self.loop,
             )
             for f in done:
-                f.result()  # propagate exceptions
+                if f.done() and f.exception() is not None:
+                    f.result() # propagate exceptions
             if fut.done():
                 return WaitResult(fut.result(), False)
             else:
