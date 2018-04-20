@@ -588,9 +588,9 @@ class Service(ServiceBase, ServiceCallbacks):
         crashed = self._crashed.wait()
 
         fut = coro.wait() if isinstance(coro, asyncio.Event) else coro
-        fut = asyncio.ensure_future(fut, loop=self.loop)
         # asyncio.wait will also ensure_future, but we need the handle
         # so we can cancel them (if we don't they will leak).
+        fut = asyncio.ensure_future(fut, loop=self.loop)
         stopped_fut = asyncio.ensure_future(stopped, loop=self.loop)
         crashed_fut = asyncio.ensure_future(crashed, loop=self.loop)
         try:
@@ -602,7 +602,7 @@ class Service(ServiceBase, ServiceCallbacks):
             )
             for f in done:
                 if f.done() and f.exception() is not None:
-                    f.result() # propagate exceptions
+                    f.result()  # propagate exceptions
             if fut.done():
                 return WaitResult(fut.result(), False)
             else:
