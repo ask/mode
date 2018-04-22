@@ -7,6 +7,12 @@ from mode.utils.times import rate_limit, want_seconds
 
 @pytest.mark.parametrize('input,expected', [
     (1.234, 1.234),
+    ('1.234', 1.234),
+    ('10/s', 10.0),
+    ('10/m', 0.16666666666666666),
+    ('8.3/m', 0.13833333333333334),
+    ('100/h', 0.02777777777777778),
+    ('1333/d', 0.01542824074074074),
     (1, 1),
     (timedelta(seconds=1.234), 1.234),
     (None, None),

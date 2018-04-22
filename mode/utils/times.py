@@ -4,14 +4,30 @@ from datetime import timedelta
 from functools import singledispatch
 from time import monotonic
 from types import TracebackType
-from typing import Optional, Type, Union
+from typing import Callable, Mapping, Optional, Type, Union
 
 from .compat import AsyncContextManager
 
-__all__ = ['Bucket', 'Seconds', 'TokenBucket', 'rate_limit', 'want_seconds']
+__all__ = [
+    'Bucket',
+    'Seconds',
+    'TokenBucket',
+    'rate',
+    'rate_limit',
+    'want_seconds',
+]
 
 #: Seconds can be expressed as float or :class:`~datetime.timedelta`,
-Seconds = Union[timedelta, float]
+Seconds = Union[timedelta, float, str]
+
+#: What the characters in a "rate" string means.
+#: E.g. 8/s is "eight in one second"
+RATE_MODIFIER_MAP: Mapping[str, Callable[[float], float]] = {
+    's': lambda n: n,
+    'm': lambda n: n / 60.0,
+    'h': lambda n: n / 60.0 / 60.0,
+    'd': lambda n: n / 60.0 / 60.0 / 24,
+}
 
 
 class Bucket(AsyncContextManager):
@@ -146,6 +162,28 @@ class TokenBucket(Bucket):
         return self._tokens
 
 
+@singledispatch
+def rate(r: float) -> float:
+    """Convert rate string (`"100/m"`, `"2/h"` or `"0.5/s"`) to seconds."""
+    return r
+
+
+@rate.register(str)
+def _(r: str) -> float:  # noqa: F811
+    ops, _, modifier = r.partition('/')
+    return RATE_MODIFIER_MAP[modifier or 's'](float(ops)) or 0
+
+
+@rate.register(int)  # noqa: F811
+def _(r: int) -> float:
+    return float(r)
+
+
+@rate.register(type(None))  # noqa: F811
+def _(r: type(None)) -> float:
+    return 0.0
+
+
 def rate_limit(rate: float, over: Seconds = 1.0,
                *,
                bucket_type: Type[Bucket] = TokenBucket,
@@ -160,6 +198,11 @@ def want_seconds(s: float) -> float:
     return s
 
 
-@want_seconds.register(timedelta)
+@want_seconds.register(str)  # noqa: F811
+def _(s: str) -> float:
+    return rate(s)
+
+
+@want_seconds.register(timedelta)  # noqa: F811
 def _(s: timedelta) -> float:
     return s.total_seconds()
