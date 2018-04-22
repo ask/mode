@@ -5,7 +5,7 @@ import os
 import sys
 import threading
 import traceback
-from functools import singledispatch
+from functools import singledispatch, wraps
 from itertools import count
 from pprint import pformat, pprint
 from time import asctime
@@ -33,8 +33,9 @@ from .times import Seconds, want_seconds
 import colorlog
 
 __all__ = [
-    'ExtensionFormatter',
     'CompositeLogger',
+    'ExtensionFormatter',
+    'Logwrapped',
     'formatter',
     'cry',
     'get_logger',
@@ -248,6 +249,56 @@ class CompositeLogger(LogSeverityMixin):
         return msg
 
 
+class Logwrapped(object):
+    """Wrap all object methods, to log on call."""
+    obj: Any
+    logger: Any
+    severity: int
+    ident: str
+
+    _ignore: Set[str] = {'__enter__', '__exit__'}
+
+    def __init__(self, obj: Any,
+                 logger: Any = None,
+                 severity: int = None,
+                 ident: str = '') -> None:
+        self.obj = obj
+        self.logger = logger
+        self.severity = severity
+        self.ident = ident
+
+    def __getattr__(self, key: str) -> Any:
+        meth = getattr(self.obj, key)
+
+        if not callable(meth) or key in self.__ignore:
+            return meth
+
+        @wraps(meth)
+        def __wrapped(*args: Any, **kwargs: Any) -> Any:
+            info = ''
+            if self.ident:
+                info += self.ident.format(self.obj)
+            info += f'{meth.__name__}('
+            if args:
+                info += ', '.join(map(repr, args))
+            if kwargs:
+                if args:
+                    info += ', '
+                info += ', '.join(f'{key}={value!r}'
+                                  for key, value in kwargs.items())
+            info += ')'
+            self.logger.log(self.severity, info)
+            return meth(*args, **kwargs)
+
+        return __wrapped
+
+    def __repr__(self):
+        return repr(self.obj)
+
+    def __dir__(self):
+        return dir(self.obj)
+
+
 def cry(file: IO,
         *,
         sep1: str = '=',
@@ -373,7 +424,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
 
     _id_source: ClassVar[Iterable[int]] = count(1)
 
-    logger: logging.Logger
+    logger: Any
     timeout: float
     loop: asyncio.AbstractEventLoop
     started_at_date: str
@@ -388,7 +439,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         args: Tuple[Any, ...]
         kwargs: Dict[str, Any]
 
-    def __init__(self, logger: logging.Logger, *, timeout: Seconds,
+    def __init__(self, logger: Any, *, timeout: Seconds,
                  loop: asyncio.AbstractEventLoop = None) -> None:
         self.id = next(self._id_source)
         self.logger = logger
@@ -397,6 +448,21 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         self.started_at_date = None
         self._fut = None
         self._logs = []
+
+    def wrap_debug(self, obj: Any) -> Logwrapped:
+        return self.wrap(logging.DEBUG, obj)
+
+    def wrap_info(self, obj: Any) -> Logwrapped:
+        return self.wrap(logging.INFO, obj)
+
+    def wrap_warn(self, obj: Any) -> Logwrapped:
+        return self.wrap(logging.WARN, obj)
+
+    def wrap_error(self, obj: Any) -> Logwrapped:
+        return self.wrap(logging.ERROR, obj)
+
+    def wrap(self, severity: int, obj: Any) -> Logwrapped:
+        return Logwrapped(logger=self, severity=severity, obj=obj)
 
     def activate(self) -> None:
         if self._fut:
