@@ -74,8 +74,8 @@ class Y(mode.Service):
         self.z = self.add_dependency(Z())
 
     async def on_start(self):
-        self.sync_context = await self.add_context(Context())
-        self.async_context = self.add_async_context(AsyncContext())
+        self.sync_context = self.add_context(Context())
+        self.async_context = await self.add_async_context(AsyncContext())
 
 
 class Complex(mode.Service):
