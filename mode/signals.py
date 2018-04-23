@@ -17,7 +17,7 @@ from typing import (
 )
 from weakref import ReferenceType, WeakMethod, ref
 
-from .types import (
+from .types.signals import (
     BaseSignalT,
     FilterReceiverMapping,
     SignalHandlerRefT,

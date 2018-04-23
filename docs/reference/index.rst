@@ -21,8 +21,18 @@ Mode
     mode.signals
     mode.supervisors
     mode.threads
-    mode.types
     mode.worker
+
+Typehints
+=========
+
+.. toctree::
+    :maxdepth: 1
+
+    mode.types
+    mode.types.services
+    mode.types.signals
+    mode.types.supervisors
 
 Event Loops
 ===========

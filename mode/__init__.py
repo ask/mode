@@ -45,16 +45,17 @@ if typing.TYPE_CHECKING:
         SupervisorStrategy,
         CrashingSupervisor,
     )
-    from .types import ServiceT, SupervisorStrategyT      # noqa: E402
-    from .types import BaseSignalT, SignalT, SyncSignalT  # noqa: E402
-    from .utils.times import Seconds, want_seconds        # noqa: E402
-    from .utils.logging import (                          # noqa: E402
+    from .types.services import ServiceT                          # noqa: E402
+    from .types.signals import BaseSignalT, SignalT, SyncSignalT  # noqa: E402
+    from .types.supervisors import SupervisorStrategyT            # noqa: E402
+    from .utils.times import Seconds, want_seconds                # noqa: E402
+    from .utils.logging import (                                  # noqa: E402
         flight_recorder,
         get_logger,
         setup_logging,
     )
-    from .utils.objects import label, shortlabel          # noqa: E402
-    from .worker import Worker                            # noqa: E402
+    from .utils.objects import label, shortlabel                  # noqa: E402
+    from .worker import Worker                                    # noqa: E402
 
 __all__ = [
     'BaseSignal',
@@ -96,13 +97,9 @@ all_by_module: Mapping[str, Sequence[str]] = {
         'SupervisorStrategy',
         'CrashingSupervisor',
     ],
-    'mode.types': [
-        'BaseSignalT',
-        'ServiceT',
-        'SignalT',
-        'SupervisorStrategyT',
-        'SyncSignalT',
-    ],
+    'mode.types.services': ['ServiceT'],
+    'mode.types.signals': ['BaseSignalT', 'SignalT', 'SyncSignalT'],
+    'mode.types.supervisors': ['SupervisorStrategyT'],
     'mode.utils.times': ['Seconds', 'want_seconds'],
     'mode.utils.logging': ['flight_recorder', 'get_logger', 'setup_logging'],
     'mode.utils.objects': ['label', 'shortlabel'],
