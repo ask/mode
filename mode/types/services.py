@@ -7,7 +7,6 @@ from typing import (
     MutableMapping,
     Set,
     Type,
-    Union,
 )
 
 from mode.utils.contexts import AsyncExitStack, ExitStack
@@ -72,8 +71,11 @@ class ServiceT(AsyncContextManager):
         ...
 
     @abc.abstractmethod
-    async def add_context(
-            self, context: Union[AsyncContextManager, ContextManager]) -> Any:
+    async def add_async_context(self, context: AsyncContextManager) -> Any:
+        ...
+
+    @abc.abstractmethod
+    def add_context(self, context: ContextManager) -> Any:
         ...
 
     @abc.abstractmethod

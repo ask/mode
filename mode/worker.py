@@ -227,7 +227,7 @@ class Worker(Service):
                 port=self.console_port,
                 loop=self.loop,
             )
-            await self.add_context(monitor)
+            await self.add_async_context(monitor)
 
     def _repr_info(self) -> str:
         return _repr(self.services)

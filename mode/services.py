@@ -515,10 +515,18 @@ class Service(ServiceBase, ServiceCallbacks):
             await service.maybe_start()
         return service
 
-    async def add_context(
-            self, context: Union[AsyncContextManager, ContextManager]) -> Any:
+    async def add_async_context(self, context: AsyncContextManager) -> Any:
         if isinstance(context, AsyncContextManager):
             return await self.async_exit_stack.enter_async_context(context)
+        elif isinstance(context, ContextManager):
+            raise TypeError(
+                'Use `self.add_context(ctx)` for non-async context')
+        raise TypeError(f'Not a context/async context: {type(context)!r}')
+
+    def add_context(self, context: ContextManager) -> Any:
+        if isinstance(context, AsyncContextManager):
+            raise TypeError(
+                'Use `await self.add_async_context(ctx)` for async context')
         elif isinstance(context, ContextManager):
             return self.exit_stack.enter_context(context)
         raise TypeError(f'Not a context/async context: {type(context)!r}')
