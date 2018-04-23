@@ -30,6 +30,7 @@ Backward Incompatible Changes
 
             async def on_start(self) -> None:
                 self.context = self.add_context(MyContext())
+
     This change was made so that contexts can be added from non-async
     functions. To add an *async context* you still need to be within an
     async function definition.
@@ -72,7 +73,7 @@ News
 
     - Supervisor types: :mod:`mode.types.supervisors`
 
-+ ``flight_recorder`` can now wrap objects so that every method call
++ :class:`mode.flight_recorder` can now wrap objects so that every method call
   on that object will result in the call and arguments to that call
   being logged.
 
