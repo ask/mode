@@ -10,6 +10,8 @@ else:
 
 __all__ = ['SupervisorStrategyT']
 
+ReplacementT = Callable[[ServiceT, int], Awaitable[ServiceT]]
+
 
 class SupervisorStrategyT(ServiceT):
     max_restarts: float
@@ -22,10 +24,9 @@ class SupervisorStrategyT(ServiceT):
                  max_restarts: Seconds = 100.0,
                  over: Seconds = 1.0,
                  raises: Type[BaseException] = None,
-                 replacement: Callable[[ServiceT, int],
-                                       Awaitable[ServiceT]] = None,
+                 replacement: ReplacementT = None,
                  **kwargs: Any) -> None:
-        self.replacement: Callable[[ServiceT, int], Awaitable[ServiceT]]
+        self.replacement: ReplacementT = replacement
 
     @abc.abstractmethod
     def wakeup(self) -> None:

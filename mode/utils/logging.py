@@ -116,7 +116,8 @@ class LogSeverityMixin:
 class CompositeLogger(LogSeverityMixin):
     logger: Logger
 
-    def __init__(self, logger: Logger,
+    def __init__(self,
+                 logger: Logger,
                  formatter: Callable[..., str] = None) -> None:
         self.logger = logger
         self.formatter: Callable[..., str] = formatter
@@ -267,9 +268,10 @@ class Logwrapped(object):
     severity: int
     ident: str
 
-    _ignore: Set[str] = {'__enter__', '__exit__'}
+    _ignore: ClassVar[Set[str]] = {'__enter__', '__exit__'}
 
-    def __init__(self, obj: Any,
+    def __init__(self,
+                 obj: Any,
                  logger: Any = None,
                  severity: Severity = None,
                  ident: str = '') -> None:
@@ -369,6 +371,14 @@ def cry(file: IO,
             print('\n', file=file)                               # noqa: T003
 
 
+class LogMessage(NamedTuple):
+    severity: int
+    message: str
+    asctime: str
+    args: Tuple[Any, ...]
+    kwargs: Dict[str, Any]
+
+
 class flight_recorder(ContextManager, LogSeverityMixin):
     """Flight Recorder context for use with :keyword:`with` statement.
 
@@ -443,14 +453,8 @@ class flight_recorder(ContextManager, LogSeverityMixin):
     _fut: asyncio.Future
     _logs: List[Tuple[int, str, Tuple[Any], Dict[str, Any]]]
 
-    class LogMessage(NamedTuple):
-        severity: int
-        message: str
-        asctime: str
-        args: Tuple[Any, ...]
-        kwargs: Dict[str, Any]
-
-    def __init__(self, logger: Any, *, timeout: Seconds,
+    def __init__(self, logger: Any, *,
+                 timeout: Seconds,
                  loop: asyncio.AbstractEventLoop = None) -> None:
         self.id = next(self._id_source)
         self.logger = logger
@@ -496,7 +500,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
 
     def _buffer_log(self, severity: int, message: str,
                     args: Any, kwargs: Any) -> None:
-        log = self.LogMessage(severity, message, asctime(), args, kwargs)
+        log = LogMessage(severity, message, asctime(), args, kwargs)
         self._logs.append(log)
 
     async def _waiting(self) -> None:

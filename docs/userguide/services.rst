@@ -5,6 +5,7 @@
 ==================
 
 .. module:: mode
+    :noindex:
 
 .. currentmodule:: mode
 

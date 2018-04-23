@@ -8,10 +8,11 @@ _T = TypeVar('_T')
 
 
 class NodeT(Generic[_T]):
-    root: 'NodeT'
-    children: List[Any]
-    parent: 'NodeT'
-    data: Any
+
+    root: 'NodeT' = None
+    children: List[Any] = None
+    parent: 'NodeT' = None
+    data: Any = None
 
     @classmethod
     @abc.abstractmethod

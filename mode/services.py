@@ -396,7 +396,7 @@ class Service(ServiceBase, ServiceCallbacks):
         def _decorate(
                 fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
             @wraps(fun)
-            async def _repeater(self: ServiceT) -> None:
+            async def _repeater(self: Service) -> None:
                 while not self.should_stop:
                     await self.sleep(_interval)
                     await fun(self)

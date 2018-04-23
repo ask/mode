@@ -11,7 +11,6 @@ from typing import (
 )
 
 from mode.utils.contexts import AsyncExitStack, ExitStack
-from mode.utils.times import Seconds
 from mode.utils.types.trees import NodeT
 
 from .supervisors import SupervisorStrategyT
@@ -111,10 +110,6 @@ class ServiceT(AsyncContextManager):
 
     @abc.abstractmethod
     def set_shutdown(self) -> None:
-        ...
-
-    @abc.abstractmethod
-    async def sleep(self, n: Seconds) -> None:
         ...
 
     @abc.abstractmethod
