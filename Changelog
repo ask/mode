@@ -4,6 +4,92 @@
  Change history
 ================
 
+.. _version-1.12.0:
+
+1.12.0
+======
+:release-date: 2018-04-23 1:28 P.M PST
+
+Backward Incompatible Changes
+-----------------------------
+
++ Changed ``Service.add_context``
+
+    - To add an async context manager (:class:`~typing.AsyncContextManager`),
+      use :meth:`~mode.Service.add_async_context`::
+
+        class S(Service):
+
+            async def on_start(self) -> None:
+                self.context = await self.add_async_context(MyAsyncContext())
+
+    - To add a regular context manager (:class:`~typing.ContextManager`),
+      use :meth:`~mode.Service.add_context`::
+
+        class S(Service):
+
+            async def on_start(self) -> None:
+                self.context = self.add_context(MyContext())
+    This change was made so that contexts can be added from non-async
+    functions. To add an *async context* you still need to be within an
+    async function definition.
+
+News
+----
+
++ Worker: Now redirects :data:`sys.stdout` and :data:`sys.stderr` to the
+          logging subsystem by default.
+
+    - To disable this pass ``Worker(redirect_stdouts=False)``.
+
+    - The default severity level for ``print`` statements are
+      :data:`logging.WARN`, but you can change this using
+      ``Worker(redirect_stdouts_level='INFO')``.
+
++ :class:`~mode.Seconds`/:func:`~mode.want_seconds` can now be expressed
+  as strings and rate strings:
+
+    - float as string: ``want_seconds('1.203') == 1.203``
+
+    - *10 in one second*: ``want_seconds('10/s') == 10.0``
+
+    - *10.33 in one hour*: ``want_seconds('10.3/h') == 0.0028611111111111116``
+
+    - *100 in one hour*: ``want_seconds('100/h') == 0.02777777777777778``
+
+    - *100 in one day*: ``want_seconds('100/d') == 0.0011574074074074076``
+
+    This is especially useful for the rate argument
+    to the :class:`~mode.utils.times.rate_limit` helper.
+
++ Added new context manager: :func:`mode.utils.logging.redirect_stdouts`.
+
++ Module :mod:`mode.types` now organized by category:
+
+    - Service types: :mod:`mode.types.services`
+
+    - Signal types: :mod:`mode.types.signals`
+
+    - Supervisor types: :mod:`mode.types.supervisors`
+
++ ``flight_recorder`` can now wrap objects so that every method call
+  on that object will result in the call and arguments to that call
+  being logged.
+
+    Example logging statements with ``INFO`` severity::
+
+        with flight_recorder(logger, timeout=10.0) as on_timeout:
+            redis = on_timeout.wrap_info(self.redis)
+            await redis.get(key)
+
+    There's also ``wrap_debug(o)``, ``wrap_warn(o)``, ``wrap_error(o)``,
+    and for any severity: ``wrap(logging.CRIT, o)``.
+
+Fixes
+-----
+
++ Fixed bug in ``Service.wait`` on Python 3.7.
+
 .. _version-1.11.5:
 
 1.11.5
