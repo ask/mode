@@ -2,7 +2,7 @@
 import sys
 import typing
 from contextlib import suppress
-from functools import singledispatch, total_ordering
+from functools import total_ordering
 from pathlib import Path
 from typing import (
     AbstractSet,

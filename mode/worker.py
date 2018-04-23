@@ -1,16 +1,16 @@
 import asyncio
-import logging
 import reprlib
 import signal
 import sys
 import typing
 from contextlib import suppress
+from logging import Logger, StreamHandler, root as root_logger
 from typing import Any, IO, Iterable, List, Tuple, Union, cast
 
 from .services import Service
 from .types import ServiceT
+from .utils import logging
 from .utils.imports import symbol_by_name
-from .utils.logging import cry, get_logger, setup_logging
 
 if typing.TYPE_CHECKING:
     from .debug import BlockingDetector
@@ -19,7 +19,7 @@ else:
 
 __all__ = ['Worker']
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 BLOCK_DETECTOR = 'mode.debug:BlockingDetector'
 
@@ -43,7 +43,9 @@ class Worker(Service):
     logfile: Union[str, IO]
     logformat: str
     console_port: int
-    loghandlers: List[logging.StreamHandler]
+    loghandlers: List[StreamHandler]
+    redirect_stdouts: bool
+    redirect_stdouts_level: int
 
     services: Iterable[ServiceT]
 
@@ -56,7 +58,9 @@ class Worker(Service):
             loglevel: Union[str, int] = None,
             logfile: Union[str, IO] = None,
             logformat: str = None,
-            loghandlers: List[logging.StreamHandler] = None,
+            loghandlers: List[StreamHandler] = None,
+            redirect_stdouts: bool = True,
+            redirect_stdouts_level: logging.Severity = None,
             stdout: IO = sys.stdout,
             stderr: IO = sys.stderr,
             console_port: int = 50101,
@@ -70,6 +74,9 @@ class Worker(Service):
         self.logfile = logfile
         self.logformat = logformat
         self.loghandlers = loghandlers
+        self.redirect_stdouts = redirect_stdouts
+        self.redirect_stdouts_level = logging.level_number(
+            redirect_stdouts_level or 'WARN')
         self.stdout = stdout
         self.stderr = stderr
         self.console_port = console_port
@@ -109,16 +116,20 @@ class Worker(Service):
     def _setup_logging(self) -> None:
         _loglevel: int = None
         if self.loglevel:
-            _loglevel = setup_logging(
+            _loglevel = logging.setup_logging(
                 loglevel=self.loglevel,
                 logfile=self.logfile,
                 logformat=self.logformat,
                 loghandlers=self.loghandlers,
             )
-        self.on_setup_root_logger(logging.root, _loglevel)
+        self._redirect_stdouts()
+        self.on_setup_root_logger(root_logger, _loglevel)
+
+    def _redirect_stdouts(self) -> None:
+        logging.redirect_stdouts(severity=self.redirect_stdouts_level)
 
     def on_setup_root_logger(self,
-                             logger: logging.Logger,
+                             logger: Logger,
                              level: int) -> None:
         ...
 
@@ -142,7 +153,7 @@ class Worker(Service):
         self.add_future(self._cry())
 
     async def _cry(self) -> None:
-        cry(file=self.stderr)
+        logging.cry(file=self.stderr)
 
     async def _stop_on_signal(self) -> None:
         self.log.info('Stopping on signal received...')
