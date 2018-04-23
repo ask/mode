@@ -399,8 +399,9 @@ def shortlabel(s: Any) -> str:
     return _label('shortlabel', s)
 
 
-@singledispatch
 def _label(label_attr: str, s: Any) -> str:
+    if isinstance(s, str):
+        return s
     return str(
         getattr(s, label_attr, None) or
         getattr(s, 'name', None) or
@@ -408,11 +409,6 @@ def _label(label_attr: str, s: Any) -> str:
         getattr(s, '__name__', None) or
         getattr(type(s), '__qualname__', None) or
         type(s).__name__)
-
-
-@_label.register(str)
-def _(s: str) -> str:
-    return s
 
 
 class cached_property(Generic[RT]):
