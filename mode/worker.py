@@ -122,11 +122,13 @@ class Worker(Service):
                 logformat=self.logformat,
                 loghandlers=self.loghandlers,
             )
-        self._redirect_stdouts()
+        if self.redirect_stdouts:
+            self._redirect_stdouts()
         self.on_setup_root_logger(root_logger, _loglevel)
 
     def _redirect_stdouts(self) -> None:
-        logging.redirect_stdouts(severity=self.redirect_stdouts_level)
+        self.add_context(
+            logging.redirect_stdouts(severity=self.redirect_stdouts_level))
 
     def on_setup_root_logger(self,
                              logger: Logger,
