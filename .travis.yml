@@ -1,14 +1,12 @@
 language: python
 sudo: required
 cache: pip
-python:
-- "3.6.0"
-- "3.6.5"
 os:
 - linux
 env:
   global:
   - PYTHONUNBUFFERED=yes
+language: python
 matrix:
   include:
     - python: "3.6.5"
