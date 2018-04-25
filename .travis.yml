@@ -2,8 +2,8 @@ language: python
 sudo: required
 cache: pip
 python:
-- '3.6.0'
-- '3.6.5'
+- "3.6.0"
+- "3.6.5"
 os:
 - linux
 env:
@@ -11,10 +11,16 @@ env:
   - PYTHONUNBUFFERED=yes
 matrix:
   include:
-    - env: TOXENV=flake8
-    - env: TOXENV=typecheck
-    - env: TOXENV=3.6
-    - env: TOXENV=apicheck
+    - python: "3.6.5"
+      env: TOXENV=flake8
+    - python: "3.6.5"
+      env: TOXENV=typecheck
+    - python: "3.6.5"
+      env: TOXENV=apicheck
+    - python: "3.6.0"
+      env: TOXENV=3.5
+    - python: "3.6.5"
+      env: TOXENV=3.6
 before_install:
 install:
 - |
