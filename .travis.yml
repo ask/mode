@@ -16,30 +16,27 @@ matrix:
       env: TOXENV=apicheck
       os: linux
     - python: "3.6.0"
-      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      env: TOXENV=3.6 PYENV_VERSION=3.6.0 PYENV_VERSION_STRING="3.6.0"
       os: linux
     - python: "3.6.1"
-      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      env: TOXENV=3.6 PYENV_VERSION=3.6.1 PYENV_VERSION_STRING="3.6.1"
       os: linux
     - python: "3.6.2"
-      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      env: TOXENV=3.6 PYENV_VERSION=3.6.2 PYENV_VERSION_STRING="3.6.2"
       os: linux
     - python: "3.6.3"
-      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      env: TOXENV=3.6 PYENV_VERSION=3.6.3 PYENV_VERSION_STRING="3.6.3"
       os: linux
     - python: "3.6.4"
-      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      env: TOXENV=3.6 PYENV_VERSION=3.6.4 PYENV_VERSION_STRING="3.6.4"
       os: linux
     - python: "3.6.5"
-      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      env: TOXENV=3.6 PYENV_VERSION=3.6.5 PYENV_VERSION_STRING="3.6.5"
       os: linux
-    - python: "3.6.5"
-      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
-      os: osx
 before_install:
 install:
 - |
-    if [[ $USE_PYENV ]]; then
+    if [[ -n "$PYENV_VERSION" ]]; then
         git clone https://github.com/yyuu/pyenv.git ~/.pyenv
         PYENV_ROOT="$HOME/.pyenv"
         PATH="$PYENV_ROOT/bin:$PATH"
