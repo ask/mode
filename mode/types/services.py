@@ -2,13 +2,13 @@ import abc
 import asyncio
 from typing import (
     Any,
-    AsyncContextManager,
     ContextManager,
     MutableMapping,
     Set,
     Type,
 )
 
+from mode.utils.compat import AsyncContextManager
 from mode.utils.contexts import AsyncExitStack, ExitStack
 from mode.utils.types.trees import NodeT
 
