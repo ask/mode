@@ -4,11 +4,21 @@
  Change history
 ================
 
+.. _version-1.12.1:
+
+1.12.1
+======
+:release-date: 2018-04-24 11:28 P.M PST
+:release-by: Ask Solem
+
+- Now works with CPython 3.6.1 and 3.6.0.
+
 .. _version-1.12.0:
 
 1.12.0
 ======
 :release-date: 2018-04-23 1:28 P.M PST
+:release-by: Ask Solem
 
 Backward Incompatible Changes
 -----------------------------
