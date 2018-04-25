@@ -3,6 +3,7 @@ sudo: required
 cache: pip
 os:
 - linux
+- osx
 env:
   global:
   - PYTHONUNBUFFERED=yes
@@ -15,6 +16,14 @@ matrix:
     - python: "3.6.5"
       env: TOXENV=apicheck
     - python: "3.6.0"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+    - python: "3.6.1"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+    - python: "3.6.2"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+    - python: "3.6.3"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+    - python: "3.6.4"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
     - python: "3.6.5"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
