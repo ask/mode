@@ -1,9 +1,6 @@
 language: python
 sudo: required
 cache: pip
-os:
-- linux
-- osx
 env:
   global:
   - PYTHONUNBUFFERED=yes
@@ -11,22 +8,34 @@ matrix:
   include:
     - python: "3.6.5"
       env: TOXENV=flake8
+      os: linux
     - python: "3.6.5"
       env: TOXENV=typecheck
+      os: linux
     - python: "3.6.5"
       env: TOXENV=apicheck
+      os: linux
     - python: "3.6.0"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
     - python: "3.6.1"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
     - python: "3.6.2"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
     - python: "3.6.3"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
     - python: "3.6.4"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
     - python: "3.6.5"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
+    - python: "3.6.5"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: osx
 before_install:
 install:
 - |
