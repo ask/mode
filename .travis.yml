@@ -16,7 +16,7 @@ matrix:
     - python: "3.6.5"
       env: TOXENV=apicheck
     - python: "3.6.0"
-      env: TOXENV=3.5
+      env: TOXENV=3.6
     - python: "3.6.5"
       env: TOXENV=3.6
 before_install:
