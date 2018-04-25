@@ -6,7 +6,6 @@ os:
 env:
   global:
   - PYTHONUNBUFFERED=yes
-language: python
 matrix:
   include:
     - python: "3.6.5"
@@ -18,7 +17,7 @@ matrix:
     - python: "3.6.0"
       env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
     - python: "3.6.5"
-      env: TOXENV=3.6
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
 before_install:
 install:
 - |
