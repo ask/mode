@@ -4,6 +4,15 @@
  Change history
 ================
 
+.. _version-1.12.2:
+
+1.12.2
+======
+:release-date: 2018-04-26 11:47 P.M PST
+:release-by: Ask Solem
+
+- Fixed shutdown error in :class:`~mode.threads.ServiceThread`.
+
 .. _version-1.12.1:
 
 1.12.1
