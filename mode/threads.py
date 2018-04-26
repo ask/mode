@@ -102,6 +102,8 @@ class ServiceThread(Service):
         try:
             await super().start()
             await self.wait_until_stopped()
+        except asyncio.CancelledError:
+            raise
         except BaseException as exc:  # pylint: disable=broad-except
             self.on_crash('{0!r} crashed: {1!r}', self.label, exc)
             await self.crash(exc)
