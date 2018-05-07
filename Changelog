@@ -4,6 +4,36 @@
  Change history
 ================
 
+.. _version-1.12.3:
+
+1.12.3
+======
+:release-date: 2016-05-07 3:33 P.M PST
+:release-by: Ask Solem
+
+Important Notes
+---------------
+
+- Moved to https://github.com/ask/mode
+
+Changes
+-------
+
+- Signal: Improved repr when signal has a default sender.
+
+- DictAttribute: Now supports ``len`` and ``del(d[key])``.
+
+- Worker: If overriding ``on_first_start`` you can now call
+  ``default_on_first_start`` instead of super.
+
+    Example::
+
+        class MyWorker(Worker):
+
+            async def on_first_start(self) -> None:
+                print('FIRST START')
+                await self.default_on_first_start()
+
 .. _version-1.12.2:
 
 1.12.2
