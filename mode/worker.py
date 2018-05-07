@@ -104,6 +104,9 @@ class Worker(Service):
         return self.services
 
     async def on_first_start(self) -> None:
+        await self.default_on_first_start()
+
+    async def default_on_first_start(self):
         self._setup_logging()
         await self.on_execute()
         if self.debug:
