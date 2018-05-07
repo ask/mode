@@ -1,7 +1,7 @@
 :Version: 1.12.2
 :Web: http://mode.readthedocs.org/
 :Download: http://pypi.python.org/pypi/mode
-:Source: http://github.com/fauststream/mode
+:Source: http://github.com/ask/mode
 :Keywords: async, service, framework, actors, bootsteps, graph
 
 What is Mode?

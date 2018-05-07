@@ -7,7 +7,7 @@
 :Version: 1.12.2
 :Web: http://mode.readthedocs.org/
 :Download: http://pypi.python.org/pypi/mode
-:Source: http://github.com/fauststream/mode
+:Source: http://github.com/ask/mode
 :Keywords: async, service, framework, actors, bootsteps, graph
 
 What is Mode?
@@ -222,7 +222,9 @@ Worker
             from mode import Worker
             Worker(app, loglevel="info").execute_from_commandline()
 
-    Then execute your program to start the worker::
+    Then execute your program to start the worker:
+
+    .. sourcecode:: console
 
         $ python examples/tutorial.py
         [2018-03-27 15:47:12,159: INFO]: [^Worker]: Starting...
@@ -235,7 +237,9 @@ Worker
         REMOVING EXPIRED USERS
         REMOVING EXPIRED USERS
 
-    To stop it hit ``Control-c``::
+    To stop it hit ``Control-c``:
+
+    .. sourcecode:: console
 
         [2018-03-27 15:55:08,084: INFO]: [^Worker]: Stopping on signal received...
         [2018-03-27 15:55:08,084: INFO]: [^Worker]: Stopping...
@@ -265,12 +269,14 @@ Beacons
     system, for example we can render it as a pretty graph.
 
     This requires you to have the ``pydot`` library and GraphViz
-    installed::
+    installed:
+
+    .. sourcecode:: console
 
         $ pip install pydot
 
     Let's change the app service class to dump the graph to an image
-    at startup.
+    at startup::
 
         class AppService(Service):
 
@@ -411,7 +417,7 @@ With pip
 You can install the latest snapshot of Mode using the following
 pip command::
 
-    $ pip install https://github.com/fauststream/Mode/zipball/master#egg=mode
+    $ pip install https://github.com/ask/mode/zipball/master#egg=mode
 
 FAQ
 ===
@@ -523,6 +529,27 @@ Will you support Python 2?
 There are no plans to support Python 2, but you are welcome to contribute to
 the project (details in question above is relevant also for Python 2).
 
+
+At Shutdown I get lots of warnings, what is this about?
+-------------------------------------------------------
+
+If you get warnings such as this at shutdown:
+
+.. sourcecode:: text
+
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Service._execute_task() running at /opt/devel/mode/mode/services.py:643> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x1100a7468>()]>>
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Service._execute_task() running at /opt/devel/mode/mode/services.py:643> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x1100a72e8>()]>>
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Service._execute_task() running at /opt/devel/mode/mode/services.py:643> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x1100a7678>()]>>
+    Task was destroyed but it is pending!
+    task: <Task pending coro=<Event.wait() running at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/locks.py:269> cb=[_release_waiter(<Future pendi...1100a7468>()]>)() at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/tasks.py:316]>
+    Task was destroyed but it is pending!
+        task: <Task pending coro=<Event.wait() running at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/locks.py:269> cb=[_release_waiter(<Future pendi...1100a7678>()]>)() at /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/asyncio/tasks.py:316]>
+
+It usually means you forgot to stop a service before the process exited.
+
 Code of Conduct
 ===============
 
@@ -567,9 +594,9 @@ reported by opening an issue or contacting one or more of the project maintainer
 This Code of Conduct is adapted from the Contributor Covenant,
 version 1.2.0 available at http://contributor-covenant.org/version/1/2/0/.
 
-.. |build-status| image:: https://secure.travis-ci.org/fauststream/mode.png?branch=master
+.. |build-status| image:: https://secure.travis-ci.org/ask/mode.png?branch=master
     :alt: Build status
-    :target: https://travis-ci.org/fauststream/mode
+    :target: https://travis-ci.org/ask/mode
 
 .. |license| image:: https://img.shields.io/pypi/l/mode.svg
     :alt: BSD License

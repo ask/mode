@@ -11,7 +11,7 @@ from typing import Any, Mapping, NamedTuple, Sequence
 __version__ = '1.12.2'
 __author__ = 'Robinhood Markets'
 __contact__ = 'opensource@robinhood.com'
-__homepage__ = 'https://github.com/fauststream/mode'
+__homepage__ = 'https://github.com/ask/mode'
 __docformat__ = 'restructuredtext'
 
 # -eof meta-
