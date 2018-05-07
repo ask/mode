@@ -430,7 +430,6 @@ class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
     def __len__(self) -> int:
         return len(self.obj.__dict__)
 
-
     def __contains__(self, key: Any) -> bool:
         return hasattr(self.obj, key)
 
