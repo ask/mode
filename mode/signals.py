@@ -194,7 +194,10 @@ class BaseSignal(BaseSignalT[T]):
         return self.name
 
     def __repr__(self) -> str:
-        return f'<{type(self).__name__}: {self.ident}>'
+        info = ''
+        if self.default_sender:
+            info = f' sender={self.default_sender!r}'
+        return f'<{type(self).__name__}: {self.ident}{info}>'
 
 
 class Signal(BaseSignal[T], SignalT[T]):
