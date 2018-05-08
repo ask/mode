@@ -1,12 +1,12 @@
 import asyncio
 from time import monotonic
 import pytest
+from mode.utils.mocks import Mock
 from mode.utils.queues import (
     FlowControlEvent,
     FlowControlQueue,
     ThrowableQueue,
 )
-from unittest.mock import Mock
 
 
 class test_FlowControlEvent:

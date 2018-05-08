@@ -1,6 +1,6 @@
-from unittest.mock import Mock, patch
 from mode.utils import logging
 from mode.utils.logging import get_logger
+from mode.utils.mocks import Mock, patch
 import pytest
 
 

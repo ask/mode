@@ -642,6 +642,9 @@ class Service(ServiceBase, ServiceCallbacks):
         assert self._crashed.is_set() or self._stopped.is_set()
 
     async def start(self) -> None:
+        await self._default_start()
+
+    async def _default_start(self) -> None:
         """Start the service."""
         assert not self._started.is_set()
         self._started.set()
@@ -736,11 +739,17 @@ class Service(ServiceBase, ServiceCallbacks):
             self.log.info('-Stopped!')
 
     async def _stop_children(self) -> None:
+        await self._default_stop_children()
+
+    async def _default_stop_children(self):
         for child in reversed(self._children):
             if child is not None:
                 await child.stop()
 
     async def _stop_futures(self) -> None:
+        await self._default_stop_futures()
+
+    async def _default_stop_futures(self) -> None:
         for future in self._futures:
             future.cancel()
         await self._gather_futures()

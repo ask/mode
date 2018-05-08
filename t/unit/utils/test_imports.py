@@ -1,6 +1,6 @@
 import os
-from unittest.mock import Mock
 from mode.utils.imports import symbol_by_name
+from mode.utils.mocks import Mock
 import pytest
 
 

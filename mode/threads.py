@@ -93,14 +93,14 @@ class ServiceThread(Service):
         ...   # called by thread instead of .stop()
 
     async def _shutdown_thread(self) -> None:
-        await super()._stop_children()
+        await self._default_stop_children()
         await self.on_thread_stop()
         self.set_shutdown()
-        await super()._stop_futures()
+        await self._default_stop_futures()
 
     async def _serve(self) -> None:
         try:
-            await super().start()
+            await self._default_start()  # start the service
             await self.wait_until_stopped()
         except asyncio.CancelledError:
             raise

@@ -1,10 +1,10 @@
-from unittest.mock import Mock, call
 import pytest
 from mode.utils.collections import (
     FastUserDict,
     FastUserSet,
     ManagedUserDict,
 )
+from mode.utils.mocks import Mock, call
 
 
 class test_FastUserDict:

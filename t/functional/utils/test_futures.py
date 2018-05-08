@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from mode.utils.futures import stampede
+from mode.utils.futures import done_future, maybe_async, stampede
 
 
 class X:
@@ -28,3 +28,26 @@ async def test_stampede():
     assert x.commit_count == 2
     assert await x.commit() == 3
     assert x.commit_count == 3
+
+
+@pytest.mark.asyncio
+async def test_done_future():
+    assert await done_future() is None
+    assert await done_future(10) == 10
+
+
+def callable():
+    return 'sync'
+
+
+async def async_callable():
+    return 'async'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('input,expected', [
+    (callable, 'sync'),
+    (async_callable, 'async'),
+])
+async def test_maybe_async(input, expected):
+    assert await maybe_async(input()) == expected

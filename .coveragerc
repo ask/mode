@@ -18,3 +18,4 @@ omit =
     */mode/types/*
     */mode/utils/types/*
     */mode/utils/_py37_contextlib.py
+    */mode/utils/compat.py

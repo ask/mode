@@ -1,6 +1,6 @@
 import asyncio
-from unittest.mock import Mock
 from mode import Service
+from mode.utils.mocks import Mock
 import pytest
 
 

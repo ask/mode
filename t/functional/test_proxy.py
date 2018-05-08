@@ -1,8 +1,7 @@
-from unittest.mock import MagicMock, Mock
 import pytest
 from mode import Service, label, shortlabel
 from mode.proxy import ServiceProxy
-from mode.utils.mocks import AsyncMock
+from mode.utils.mocks import AsyncMock, MagicMock, Mock
 
 
 class Proxy(ServiceProxy):
@@ -20,15 +19,18 @@ class test_Proxy:
 
     @pytest.fixture
     def service(self):
-        s = Mock(name='service', autospec=Service)
-        s.attach_mock(AsyncMock(), 'add_runtime_dependency')
-        s.attach_mock(AsyncMock(), 'add_async_context')
-        s.attach_mock(AsyncMock(), 'start')
-        s.attach_mock(AsyncMock(), 'maybe_start')
-        s.attach_mock(AsyncMock(), 'crash')
-        s.attach_mock(AsyncMock(), 'stop')
-        s.attach_mock(AsyncMock(), 'restart')
-        s.attach_mock(AsyncMock(), 'wait_until_stopped')
+        s = Mock(
+            name='service',
+            autospec=Service,
+            add_runtime_dependency=AsyncMock(),
+            add_async_context=AsyncMock(),
+            start=AsyncMock(),
+            maybe_start=AsyncMock(),
+            crash=AsyncMock(),
+            stop=AsyncMock(),
+            restart=AsyncMock(),
+            wait_until_stopped=AsyncMock(),
+        )
         return s
 
     @pytest.fixture
