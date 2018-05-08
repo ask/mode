@@ -4,11 +4,49 @@
  Change history
 ================
 
+.. _version-1.12.4:
+
+1.12.4
+======
+:release-date: 2018-05-07 3:20 P.M PDT
+:release-by: Ask Solem
+
+- Adds new mock class for async functions: :func:`mode.utils.mocks.AsyncMock`
+
+    This can be used to mock an async callable::
+
+        from mode.utils.mocks import AsyncMock
+
+        class App(Service):
+
+            async def on_start(self):
+                self.ret = await self.some_async_method('arg')
+
+            async def some_async_method(self, arg):
+                await asyncio.sleep(1)
+
+        @pytest.fixture
+        def app():
+            return App()
+
+        @pytest.mark.asyncio
+        async def test_something(*, app):
+            app.some_async_method = AsyncMock()
+            async with app: # starts and stops the service, calling on_start
+                app.some_async_method.assert_called_once_with('arg')
+                assert app.ret is app.some_async_method.coro.return_value
+
+- Added 100% test coverage for modules:
+
+    + :mod:`mode.proxy`
+    + :mod:`mode.threads`
+    + :mod:`mode.utils.aiter`
+
 .. _version-1.12.3:
 
 1.12.3
 ======
-:release-date: 2018-05-07 3:33 P.M PST
+:release-date: 2018-05-07 3:33 P.M PDT
 :release-by: Ask Solem
 
 Important Notes
@@ -38,7 +76,7 @@ Changes
 
 1.12.2
 ======
-:release-date: 2018-04-26 11:47 P.M PST
+:release-date: 2018-04-26 11:47 P.M PDT
 :release-by: Ask Solem
 
 - Fixed shutdown error in :class:`~mode.threads.ServiceThread`.
@@ -47,7 +85,7 @@ Changes
 
 1.12.1
 ======
-:release-date: 2018-04-24 11:28 P.M PST
+:release-date: 2018-04-24 11:28 P.M PDT
 :release-by: Ask Solem
 
 - Now works with CPython 3.6.1 and 3.6.0.
@@ -56,7 +94,7 @@ Changes
 
 1.12.0
 ======
-:release-date: 2018-04-23 1:28 P.M PST
+:release-date: 2018-04-23 1:28 P.M PDT
 :release-by: Ask Solem
 
 Backward Incompatible Changes
