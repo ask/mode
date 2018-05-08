@@ -28,7 +28,7 @@ class ServiceProxy(ServiceBase):
 
     @property
     @abc.abstractmethod
-    def _service(self) -> ServiceT:
+    def _service(self) -> ServiceT:  # pragma: no cover
         ...
 
     def add_dependency(self, service: ServiceT) -> ServiceT:

@@ -1,0 +1,20 @@
+[run]
+branch = 1
+cover_pylib = 0
+include=*mode/*
+omit = t.*
+
+[report]
+omit =
+    */python?.?/*
+    */site-packages/*
+    */pypy/*
+
+    # tested by functional tests
+    */mode/loop/*
+
+    # not needed
+    */mode/debug.py
+    */mode/types/*
+    */mode/utils/types/*
+    */mode/utils/_py37_contextlib.py
