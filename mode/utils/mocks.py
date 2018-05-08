@@ -1,8 +1,7 @@
 import asyncio
 import unittest.mock
 from asyncio import coroutine
-from functools import partial
-from typing import Any, Iterable, Type
+from typing import Any
 
 __all__ = [
     'ANY',

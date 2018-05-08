@@ -741,7 +741,7 @@ class Service(ServiceBase, ServiceCallbacks):
     async def _stop_children(self) -> None:
         await self._default_stop_children()
 
-    async def _default_stop_children(self):
+    async def _default_stop_children(self) -> None:
         for child in reversed(self._children):
             if child is not None:
                 await child.stop()
