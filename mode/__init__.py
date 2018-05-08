@@ -34,7 +34,7 @@ VERSION = version_info = version_info_t(
 del(_temp)
 del(re)
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from .services import Service, task, timer            # noqa: E402
     from .signals import BaseSignal, Signal, SyncSignal   # noqa: E402
     from .supervisors import (                            # noqa: E402
