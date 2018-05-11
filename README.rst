@@ -13,12 +13,11 @@
 What is Mode?
 =============
 
-Mode is a library for Python AsyncIO, using the new ``async/await`` syntax
-in Python 3.6 to define your program as a set of services.
+Mode is a very minimal Python library built-on top of AsyncIO that makes
+it much easier to use.
 
-When writing projects using ``asyncio``, a pattern emerged where we'd base
-our program on one or more services. These behave much like actors in Erlang,
-but implemented as classes:
+In Mode your program is built out of services that you can start, stop,
+restart and supervise.
 
 A service is just a class::
 
@@ -35,8 +34,10 @@ A service is just a class::
             return await self.redis.get(url)
 
 
-Services are started, stopped and restarted; and they can
-start other services, define background tasks, timers, and more::
+Services are started, stopped and restarted and have
+callbacks for those actions.
+
+It can start another service:
 
     class App(Service):
         page_view_cache: PageViewCache = None
@@ -48,179 +49,24 @@ start other services, define background tasks, timers, and more::
         def page_view_cache(self) -> PageViewCache:
             return PageViewCache()
 
+It can include background tasks:
 
-Services
-    can depend on other services::
+    class PageViewCache(Service):
 
-        class App(Service):
+        @Service.timer(1.0)
+        async def _update_cache(self) -> None:
+            self.data = await cache.get('key')
 
-            def on_init_dependencies(self) -> None:
-                return [
-                    self.websockets,
-                    self.webserver,
-                    self.user_cache,
-                ]
-
-            async def on_start(self) -> None:
-                print('App is starting')
-
-Graph
-    If we fill out the rest of this code to implement the additional
-    services.
-
-    A service managing our websocket server::
-
-        class Websockets(Service):
-
-            def __init__(self, port: int = 8081, **kwargs: Any) -> None:
-                self.port = 8081
-                self._server = None
-                super().__init__(**kwargs)
-
-            async def on_start(self) -> None:
-                self._server = websockets.run()
-
-            async def on_stop(self) -> None:
-                if self._server is not None:
-                    self._server.close()
-
-    Then a web server, run in a separate thread using ``ServiceThread``::
-
-        from aiohttp.web import Application
-        from mode.threads import ServiceThread
-
-        class Webserver(ServiceThread):
-
-            def __init__(self,
-                         port: int = 8000,
-                         bind: str = None,
-                         **kwargs: Any) -> None:
-                self._app = Application()
-                self.port = port
-                self.bind = bind
-                self._handler = None
-                self._srv = None
-                super().__init__(**kwargs)
-
-            async def on_start(self) -> None:
-                handler = self._handler = self._app.make_handler()
-                # self.loop is the event loop in this thread
-                #   self.parent_loop is the loop that created this thread.
-                self._srv = await self.loop.create_server(
-                    handler, self.bind, self.port)
-                self.log.info('Serving on port %s', self.port)
-
-            async def on_thread_stop(self) -> None:
-                # see examples/tutorial.py for an actual example
-                self._srv.stop()
-
-    Third, our user cache, which has a background coroutine used to
-    remove old expired items from the cache::
-
-        class UserCache(Service):
-            _cache: MutableMapping[str, User]
-
-            def __post_init__(self):
-                self._cache = {}
-
-            async def lookup(self, user_id: str) -> User:
-                try:
-                    return self._cache[user_id]
-                except KeyError:
-                    user = self._cache[user_id] = await User.objects.get(user_id)
-                    return user
-
-            @Service.timer(10)  # execute every 10 seconds.
-            def _remove_expired(self):
-                remove_expired_users(self._cache)
-
-Proxy
-    Now we just need to create these services in our "App" class.
-
-    In our little tutorial example the "app" is the entrypoint for
-    our program.  Mode does not have a concept of apps, so we don't
-    subclass anything, but we want the app to be reusable in projects
-    and keep it possible to start multiple apps at the same time.
-
-    If we create apps at module scope, for example::
-
-        # example/app.py
-        from our_library import App
-        app = App(web_port=6066)
-
-    It is very important to instantiate services lazily, otherwise
-    the ``asyncio`` event loop is created too early.
-
-    For services that are defined at module level we can create a
-    ``ServiceProxy``::
-
-        from typing import Any
-
-        from mode import Service, ServiceProxy, ServiceT
-        from mode.utils.objects import cached_property
-
-        class AppService(Service):
-            # the "real" service that App.start() will run
-
-            def __init__(self, app: 'App', **kwargs: Any) -> None:
-                self.app = app
-                super().__init__(**kwargs)
-
-            def on_init_dependencies(self) -> None:
-                return [
-                    self.app.websockets,
-                    self.app.webserver,
-                    self.app.user_cache,
-                ]
-
-            async def on_start(self) -> None:
-                print('App is starting')
-
-        class App(ServiceProxy):
-
-            def __init__(self,
-                         web_port: int = 8000,
-                         web_bind: str = None,
-                         websocket_port: int = 8001,
-                         **kwargs: Any) -> None:
-                self.web_port = web_port
-                self.web_bind = web_bind
-                self.websocket_port = websocket_port
-
-            @cached_property
-            def _service(self) -> ServiceT:
-                return AppService(self)
-
-            @cached_property
-            def websockets(self) -> Websockets:
-                return Websockets(
-                    port=self.websocket_port,
-                    loop=self.loop,
-                    beacon=self.beacon,
-                )
-
-            @cached_property
-            def webserver(self) -> Webserver:
-                return Webserver(
-                    port=self.web_port,
-                    bind=self.web_bind,
-                    loop=self.loop,
-                    beacon=self.beacon,
-                )
-
-            @cached_property
-            def user_cache(self) -> UserCache:
-                return UserCache(loop=self.loop, beacon=self.beacon)
+Services that depends on other services actually form a graph
+that you can visualize.
 
 Worker
-    To start your service on the command-line, add an
-    entrypoint for a ``Worker`` to start it::
-
-        app = App()
+    Mode optionally provides a worker that you can use to start the program,
+    with support for logging, blocking detection, remote debugging and more.
 
         if __name__ == '__main__':
             from mode import Worker
-            Worker(app, loglevel="info").execute_from_commandline()
+            Worker(Service(), loglevel="info").execute_from_commandline()
 
     Then execute your program to start the worker:
 
