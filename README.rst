@@ -37,7 +37,7 @@ A service is just a class::
 Services are started, stopped and restarted and have
 callbacks for those actions.
 
-It can start another service:
+It can start another service::
 
     class App(Service):
         page_view_cache: PageViewCache = None
@@ -49,7 +49,7 @@ It can start another service:
         def page_view_cache(self) -> PageViewCache:
             return PageViewCache()
 
-It can include background tasks:
+It can include background tasks::
 
     class PageViewCache(Service):
 
@@ -63,6 +63,8 @@ that you can visualize.
 Worker
     Mode optionally provides a worker that you can use to start the program,
     with support for logging, blocking detection, remote debugging and more.
+
+    To start a worker add this to your program::
 
         if __name__ == '__main__':
             from mode import Worker
