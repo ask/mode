@@ -67,11 +67,15 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
     def add(self, *services: ServiceT) -> None:
         # XXX not thread-safe, but shouldn't have to be.
         size = len(self._services)
-        self._services.extend(services)
         for i, service in enumerate(services):
-            self._index[service] = (size + i + 1) if size else 0
+            if size:
+                pos = size + i
+            else:
+                pos = i
+            self._index[service] = pos
             assert service.supervisor is None
             self._contribute_to_service(service)
+        self._services.extend(services)
 
     def _contribute_to_service(self, service: ServiceT) -> None:
         # A "poisonpill" is the default behavior for any service
@@ -94,7 +98,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
     def insert(self, index: int, service: ServiceT) -> None:
         old_service, self._services[index] = self._services[index], service
         service.supervisor = self
-        del self._index[old_service]
+        self._index.pop(old_service, None)
         self._index[service] = index
 
     def service_operational(self, service: ServiceT) -> bool:
@@ -124,6 +128,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
             to_start: List[ServiceT] = []
             to_restart: List[ServiceT] = []
             for service in services:
+                assert service.supervisor
                 if service.started:
                     if not self.service_operational(service):
                         to_restart.append(service)
