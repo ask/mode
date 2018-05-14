@@ -4,6 +4,16 @@
  Change history
 ================
 
+.. _version-1.12.5:
+
+1.12.5
+======
+:release-date: 2018-05-14 4:48 P.M PDT
+:release-by: Ask Solem
+
+- Supervisor: Fixed wrong index calculation in management
+  of index-based service restart.
+
 .. _version-1.12.4:
 
 1.12.4
