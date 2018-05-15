@@ -72,7 +72,7 @@ class ServiceBase(ServiceT):
 
     #: Logger used by this service.
     #: IF not explicitly set this will be based on get_logger(cls.__name__)
-    logger: logging.Logger = None
+    logger: Optional[logging.Logger] = None
 
     def __init_subclass__(self) -> None:
         if self.abstract:
@@ -344,7 +344,7 @@ class Service(ServiceBase, ServiceCallbacks):
     _crashed: asyncio.Event
 
     #: The reason for last crash (an exception instance).
-    _crash_reason: BaseException
+    _crash_reason: Optional[BaseException]
 
     #: The beacon is used to maintain a graph of services.
     _beacon: NodeT
@@ -362,7 +362,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     #: The ``@Service.task`` decorator adds names of attributes
     #: that are ServiceTasks to this list (which is a class variable).
-    _tasks: ClassVar[Dict[str, Set[str]]] = None
+    _tasks: ClassVar[Optional[Dict[str, Set[str]]]]
 
     @classmethod
     def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
@@ -449,12 +449,13 @@ class Service(ServiceBase, ServiceCallbacks):
     def _get_tasks(self) -> Iterable[ServiceTask]:
         seen: Set[ServiceTask] = set()
         cls = type(self)
-        for attr_name in cls._tasks[cls._get_class_id()]:
-            task = getattr(self, attr_name)
-            assert isinstance(task, ServiceTask)
-            assert task not in seen
-            seen.add(task)
-            yield task
+        if cls._tasks:
+            for attr_name in cls._tasks[cls._get_class_id()]:
+                task = getattr(self, attr_name)
+                assert isinstance(task, ServiceTask)
+                assert task not in seen
+                seen.add(task)
+                yield task
 
     @classmethod
     def _get_class_id(cls) -> str:

@@ -1,6 +1,6 @@
 import abc
 import typing
-from typing import Any, Awaitable, Callable, Type
+from typing import Any, Awaitable, Callable, Optional, Type
 from mode.utils.times import Seconds
 
 if typing.TYPE_CHECKING:
@@ -26,7 +26,7 @@ class SupervisorStrategyT(ServiceT):
                  raises: Type[BaseException] = None,
                  replacement: ReplacementT = None,
                  **kwargs: Any) -> None:
-        self.replacement: ReplacementT = replacement
+        self.replacement: Optional[ReplacementT] = replacement
 
     @abc.abstractmethod
     def wakeup(self) -> None:

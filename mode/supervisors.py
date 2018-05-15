@@ -7,7 +7,7 @@ http://learnyousomeerlang.com/supervisors
 
 """
 import asyncio
-from typing import Any, Awaitable, Callable, Dict, List, Type, cast
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, cast
 
 from .exceptions import MaxRestartsExceeded
 from .services import Service
@@ -29,7 +29,7 @@ logger = get_logger(__name__)
 
 class SupervisorStrategy(Service, SupervisorStrategyT):
     # set this future to wakeup supervisor
-    _please_wakeup: asyncio.Future
+    _please_wakeup: Optional[asyncio.Future]
 
     #: the services we manage
     _services: List[ServiceT]

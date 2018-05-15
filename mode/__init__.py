@@ -27,10 +27,13 @@ class version_info_t(NamedTuple):
 
 # bumpversion can only search for {current_version}
 # so we have to parse the version here.
-_temp = re.match(
-    r'(\d+)\.(\d+).(\d+)(.+)?', __version__).groups()
+_match = re.match(r'(\d+)\.(\d+).(\d+)(.+)?', __version__)
+if _match is None:
+    raise RuntimeError('MODE VERSION HAS ILLEGAL FORMAT')
+_temp = _match.groups()
 VERSION = version_info = version_info_t(
     int(_temp[0]), int(_temp[1]), int(_temp[2]), _temp[3] or '', '')
+del(_match)
 del(_temp)
 del(re)
 
@@ -117,7 +120,7 @@ class _module(ModuleType):
 
     def __getattr__(self, name: str) -> Any:
         if name in object_origins:
-            module = __import__(
+            module = __import__(  # type: ignore
                 object_origins[name], None, None, [name])
             for extra_name in all_by_module[module.__name__]:
                 setattr(self, extra_name, getattr(module, extra_name))

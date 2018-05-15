@@ -9,6 +9,7 @@ from typing import (
     Generic,
     MutableMapping,
     MutableSet,
+    Optional,
     Type,
     TypeVar,
     Union,
@@ -45,7 +46,7 @@ FilterReceiverMapping = MutableMapping[Any, MutableSet[SignalHandlerRefT]]
 
 class BaseSignalT(Generic[T]):
     name: str
-    owner: Type
+    owner: Optional[Type]
 
     @abc.abstractmethod
     def __init__(self, *,

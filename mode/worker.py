@@ -5,12 +5,13 @@ import sys
 import typing
 from contextlib import suppress
 from logging import Logger, StreamHandler, root as root_logger
-from typing import Any, IO, Iterable, List, Tuple, Union, cast
+from typing import Any, IO, Iterable, List, Optional, Tuple, Union, cast
 
 from .services import Service
 from .types import ServiceT
 from .utils import logging
 from .utils.imports import symbol_by_name
+from .utils.times import Seconds
 
 if typing.TYPE_CHECKING:
     from .debug import BlockingDetector
@@ -38,10 +39,10 @@ class Worker(Service):
     stderr: IO
     debug: bool
     quiet: bool
-    blocking_timeout: float
-    loglevel: Union[str, int]
-    logfile: Union[str, IO]
-    logformat: str
+    blocking_timeout: Seconds
+    loglevel: Optional[Union[str, int]]
+    logfile: Optional[Union[str, IO]]
+    logformat: Optional[str]
     console_port: int
     loghandlers: List[StreamHandler]
     redirect_stdouts: bool
@@ -49,7 +50,7 @@ class Worker(Service):
 
     services: Iterable[ServiceT]
 
-    _blocking_detector: BlockingDetector = None
+    _blocking_detector: Optional[BlockingDetector] = None
 
     def __init__(
             self, *services: ServiceT,
@@ -64,7 +65,7 @@ class Worker(Service):
             stdout: IO = sys.stdout,
             stderr: IO = sys.stderr,
             console_port: int = 50101,
-            blocking_timeout: float = None,
+            blocking_timeout: Seconds = 10.0,
             loop: asyncio.AbstractEventLoop = None,
             **kwargs: Any) -> None:
         self.services = services
@@ -73,7 +74,7 @@ class Worker(Service):
         self.loglevel = loglevel
         self.logfile = logfile
         self.logformat = logformat
-        self.loghandlers = loghandlers
+        self.loghandlers = loghandlers or []
         self.redirect_stdouts = redirect_stdouts
         self.redirect_stdouts_level = logging.level_number(
             redirect_stdouts_level or 'WARN')
@@ -117,7 +118,7 @@ class Worker(Service):
         ...
 
     def _setup_logging(self) -> None:
-        _loglevel: int = None
+        _loglevel: int = 0
         if self.loglevel:
             _loglevel = logging.setup_logging(
                 loglevel=self.loglevel,
@@ -245,4 +246,4 @@ class Worker(Service):
                 beacon=self.beacon,
                 loop=self.loop,
             )
-        return self._blocking_detector
+        return cast(BlockingDetector, self._blocking_detector)

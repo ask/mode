@@ -4,6 +4,7 @@ from typing import (
     Any,
     ContextManager,
     MutableMapping,
+    Optional,
     Set,
     Type,
 )
@@ -52,9 +53,9 @@ class ServiceT(AsyncContextManager):
 
     shutdown_timeout: float
     wait_for_shutdown = False
-    loop: asyncio.AbstractEventLoop = None
+    loop: asyncio.AbstractEventLoop
     restart_count: int = 0
-    supervisor: SupervisorStrategyT = None
+    supervisor: Optional[SupervisorStrategyT] = None
 
     @abc.abstractmethod
     def __init__(self, *,
