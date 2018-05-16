@@ -31,3 +31,4 @@ cover/
 .pytest_cache/
 htmlcov/
 *-cache*
+.pyre/
