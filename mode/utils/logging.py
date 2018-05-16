@@ -600,7 +600,7 @@ class FileLogProxy:
 def redirect_stdouts(logger: Logger = redirect_logger, *,
                      severity: Severity = None,
                      stdout: bool = True,
-                     stderr: bool = True) -> FileLogProxy:
+                     stderr: bool = True) -> ContextManager[FileLogProxy]:
     proxy = FileLogProxy(logger, severity=severity)
     if stdout:
         sys.stdout = proxy

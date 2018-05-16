@@ -86,8 +86,9 @@ class ServiceBase(ServiceT):
             cls.logger = get_logger(cls.__module__)
             cls.logger.__modex__ = True
 
-    def __init__(self) -> None:
+    def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
         self.log = CompositeLogger(self.logger, formatter=self._format_log)
+        self.loop = cast(asyncio.AbstractEventLoop, loop)  # can be None
 
     def _format_log(self, severity: int, msg: str,
                     *args: Any, **kwargs: Any) -> str:
@@ -362,7 +363,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     #: The ``@Service.task`` decorator adds names of attributes
     #: that are ServiceTasks to this list (which is a class variable).
-    _tasks: ClassVar[Optional[Dict[str, Set[str]]]]
+    _tasks: ClassVar[Optional[Dict[str, Set[str]]]] = None
 
     @classmethod
     def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
@@ -478,7 +479,7 @@ class Service(ServiceBase, ServiceCallbacks):
         self.exit_stack = ExitStack()
         self.on_init()
         self.__post_init__()
-        super().__init__()
+        super().__init__(loop=self.loop)
 
     def _new_started_event(self) -> asyncio.Event:
         return asyncio.Event(loop=self.loop)

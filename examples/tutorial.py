@@ -133,10 +133,11 @@ class App(ServiceProxy):
         self.web_port = web_port
         self.web_bind = web_bind
         self.websocket_port = websocket_port
+        super().__init__(**kwargs)
 
     @cached_property
     def _service(self) -> ServiceT:
-        return AppService(self)
+        return AppService(self, loop=self.loop)
 
     @cached_property
     def websockets(self) -> Websockets:

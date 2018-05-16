@@ -78,7 +78,11 @@ class Worker(Service):
         self.redirect_stdouts = redirect_stdouts
         self.redirect_stdouts_level = logging.level_number(
             redirect_stdouts_level or 'WARN')
+        if stdout is None:
+            stdout = sys.stdout
         self.stdout = stdout
+        if stderr is None:
+            stderr = sys.stderr
         self.stderr = stderr
         self.console_port = console_port
         self.blocking_timeout = blocking_timeout
@@ -97,9 +101,14 @@ class Worker(Service):
         """Write warning to standard err."""
         self._say(msg, file=self.stderr)
 
-    def _say(self, msg: str, file: IO = None, end: str = '\n') -> None:
+    def _say(self,
+             msg: str,
+             file: Optional[IO] = None,
+             end: str = '\n') -> None:
+        if file is None:
+            file = self.stdout
         if not self.quiet:
-            print(msg, file=file or self.stdout, end=end)  # noqa: T003
+            print(msg, file=file, end=end)  # noqa: T003
 
     def on_init_dependencies(self) -> Iterable[ServiceT]:
         return self.services

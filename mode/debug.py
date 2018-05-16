@@ -23,7 +23,7 @@ else:
             signal.alarm(math.ceil(seconds))
     else:
         def arm_alarm(seconds: float) -> None:
-            return itimer(seconds)
+            itimer(seconds)
 
 
 class Blocking(RuntimeError):

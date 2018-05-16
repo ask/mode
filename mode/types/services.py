@@ -39,7 +39,7 @@ class DiagT(abc.ABC):
         ...
 
 
-class ServiceT(AsyncContextManager):
+class ServiceT(AsyncContextManager):  # type: ignore
     """Abstract type for an asynchronous service that can be started/stopped.
 
     See Also:

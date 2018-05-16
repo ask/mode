@@ -38,7 +38,7 @@ if asyncio._get_running_loop() is not None:
     raise RuntimeError('Event loop created before importing gevent loop!')
 
 
-class Policy(aiogevent.EventLoopPolicy):
+class Policy(aiogevent.EventLoopPolicy):  # type: ignore
     _loop: Optional[asyncio.AbstractEventLoop] = None
 
     def get_event_loop(self) -> asyncio.AbstractEventLoop:
