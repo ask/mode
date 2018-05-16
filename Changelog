@@ -4,6 +4,21 @@
  Change history
 ================
 
+.. _version-1.13.0:
+
+1.13.0
+======
+:release-date: 2018-05-16 1:26 P.M PDT
+:release-by: Ask Solem
+
+- Mode now registers as a library having static type annotations.
+
+    This conforms to :pep:`561` -- a new specification that defines
+    how Python libraries register type stubs to make them available
+    for use with static analyzers like :pypi:`mypy` and :pypi:`pyre-check`.
+
+- The code base now passes ``--strict-optional`` type checks.
+
 .. _version-1.12.5:
 
 1.12.5
