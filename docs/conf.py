@@ -12,7 +12,7 @@ globals().update(conf.build_config(
     # version_stable='1.4',
     canonical_url='http://mode.readthedocs.io',
     webdomain='',
-    github_project='fauststream/mode',
+    github_project='ask/mode',
     copyright='2017',
     html_logo='images/logo.png',
     html_favicon='images/favicon.ico',

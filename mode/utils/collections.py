@@ -4,8 +4,20 @@ import collections
 import threading
 from collections import OrderedDict, UserDict, UserList
 from typing import (
-    Any, ContextManager, Dict, ItemsView, Iterable, Iterator, KeysView,
-    Mapping, MutableMapping, MutableSet, Tuple, TypeVar, ValuesView, cast,
+    Any,
+    ContextManager,
+    Dict,
+    ItemsView,
+    Iterable,
+    Iterator,
+    KeysView,
+    Mapping,
+    MutableMapping,
+    MutableSet,
+    Tuple,
+    TypeVar,
+    ValuesView,
+    cast,
 )
 
 from .compat import DummyContext
@@ -103,6 +115,10 @@ class FastUserSet(MutableSet):
 
     def discard(self, key: Any) -> None:
         self.data.pop(key, None)
+
+    def update(self, d: Iterable) -> None:
+        for item in d:
+            self.add(item)
 
     # Rest is fast versions of generic slow MutableSet methods.
 
@@ -407,6 +423,12 @@ class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
 
     def __setitem__(self, key: Any, value: Any) -> None:
         setattr(self.obj, key, value)
+
+    def __delitem__(self, key: Any) -> None:
+        raise NotImplementedError()
+
+    def __len__(self) -> int:
+        return len(self.obj.__dict__)
 
     def __contains__(self, key: Any) -> bool:
         return hasattr(self.obj, key)

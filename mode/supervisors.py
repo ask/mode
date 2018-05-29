@@ -7,7 +7,7 @@ http://learnyousomeerlang.com/supervisors
 
 """
 import asyncio
-from typing import Any, Awaitable, Callable, Dict, List, Type, cast
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, cast
 
 from .exceptions import MaxRestartsExceeded
 from .services import Service
@@ -28,16 +28,20 @@ logger = get_logger(__name__)
 
 
 class SupervisorStrategy(Service, SupervisorStrategyT):
-    _please_wakeup: asyncio.Future  # set to wakeup supervisor.
-    _services: List[ServiceT]       # the services we manage.
-    _bucket: Bucket                 # rate limit state.
-    _index: Dict[ServiceT, int]     # what index is service at?
-                                    # -- if we have 10 services for
-                                    #    example, and one of them crash - we
-                                    #    want to know the position of the
-                                    #    service we are restarting.
-                                    #    This is needed for Faust and
-                                    #    the @app.agent(concurrency=n) feature.
+    # set this future to wakeup supervisor
+    _please_wakeup: Optional[asyncio.Future]
+
+    #: the services we manage
+    _services: List[ServiceT]
+
+    # rate limit state
+    _bucket: Bucket
+
+    # what index is service at?
+    # if we have 10 services for example, and one of the crash,
+    #  we want to know the position of the service we are restarting.
+    # This is needed for Faust and the @app.agent(concurrency=n) feature.
+    _index: Dict[ServiceT, int]
 
     def __init__(self,
                  *services: ServiceT,
@@ -63,11 +67,15 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
     def add(self, *services: ServiceT) -> None:
         # XXX not thread-safe, but shouldn't have to be.
         size = len(self._services)
-        self._services.extend(services)
         for i, service in enumerate(services):
-            self._index[service] = (size + i + 1) if size else 0
+            if size:
+                pos = size + i
+            else:
+                pos = i
+            self._index[service] = pos
             assert service.supervisor is None
             self._contribute_to_service(service)
+        self._services.extend(services)
 
     def _contribute_to_service(self, service: ServiceT) -> None:
         # A "poisonpill" is the default behavior for any service
@@ -90,7 +98,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
     def insert(self, index: int, service: ServiceT) -> None:
         old_service, self._services[index] = self._services[index], service
         service.supervisor = self
-        del self._index[old_service]
+        self._index.pop(old_service, None)
         self._index[service] = index
 
     def service_operational(self, service: ServiceT) -> bool:
@@ -120,6 +128,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
             to_start: List[ServiceT] = []
             to_restart: List[ServiceT] = []
             for service in services:
+                assert service.supervisor
                 if service.started:
                     if not self.service_operational(service):
                         to_restart.append(service)
@@ -163,7 +172,8 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
 
     async def restart_service(self, service: ServiceT) -> None:
         self.log.info('Restarting dead %r! Last crash reason: %r',
-                      service, cast(Service, service)._crash_reason)
+                      service, cast(Service, service)._crash_reason,
+                      exc_info=1)
         try:
             async with self._bucket:
                 if self.replacement:
@@ -188,7 +198,7 @@ class OneForAllSupervisor(SupervisorStrategy):
         # and restart all of them
         if services:
             # Stop them all, and wait for all of them to stop (concurrently).
-            self.stop_services(self._services)
+            await self.stop_services(self._services)
             # Then restart them one by one.
             for service in self._services:
                 await self.restart_service(service)
@@ -200,6 +210,7 @@ class ForfeitOneForOneSupervisor(SupervisorStrategy):
     async def restart_services(self, services: List[ServiceT]) -> None:
         if services:
             self.log.critical('Giving up on crashed services: %r', services)
+            await self.stop_services(services)
 
 
 class ForfeitOneForAllSupervisor(SupervisorStrategy):
@@ -211,7 +222,7 @@ class ForfeitOneForAllSupervisor(SupervisorStrategy):
                 'Giving up on all services in group because %r crashed',
                 services,
             )
-            self.stop_services(self._services)
+            await self.stop_services(self._services)
 
 
 class CrashingSupervisor(SupervisorStrategy):

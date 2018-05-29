@@ -1,10 +1,10 @@
-from unittest.mock import Mock, call
 import pytest
 from mode.utils.collections import (
     FastUserDict,
     FastUserSet,
     ManagedUserDict,
 )
+from mode.utils.mocks import Mock, call
 
 
 class test_FastUserDict:
@@ -92,7 +92,7 @@ class test_FastUserSet:
         class X(FastUserSet):
 
             def __init__(self):
-                self.data = set()
+                self.data = {}
 
         return X()
 
@@ -121,7 +121,7 @@ class test_FastUserSet:
 
     def test_clear(self, d):
         d.update({1, 2, 3})
-        assert d.issubset({1, 2, 3})
+        assert 1 in d
         assert len(d) == 3
         d.clear()
         assert not d

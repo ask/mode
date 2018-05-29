@@ -1,7 +1,16 @@
 from functools import partial
 from typing import (
-    Any, Callable, IO, ItemsView, Iterable, Iterator,
-    List, MutableMapping, Sequence, Set, cast,
+    Any,
+    Callable,
+    IO,
+    ItemsView,
+    Iterable,
+    Iterator,
+    List,
+    MutableMapping,
+    Sequence,
+    Set,
+    cast,
 )
 
 from .formatter import GraphFormatter

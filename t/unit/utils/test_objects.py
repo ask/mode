@@ -1,6 +1,7 @@
-from typing import AsyncContextManager, Generic
+from typing import Generic
 from mode import Service, ServiceT
 from mode.services import ServiceBase, ServiceCallbacks
+from mode.utils.compat import AsyncContextManager
 from mode.utils.objects import cached_property, iter_mro_reversed
 import pytest
 

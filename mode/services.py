@@ -6,8 +6,21 @@ from functools import wraps
 from time import monotonic
 from types import TracebackType
 from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Generator, Iterable, List,
-    MutableSequence, NamedTuple, Optional, Sequence, Set, Type, Union, cast,
+    Any,
+    Awaitable,
+    Callable,
+    ClassVar,
+    Dict,
+    Generator,
+    Iterable,
+    MutableSequence,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Set,
+    Type,
+    Union,
+    cast,
 )
 
 from .types import DiagT, ServiceT
@@ -24,28 +37,42 @@ __all__ = [
     'ServiceBase',
     'Service',
     'Diag',
+    'task',
+    'timer',
 ]
 
+#: Future type: Different types of awaitables.
 FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
 
+#: Argument type for ``Service.wait(*events)``
+#: Wait can take any number of futures or events to wait for.
 WaitArgT = Union[FutureT, asyncio.Event]
 
 
 class WaitResult(NamedTuple):
+    """Return value of :meth:`Service.wait`."""
+
+    #: Return value of the future we were waiting for.
     result: Any
+
+    #: Set to :const:`True` if the service was stopped while waiting.
     stopped: bool
 
 
 class ServiceBase(ServiceT):
     """Base class for services."""
 
+    # This class implements stuff common to Service + ServiceProxy
+
+    #: Set to True if this service class is abstract-only,
+    #: meaning it will only be used as a base class.
     abstract: ClassVar[bool] = True
 
     log: CompositeLogger
 
     #: Logger used by this service.
     #: IF not explicitly set this will be based on get_logger(cls.__name__)
-    logger: logging.Logger = None
+    logger: Optional[logging.Logger] = None
 
     def __init_subclass__(self) -> None:
         if self.abstract:
@@ -54,21 +81,18 @@ class ServiceBase(ServiceT):
 
     @classmethod
     def _init_subclass_logger(cls) -> None:
+        # make sure class has a logger.
         if cls.logger is None or getattr(cls.logger, '__modex__', False):
             cls.logger = get_logger(cls.__module__)
             cls.logger.__modex__ = True
 
-    # This contains the common methods for Service and ServiceProxy
-
-    def __init__(self) -> None:
-        self.log = CompositeLogger(self)
+    def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
+        self.log = CompositeLogger(self.logger, formatter=self._format_log)
+        self.loop = cast(asyncio.AbstractEventLoop, loop)  # can be None
 
     def _format_log(self, severity: int, msg: str,
                     *args: Any, **kwargs: Any) -> str:
         return f'[^{"-" * (self.beacon.depth - 1)}{self.shortlabel}]: {msg}'
-
-    def _log(self, severity: int, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.logger.log(severity, msg, *args, **kwargs)
 
     async def __aenter__(self) -> ServiceT:
         await self.start()
@@ -82,6 +106,7 @@ class ServiceBase(ServiceT):
         return None
 
     def __repr__(self) -> str:
+        # Override _repr_info to add additional text to repr.
         return '<{name}: {self.state}{info}>'.format(
             name=type(self).__name__,
             self=self,
@@ -93,6 +118,38 @@ class ServiceBase(ServiceT):
 
 
 class Diag(DiagT):
+    """Service diagnostics.
+
+    This can be used to track what your service is doing.
+    For example if your service is a Kafka consumer with a background
+    thread that commits the offset every 30 seconds, you may want to
+    see when this happens::
+
+        DIAG_COMMITTING = 'committing'
+
+        class Consumer(Service):
+
+            @Service.task
+            async def _background_commit(self) -> None:
+                while not self.should_stop:
+                    await self.sleep(30.0)
+                    self.diag.set_flag(DIAG_COMITTING)
+                    try:
+                        await self._consumer.commit()
+                    finally:
+                        self.diag.unset_flag(DIAG_COMMITTING)
+
+    The above code is setting the flag manually, but you can also use
+    a decorator to accomplish the same thing::
+
+        @Service.timer(30.0)
+        async def _background_commit(self) -> None:
+            await self.commit()
+
+        @Service.transitions_with(DIAG_COMITTING)
+        async def commit(self) -> None:
+            await self._consumer.commit()
+    """
 
     def __init__(self, service: ServiceT) -> None:
         self.service = service
@@ -108,6 +165,19 @@ class Diag(DiagT):
 
 
 class ServiceTask:
+    """A background task.
+
+    You don't have to use this class directly, instead
+    use the ``@Service.task`` decorator::
+
+        class MyService(Service):
+
+            @Service.task
+            def _background_task(self):
+                while not self.should_stop:
+                    print('Hello')
+                    await self.sleep(1.0)
+    """
 
     def __init__(self, fun: Callable[..., Awaitable]) -> None:
         self.fun: Callable[..., Awaitable] = fun
@@ -120,29 +190,120 @@ class ServiceTask:
 
 
 class ServiceCallbacks:
+    """Service callback interface.
 
+    When calling ``await service.start()`` this happens:
+
+    .. sourcecode:: text
+
+        +--------------------+
+        | INIT (not started) |
+        +--------------------+
+                V
+        .-----------------------.
+        / await service.start() |
+        `-----------------------'
+                V
+        +--------------------+
+        | on_first_start     |
+        +--------------------+
+                V
+        +--------------------+
+        | on_start           |
+        +--------------------+
+                V
+        +--------------------+
+        | on_started         |
+        +--------------------+
+
+    When stopping and ``wait_for_shutdown`` is unset, this happens:
+
+    .. sourcecode:: text
+
+        .-----------------------.
+        / await service.stop()  |
+        `-----------------------'
+                V
+        +--------------------+
+        | on_stop             |
+        +--------------------+
+                V
+        +--------------------+
+        | on_shutdown        |
+        +--------------------+
+
+    When stopping and ``wait_for_shutdown`` is set, the stop operation
+    will wait for something to set the shutdown flag ``self.set_shutdown()``:
+
+    .. sourcecode:: text
+
+        .-----------------------.
+        / await service.stop()  |
+        `-----------------------'
+                V
+        +--------------------+
+        | on_stop             |
+        +--------------------+
+                V
+        .-------------------------.
+        / service.set_shutdown()  |
+        `-------------------------'
+                V
+        +--------------------+
+        | on_shutdown        |
+        +--------------------+
+
+    When restarting the order is as follows (assuming
+    ``wait_for_shutdown`` unset):
+
+    .. sourcecode:: text
+
+        .-------------------------.
+        / await service.restart() |
+        `-------------------------'
+                V
+        +--------------------+
+        | on_stop             |
+        +--------------------+
+                V
+        +--------------------+
+        | on_shutdown        |
+        +--------------------+
+                V
+        +--------------------+
+        | on_restart         |
+        +--------------------+
+                V
+        +--------------------+
+        | on_start           |
+        +--------------------+
+                V
+        +--------------------+
+        | on_started         |
+        +--------------------+
+    """
     async def on_first_start(self) -> None:
-        """Callback to be called the first time the service is started."""
+        """Called only the first time the service is started."""
         ...
 
     async def on_start(self) -> None:
-        """Callback to be called every time the service is started."""
+        """Called every time before the service is started/restarted."""
         ...
 
     async def on_started(self) -> None:
-        """Callback to be called once the service is started/restarted."""
+        """Called every time after the service is started/restarted."""
         ...
 
     async def on_stop(self) -> None:
-        """Callback to be called when the service is signalled to stop."""
+        """Called every time before the service is stopped/restarted."""
         ...
 
     async def on_shutdown(self) -> None:
-        """Callback to be called when the service is shut down."""
+        """Called every time after the service is stopped/restarted"""
         ...
 
     async def on_restart(self) -> None:
-        """Callback to be called when the service is restarted."""
+        """Called every time when the service is restarted."""
         ...
 
 
@@ -170,26 +331,39 @@ class Service(ServiceBase, ServiceCallbacks):
     #: Current number of times this service instance has been restarted.
     restart_count = 0
 
+    #: Event set when service started.
     _started: asyncio.Event
-    _stopped: asyncio.Event
-    _shutdown: asyncio.Event
-    _crashed: asyncio.Event
-    _crash_reason: BaseException
 
-    #: The beacon is used to track the graph of services.
+    #: Event set when service stopped.
+    _stopped: asyncio.Event
+
+    #: Event set by user to signal service can be shutdown
+    #: (see :attr:`wait_for_shutdown)
+    _shutdown: asyncio.Event
+
+    #: Event set when service crashed.
+    _crashed: asyncio.Event
+
+    #: The reason for last crash (an exception instance).
+    _crash_reason: Optional[BaseException]
+
+    #: The beacon is used to maintain a graph of services.
     _beacon: NodeT
 
-    #: .add_dependency adds subservices to this list.
-    #: They are started/stopped with the service.
+    #: .add_dependency and friends adds services to this list,
+    #: that are started/stopped/restarted with the service.
     _children: MutableSequence[ServiceT]
 
-    #: .add_future adds futures to this list
-    #: They are started/stopped with the service.
-    _futures: List[asyncio.Future]
+    #: .add_future adds futures to this list, and when stopping
+    #: we will wait for them a bit, then cancel them.
+    #: Note: Unlike ``add_dependency`` these futures will not be
+    # restarted with the service: if you want that to happen make sure
+    # calling service.start() again will add the future again.
+    _futures: Set[asyncio.Future]
 
     #: The ``@Service.task`` decorator adds names of attributes
     #: that are ServiceTasks to this list (which is a class variable).
-    _tasks: ClassVar[Dict[str, Set[str]]] = None
+    _tasks: ClassVar[Optional[Dict[str, Set[str]]]] = None
 
     @classmethod
     def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
@@ -198,23 +372,32 @@ class Service(ServiceBase, ServiceCallbacks):
         Example:
             >>> class S(Service):
             ...
-            ... @Service.task
-            ... async def background_task(self):
-            ...     while not self.should_stop:
-            ...         print('Waking up')
-            ...         await self.sleep(1.0)
+            ...     @Service.task
+            ...     async def background_task(self):
+            ...         while not self.should_stop:
+            ...             await self.sleep(1.0)
+            ...             print('Waking up')
         """
         return ServiceTask(fun)
 
     @classmethod
     def timer(cls, interval: Seconds) -> Callable[
             [Callable[[ServiceT], Awaitable[None]]], ServiceTask]:
+        """A background timer that executes every ``n`` seconds.
+
+        Example:
+            >>> class S(Service):
+            ...
+            ...     @Service.timer(1.0)
+            ...     async def background_timer(self):
+            ...         print('Waking up')
+        """
         _interval = want_seconds(interval)
 
         def _decorate(
                 fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
             @wraps(fun)
-            async def _repeater(self: ServiceT) -> None:
+            async def _repeater(self: Service) -> None:
                 while not self.should_stop:
                     await self.sleep(_interval)
                     await fun(self)
@@ -223,6 +406,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     @classmethod
     def transitions_to(cls, flag: str) -> Callable:
+        """Decorator that adds diagnostic flag while function is running."""
         def _decorate(
                 fun: Callable[..., Awaitable]) -> Callable[..., Awaitable]:
             @wraps(fun)
@@ -266,12 +450,13 @@ class Service(ServiceBase, ServiceCallbacks):
     def _get_tasks(self) -> Iterable[ServiceTask]:
         seen: Set[ServiceTask] = set()
         cls = type(self)
-        for attr_name in cls._tasks[cls._get_class_id()]:
-            task = getattr(self, attr_name)
-            assert isinstance(task, ServiceTask)
-            assert task not in seen
-            seen.add(task)
-            yield task
+        if cls._tasks:
+            for attr_name in cls._tasks[cls._get_class_id()]:
+                task = getattr(self, attr_name)
+                assert isinstance(task, ServiceTask)
+                assert task not in seen
+                seen.add(task)
+                yield task
 
     @classmethod
     def _get_class_id(cls) -> str:
@@ -289,11 +474,12 @@ class Service(ServiceBase, ServiceCallbacks):
         self._crash_reason = None
         self._beacon = Node(self) if beacon is None else beacon.new(self)
         self._children = []
-        self._futures = []
+        self._futures = set()
         self.async_exit_stack = AsyncExitStack()
         self.exit_stack = ExitStack()
         self.on_init()
-        super().__init__()
+        self.__post_init__()
+        super().__init__(loop=self.loop)
 
     def _new_started_event(self) -> asyncio.Event:
         return asyncio.Event(loop=self.loop)
@@ -331,10 +517,18 @@ class Service(ServiceBase, ServiceCallbacks):
             await service.maybe_start()
         return service
 
-    async def add_context(
-            self, context: Union[AsyncContextManager, ContextManager]) -> Any:
+    async def add_async_context(self, context: AsyncContextManager) -> Any:
         if isinstance(context, AsyncContextManager):
-            await self.async_exit_stack.enter_async_context(context)
+            return await self.async_exit_stack.enter_async_context(context)
+        elif isinstance(context, ContextManager):
+            raise TypeError(
+                'Use `self.add_context(ctx)` for non-async context')
+        raise TypeError(f'Not a context/async context: {type(context)!r}')
+
+    def add_context(self, context: ContextManager) -> Any:
+        if isinstance(context, AsyncContextManager):
+            raise TypeError(
+                'Use `await self.add_async_context(ctx)` for async context')
         elif isinstance(context, ContextManager):
             return self.exit_stack.enter_context(context)
         raise TypeError(f'Not a context/async context: {type(context)!r}')
@@ -345,12 +539,20 @@ class Service(ServiceBase, ServiceCallbacks):
         The future will be joined when this service is stopped.
         """
         fut = asyncio.ensure_future(self._execute_task(coro), loop=self.loop)
-        self._futures.append(fut)
+        fut.__wrapped__ = coro  # type: ignore
+        fut.add_done_callback(self._on_future_done)
+        self._futures.add(fut)
         return fut
 
-    def on_init(self) -> None:
+    def _on_future_done(self, fut: asyncio.Future) -> None:
+        self._futures.discard(fut)
+
+    def __post_init__(self) -> None:
         """Callback to be called on instantiation."""
         ...
+
+    def on_init(self) -> None:
+        ...  # deprecated: use __post_init__
 
     def on_init_dependencies(self) -> Iterable[ServiceT]:
         """Callback to be used to add service dependencies."""
@@ -396,20 +598,21 @@ class Service(ServiceBase, ServiceCallbacks):
         crashed = self._crashed.wait()
 
         fut = coro.wait() if isinstance(coro, asyncio.Event) else coro
-        fut = asyncio.ensure_future(fut, loop=self.loop)
         # asyncio.wait will also ensure_future, but we need the handle
         # so we can cancel them (if we don't they will leak).
+        fut = asyncio.ensure_future(fut, loop=self.loop)
         stopped_fut = asyncio.ensure_future(stopped, loop=self.loop)
         crashed_fut = asyncio.ensure_future(crashed, loop=self.loop)
         try:
             done, pending = await asyncio.wait(
-                (fut, stopped, crashed),
+                (fut, stopped_fut, crashed_fut),
                 return_when=asyncio.FIRST_COMPLETED,
                 timeout=timeout,
                 loop=self.loop,
             )
             for f in done:
-                f.result()  # propagate exceptions
+                if f.done() and f.exception() is not None:
+                    f.result()  # propagate exceptions
             if fut.done():
                 return WaitResult(fut.result(), False)
             else:
@@ -441,6 +644,9 @@ class Service(ServiceBase, ServiceCallbacks):
         assert self._crashed.is_set() or self._stopped.is_set()
 
     async def start(self) -> None:
+        await self._default_start()
+
+    async def _default_start(self) -> None:
         """Start the service."""
         assert not self._started.is_set()
         self._started.set()
@@ -453,7 +659,7 @@ class Service(ServiceBase, ServiceCallbacks):
             self.log.info('Starting...')
             await self.on_start()
             for task in self._get_tasks():
-                self.add_future(task(self))
+                self.add_future(task.fun(self))
             for child in self._children:
                 if child is not None:
                     await child.maybe_start()
@@ -473,7 +679,7 @@ class Service(ServiceBase, ServiceCallbacks):
             if 'Event loop is closed' in str(exc):
                 self.log.info('Cancelled task %r: %s', task, exc)
         except BaseException as exc:
-            # the exception will be reraised by the main thread.
+            # the exception will be re-raised by the main thread.
             await self.crash(exc)
 
     async def maybe_start(self) -> None:
@@ -483,12 +689,14 @@ class Service(ServiceBase, ServiceCallbacks):
 
     async def crash(self, reason: BaseException) -> None:
         """Crash the service and all child services."""
+        self.log.exception('Crashed reason=%r', reason)
         if not self._crashed.is_set():
             # We record the stack by raising the exception.
-            self.log.exception('Crashed reason=%r', reason)
 
-            if not self.supervisor:
-                # Only if the service has no supervisor do we go ahead
+            if self.supervisor:
+                self.supervisor.wakeup()
+            else:
+                # if the service has no supervisor we go ahead
                 # and mark parent nodes as crashed as well.
                 root = self.beacon.root
                 seen: Set[NodeT] = set()
@@ -508,6 +716,8 @@ class Service(ServiceBase, ServiceCallbacks):
     def _crash(self, reason: BaseException) -> None:
         self._crashed.set()
         self._crash_reason = reason
+        for node in self._children:
+            node._crash(reason)
 
     async def stop(self) -> None:
         """Stop the service."""
@@ -531,12 +741,18 @@ class Service(ServiceBase, ServiceCallbacks):
             self.log.info('-Stopped!')
 
     async def _stop_children(self) -> None:
+        await self._default_stop_children()
+
+    async def _default_stop_children(self) -> None:
         for child in reversed(self._children):
             if child is not None:
                 await child.stop()
 
     async def _stop_futures(self) -> None:
-        for future in reversed(self._futures):
+        await self._default_stop_futures()
+
+    async def _default_stop_futures(self) -> None:
+        for future in self._futures:
             future.cancel()
         await self._gather_futures()
 
@@ -551,6 +767,13 @@ class Service(ServiceBase, ServiceCallbacks):
                 ))
             except asyncio.CancelledError:
                 continue
+            except ValueError:
+                if self._futures:
+                    raise
+                # race condition:
+                # _futures non-empty when loop starts,
+                # but empty when asyncio.wait receives it.
+                break
             else:
                 break
         self._futures.clear()
@@ -570,6 +793,9 @@ class Service(ServiceBase, ServiceCallbacks):
                    self._crashed):
             ev.clear()
         self._crash_reason = None
+        for child in self._children:
+            if child is not None:
+                child.service_reset()
 
     async def wait_until_stopped(self) -> None:
         """Wait until the service is signalled to stop."""
@@ -630,3 +856,7 @@ class Service(ServiceBase, ServiceCallbacks):
     @beacon.setter
     def beacon(self, beacon: NodeT) -> None:
         self._beacon = beacon
+
+
+task = Service.task
+timer = Service.timer

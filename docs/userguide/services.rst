@@ -5,6 +5,7 @@
 ==================
 
 .. module:: mode
+    :noindex:
 
 .. currentmodule:: mode
 
@@ -84,13 +85,13 @@ Adding child services
 
 Child services can be added in three ways,
 
-1) Using ``add_dependency()`` in ``on_init``:
+1) Using ``add_dependency()`` in ``__post_init__``:
 
     .. sourcecode:: python
 
         class MyService(Service):
 
-            def on_init(self) -> None:
+            def __post_init__(self) -> None:
                 self.add_dependency(OtherService())
 
 2) Using ``add_dependency()`` in ``on_start``:
@@ -154,7 +155,7 @@ Order when restarting (``await Service.restart()``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. The service is stopped (``await service.stop()``).
-2. The ``on_init()`` callback is called again.
+2. The ``__post_init__()`` callback is called again.
 3. The service is started (``await service.start()``).
 
 Callbacks

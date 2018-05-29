@@ -1,21 +1,50 @@
 language: python
 sudo: required
 cache: pip
-python:
-- '3.6'
-os:
-- linux
 env:
   global:
   - PYTHONUNBUFFERED=yes
 matrix:
   include:
-    - env: TOXENV=flake8
-    - env: TOXENV=typecheck
-    - env: TOXENV=3.6
-    - env: TOXENV=apicheck
+    - python: "3.6.5"
+      env: TOXENV=flake8
+      os: linux
+    - python: "3.6.5"
+      env: TOXENV=typecheck
+      os: linux
+    - python: "3.6.5"
+      env: TOXENV=apicheck
+      os: linux
+    - python: "3.6.0"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
+    - python: "3.6.1"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
+    - python: "3.6.2"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
+    - python: "3.6.3"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
+    - python: "3.6.4"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
+    - python: "3.6.5"
+      env: TOXENV=3.6 RUN_SUITE=y USE_PYENV=y
+      os: linux
 before_install:
-install: travis_retry pip install -U tox
+install:
+- |
+    if [[ $USE_PYENV ]]; then
+        git clone https://github.com/yyuu/pyenv.git ~/.pyenv
+        PYENV_ROOT="$HOME/.pyenv"
+        PATH="$PYENV_ROOT/bin:$PATH"
+        eval "$(pyenv init -)"
+        pyenv install "${TRAVIS_PYTHON_VERSION}"
+        pyenv global "${TRAVIS_PYTHON_VERSION}"
+    fi
+- travis_retry pip install -U tox
 script: tox -v -- -v
 notifications:
   slack:

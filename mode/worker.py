@@ -1,17 +1,18 @@
 import asyncio
-import logging
 import reprlib
 import signal
 import sys
 import typing
 import warnings
 from contextlib import suppress
-from typing import Any, Dict, IO, Iterable, List, Tuple, Union, cast
+from logging import Logger, StreamHandler
+from typing import Any, Dict, IO, Iterable, List, Optional, Tuple, Union, cast
 
 from .services import Service
 from .types import ServiceT
+from .utils import logging
 from .utils.imports import symbol_by_name
-from .utils.logging import cry, get_logger, setup_logging, configure_logging
+from .utils.times import Seconds
 
 if typing.TYPE_CHECKING:
     from .debug import BlockingDetector
@@ -20,7 +21,7 @@ else:
 
 __all__ = ['Worker']
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 BLOCK_DETECTOR = 'mode.debug:BlockingDetector'
 
@@ -39,17 +40,19 @@ class Worker(Service):
     stderr: IO
     debug: bool
     quiet: bool
-    blocking_timeout: float
+    blocking_timeout: Seconds
     logging_config: Dict
-    loglevel: Union[str, int]
-    logfile: Union[str, IO]
-    logformat: str
+    loglevel: Optional[Union[str, int]]
+    logfile: Optional[Union[str, IO]]
+    logformat: Optional[str]
     console_port: int
-    loghandlers: List[logging.StreamHandler]
+    loghandlers: List[StreamHandler]
+    redirect_stdouts: bool
+    redirect_stdouts_level: int
 
     services: Iterable[ServiceT]
 
-    _blocking_detector: BlockingDetector = None
+    _blocking_detector: Optional[BlockingDetector] = None
 
     def __init__(
             self, *services: ServiceT,
@@ -59,11 +62,13 @@ class Worker(Service):
             loglevel: Union[str, int] = None,
             logfile: Union[str, IO] = None,
             logformat: str = None,
-            loghandlers: List[logging.StreamHandler] = None,
+            loghandlers: List[StreamHandler] = None,
+            redirect_stdouts: bool = True,
+            redirect_stdouts_level: logging.Severity = None,
             stdout: IO = sys.stdout,
             stderr: IO = sys.stderr,
             console_port: int = 50101,
-            blocking_timeout: float = None,
+            blocking_timeout: Seconds = 10.0,
             loop: asyncio.AbstractEventLoop = None,
             **kwargs: Any) -> None:
         self.services = services
@@ -73,8 +78,15 @@ class Worker(Service):
         self.loglevel = loglevel
         self.logfile = logfile
         self.logformat = logformat
-        self.loghandlers = loghandlers
+        self.loghandlers = loghandlers or []
+        self.redirect_stdouts = redirect_stdouts
+        self.redirect_stdouts_level = logging.level_number(
+            redirect_stdouts_level or 'WARN')
+        if stdout is None:
+            stdout = sys.stdout
         self.stdout = stdout
+        if stderr is None:
+            stderr = sys.stderr
         self.stderr = stderr
         self.console_port = console_port
         self.blocking_timeout = blocking_timeout
@@ -93,14 +105,22 @@ class Worker(Service):
         """Write warning to standard err."""
         self._say(msg, file=self.stderr)
 
-    def _say(self, msg: str, file: IO = None, end: str = '\n') -> None:
+    def _say(self,
+             msg: str,
+             file: Optional[IO] = None,
+             end: str = '\n') -> None:
+        if file is None:
+            file = self.stdout
         if not self.quiet:
-            print(msg, file=file or self.stdout, end=end)  # noqa: T003
+            print(msg, file=file, end=end)  # noqa: T003
 
     def on_init_dependencies(self) -> Iterable[ServiceT]:
         return self.services
 
     async def on_first_start(self) -> None:
+        await self.default_on_first_start()
+
+    async def default_on_first_start(self) -> None:
         self._setup_logging()
         await self.on_execute()
         if self.debug:
@@ -111,9 +131,12 @@ class Worker(Service):
         ...
 
     def _setup_logging(self) -> None:
+        _loglevel: int = 0
+        if self.redirect_stdouts:
+            self._redirect_stdouts()
         if self.loglevel:
             warnings.warn("deprecated", DeprecationWarning)
-            _loglevel = setup_logging(
+            _loglevel = logging.setup_logging(
                 loglevel=self.loglevel,
                 logfile=self.logfile,
                 logformat=self.logformat,
@@ -121,10 +144,14 @@ class Worker(Service):
             )
             self.on_setup_root_logger(logging.root, _loglevel)
         else:
-            configure_logging(self.logging_config)
+            logging.configure_logging(self.logging_config)
+
+    def _redirect_stdouts(self) -> None:
+        self.add_context(
+            logging.redirect_stdouts(severity=self.redirect_stdouts_level))
 
     def on_setup_root_logger(self,
-                             logger: logging.Logger,
+                             logger: Logger,
                              level: int) -> None:
         ...
 
@@ -148,7 +175,7 @@ class Worker(Service):
         self.add_future(self._cry())
 
     async def _cry(self) -> None:
-        cry(file=self.stderr)
+        logging.cry(file=self.stderr)
 
     async def _stop_on_signal(self) -> None:
         self.log.info('Stopping on signal received...')
@@ -222,7 +249,7 @@ class Worker(Service):
                 port=self.console_port,
                 loop=self.loop,
             )
-            await self.add_context(monitor)
+            await self.add_async_context(monitor)
 
     def _repr_info(self) -> str:
         return _repr(self.services)
@@ -235,4 +262,4 @@ class Worker(Service):
                 beacon=self.beacon,
                 loop=self.loop,
             )
-        return self._blocking_detector
+        return cast(BlockingDetector, self._blocking_detector)

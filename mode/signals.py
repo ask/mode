@@ -3,14 +3,29 @@ from collections import defaultdict
 from functools import partial
 from types import MethodType
 from typing import (
-    Any, Callable, Iterable, Mapping, MutableSet,
-    Optional, Set, Tuple, Type, cast, no_type_check,
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    MutableSet,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    cast,
+    no_type_check,
 )
 from weakref import ReferenceType, WeakMethod, ref
 
-from .types import (
-    BaseSignalT, FilterReceiverMapping, SignalHandlerRefT,
-    SignalHandlerT, SignalT, SyncSignalT, T, T_contra,
+from .types.signals import (
+    BaseSignalT,
+    FilterReceiverMapping,
+    SignalHandlerRefT,
+    SignalHandlerT,
+    SignalT,
+    SyncSignalT,
+    T,
+    T_contra,
 )
 from .utils.futures import maybe_async
 
@@ -18,8 +33,8 @@ __all__ = ['BaseSignal', 'Signal', 'SyncSignal']
 
 
 class BaseSignal(BaseSignalT[T]):
-    _receivers: MutableSet[SignalHandlerRefT] = None
-    _filter_receivers: FilterReceiverMapping = None
+    _receivers: MutableSet[SignalHandlerRefT]
+    _filter_receivers: FilterReceiverMapping
 
     def __init__(self, *,
                  name: str = None,
@@ -28,14 +43,14 @@ class BaseSignal(BaseSignalT[T]):
                  default_sender: Any = None,
                  receivers: MutableSet[SignalHandlerRefT] = None,
                  filter_receivers: FilterReceiverMapping = None) -> None:
-        self.name = name
+        self.name = name or ''
         self.owner = owner
         self.loop = loop
         self.default_sender = default_sender
         self._receivers = receivers if receivers is not None else set()
+        if filter_receivers is None:
+            filter_receivers = defaultdict(set)
         self._filter_receivers = filter_receivers
-        if self._filter_receivers is None:
-            self._filter_receivers = defaultdict(set)
 
     def asdict(self) -> Mapping[str, Any]:
         return {
@@ -91,7 +106,7 @@ class BaseSignal(BaseSignalT[T]):
     def connect(self, fun: SignalHandlerT = None, **kwargs: Any) -> Callable:
         if fun is not None:
             return self._connect(fun, **kwargs)
-        return partial(self._connect(fun))
+        return partial(self._connect(cast(SignalHandlerT, fun)))
 
     def _connect(self, fun: SignalHandlerT,
                  *,
@@ -146,7 +161,7 @@ class BaseSignal(BaseSignalT[T]):
         dead_refs: Set[SignalHandlerRefT] = set()
         for href in r:
             alive, value = self._is_alive(href)
-            if alive:
+            if alive and value is not None:
                 live_receivers.add(value)
             else:
                 dead_refs.add(href)
@@ -179,7 +194,10 @@ class BaseSignal(BaseSignalT[T]):
         return self.name
 
     def __repr__(self) -> str:
-        return f'<{type(self).__name__}: {self.ident}>'
+        info = ''
+        if self.default_sender:
+            info = f' sender={self.default_sender!r}'
+        return f'<{type(self).__name__}: {self.ident}{info}>'
 
 
 class Signal(BaseSignal[T], SignalT[T]):

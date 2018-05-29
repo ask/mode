@@ -4,14 +4,30 @@ from datetime import timedelta
 from functools import singledispatch
 from time import monotonic
 from types import TracebackType
-from typing import Optional, Type, Union
+from typing import Callable, Mapping, Optional, Type, Union
 
 from .compat import AsyncContextManager
 
-__all__ = ['Bucket', 'Seconds', 'TokenBucket', 'rate_limit', 'want_seconds']
+__all__ = [
+    'Bucket',
+    'Seconds',
+    'TokenBucket',
+    'rate',
+    'rate_limit',
+    'want_seconds',
+]
 
 #: Seconds can be expressed as float or :class:`~datetime.timedelta`,
-Seconds = Union[timedelta, float]
+Seconds = Union[timedelta, float, str]
+
+#: What the characters in a "rate" string means.
+#: E.g. 8/s is "eight in one second"
+RATE_MODIFIER_MAP: Mapping[str, Callable[[float], float]] = {
+    's': lambda n: n,
+    'm': lambda n: n / 60.0,
+    'h': lambda n: n / 60.0 / 60.0,
+    'd': lambda n: n / 60.0 / 60.0 / 24,
+}
 
 
 class Bucket(AsyncContextManager):
@@ -74,9 +90,9 @@ class Bucket(AsyncContextManager):
         self.raises = raises
         self.loop = loop
         self._tokens = self.capacity
-        self.on_init()
+        self.__post_init__()
 
-    def on_init(self) -> None:
+    def __post_init__(self) -> None:
         ...
 
     @abc.abstractmethod
@@ -99,7 +115,7 @@ class Bucket(AsyncContextManager):
         return self.rate
 
     async def __aenter__(self) -> 'Bucket':
-        if self.pour():
+        if not self.pour():
             if self.raises:
                 raise self.raises()
             expected_time = self.expected_time()
@@ -117,17 +133,16 @@ class TokenBucket(Bucket):
     _tokens: float
     _last_pour: float
 
-    def on_init(self) -> None:
+    def __post_init__(self) -> None:
         self._last_pour = monotonic()
 
     def pour(self, tokens: int = 1) -> bool:
         need = tokens
         have = self.tokens
-        need_to_wait = False
-        if need <= have:
-            self._tokens -= need
-            need_to_wait = True
-        return need_to_wait
+        if have < need:
+            return False
+        self._tokens -= tokens
+        return True
 
     def expected_time(self, tokens: int = 1) -> float:
         have = self._tokens
@@ -138,11 +153,35 @@ class TokenBucket(Bucket):
     @property
     def tokens(self) -> float:
         now = monotonic()
+        if now < self._last_pour:
+            return self._tokens
         if self._tokens < self.capacity:
             delta = self.fill_rate * (now - self._last_pour)
             self._tokens = min(self.capacity, self._tokens + delta)
-        self._last_pour = now
+            self._last_pour = now
         return self._tokens
+
+
+@singledispatch
+def rate(r: float) -> float:
+    """Convert rate string (`"100/m"`, `"2/h"` or `"0.5/s"`) to seconds."""
+    return r
+
+
+@rate.register(str)
+def _(r: str) -> float:  # noqa: F811
+    ops, _, modifier = r.partition('/')
+    return RATE_MODIFIER_MAP[modifier or 's'](float(ops)) or 0
+
+
+@rate.register(int)  # noqa: F811
+def _(r: int) -> float:
+    return float(r)
+
+
+@rate.register(type(None))  # noqa: F811
+def _(r: type(None)) -> float:
+    return 0.0
 
 
 def rate_limit(rate: float, over: Seconds = 1.0,
@@ -159,6 +198,11 @@ def want_seconds(s: float) -> float:
     return s
 
 
-@want_seconds.register(timedelta)
+@want_seconds.register(str)  # noqa: F811
+def _(s: str) -> float:
+    return rate(s)
+
+
+@want_seconds.register(timedelta)  # noqa: F811
 def _(s: timedelta) -> float:
     return s.total_seconds()

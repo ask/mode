@@ -39,4 +39,4 @@ With pip
 You can install the latest snapshot of Mode using the following
 pip command::
 
-    $ pip install https://github.com/fauststream/Mode/zipball/master#egg=mode
+    $ pip install https://github.com/ask/mode/zipball/master#egg=mode

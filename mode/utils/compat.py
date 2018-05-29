@@ -5,8 +5,20 @@ import typing
 import _collections_abc
 from types import TracebackType
 from typing import (
-    Any, AnyStr, ContextManager, Dict, Generic, IO, KT,
-    MutableMapping, MutableSequence, Optional, T, T_co, Type, VT,
+    Any,
+    AnyStr,
+    ContextManager,
+    Dict,
+    Generic,
+    IO,
+    KT,
+    MutableMapping,
+    MutableSequence,
+    Optional,
+    T,
+    T_co,
+    Type,
+    VT,
 )
 
 __all__ = [

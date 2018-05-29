@@ -1,6 +1,6 @@
 from typing import Any
-from unittest.mock import Mock
 from mode.signals import Signal, SignalT, SyncSignal, SyncSignalT
+from mode.utils.mocks import Mock
 import pytest
 
 

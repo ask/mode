@@ -10,6 +10,7 @@ except ImportError:
         'Gevent loop requires the gevent library: '
         'pip install gevent') from None
 gevent.monkey.patch_all()
+from typing import Optional, cast  # noqa: F401
 
 try:
     import psycopg2  # noqa: F401
@@ -37,15 +38,16 @@ if asyncio._get_running_loop() is not None:
     raise RuntimeError('Event loop created before importing gevent loop!')
 
 
-class Policy(aiogevent.EventLoopPolicy):
-    _loop: asyncio.AbstractEventLoop = None
+class Policy(aiogevent.EventLoopPolicy):  # type: ignore
+    _loop: Optional[asyncio.AbstractEventLoop] = None
 
     def get_event_loop(self) -> asyncio.AbstractEventLoop:
         # aiogevent raises an error here current_thread() is not MainThread,
         # but gevent monkey patches current_thread, so it's not a good check.
-        if self._loop is None:
-            self._loop = self.new_event_loop()
-        return self._loop
+        loop = self._loop
+        if loop is None:
+            loop = self._loop = self.new_event_loop()
+        return cast(asyncio.AbstractEventLoop, loop)
 
 
 policy = Policy()

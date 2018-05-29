@@ -3,7 +3,7 @@ from typing import Any
 import gevent.core
 
 
-class Loop(gevent.core.loop):
+class Loop(gevent.core.loop):  # type: ignore
     _aioloop_loop = None
 
     def run_callback(self, *args: Any, **kwargs: Any) -> None:

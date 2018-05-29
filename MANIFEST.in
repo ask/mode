@@ -7,7 +7,7 @@ include setup.py
 recursive-include docs *
 recursive-include extra/*
 recursive-include examples *
-recursive-include mode *.py *.html
+recursive-include mode *.py *.html *.typed
 recursive-include requirements *.txt *.rst
 
 recursive-exclude * __pycache__

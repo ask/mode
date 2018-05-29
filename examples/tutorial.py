@@ -82,7 +82,7 @@ class Webserver(ServiceThread):
 class UserCache(Service):
     _cache: MutableMapping[str, User]
 
-    def on_init(self):
+    def __post_init__(self):
         self._cache = {}
 
     async def lookup(self, user_id: str) -> User:
@@ -133,10 +133,11 @@ class App(ServiceProxy):
         self.web_port = web_port
         self.web_bind = web_bind
         self.websocket_port = websocket_port
+        super().__init__(**kwargs)
 
     @cached_property
     def _service(self) -> ServiceT:
-        return AppService(self)
+        return AppService(self, loop=self.loop)
 
     @cached_property
     def websockets(self) -> Websockets:

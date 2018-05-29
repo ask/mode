@@ -1,5 +1,5 @@
-from unittest.mock import Mock, patch
 from mode.worker import Worker
+from mode.utils.mocks import Mock, patch
 import pytest
 
 

@@ -124,6 +124,8 @@ setup(
     keywords='asyncio service bootsteps graph coroutine',
     packages=find_packages(exclude=['ez_setup', 'tests', 'tests.*']),
     include_package_data=True,
+    # PEP-561: https://www.python.org/dev/peps/pep-0561/
+    package_data={'mode': ['py.typed']},
     zip_safe=False,
     install_requires=reqs('default.txt'),
     tests_require=reqs('test.txt'),
