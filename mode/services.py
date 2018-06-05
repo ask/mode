@@ -589,6 +589,16 @@ class Service(ServiceBase, ServiceCallbacks):
             await self._wait_stopped(timeout=timeout)
             return WaitResult(None, True)
 
+    async def wait_many(self, coros: Iterable[WaitArgT],
+                        *,
+                        timeout: Seconds = None) -> WaitResult:
+        coro = asyncio.wait(
+            coros,
+            return_when=asyncio.ALL_COMPLETED,
+            timeout=timeout,
+        )
+        return await self._wait_one(coro, timeout=timeout)
+
     async def _wait_one(self, coro: WaitArgT,
                         *,
                         timeout: Seconds = None) -> WaitResult:
