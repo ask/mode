@@ -4,6 +4,15 @@
  Change history
 ================
 
+.. _version-1.14.0:
+
+1.14.0
+======
+:release-date: 2018-06-05 12:13 P.M PDT
+:release-by: Ask Solem
+
+- Adds method ``Service.wait_many(futures, *, timeout=None)``
+
 .. _version-1.13.0:
 
 1.13.0
