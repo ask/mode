@@ -83,11 +83,11 @@ class TestFeedController:
             'disable_existing_loggers': True,
             'formatters': {
                 'simple': {
-                    'format': '[%(asctime)s: %(levelname)s]: %(message)s'
+                    'format': '[%(asctime)s: %(levelname)s]: %(message)s',
                 },
                 'colored': {
                     '()': 'colorlog.ColoredFormatter',
-                    'format': "%(log_color)s%(levelname)-8s%(reset)s %(white)s%(message)s",
+                    'format': logging.DEFAULT_COLOR_FORMAT,
                 },
             },
             'handlers': {
@@ -107,9 +107,9 @@ class TestFeedController:
                     'handlers': ['console', 'mode.worker'],
                     'level': 'INFO',
                     'propagate': False,
-                }
-            }
-        }
+                },
+            },
+        },
     ])
     def test_configure_logging(self, logging_config):
         logging.configure_logging(logging_config)

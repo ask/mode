@@ -60,7 +60,7 @@ DEFAULT_FORMAT: str = """\
 [%(asctime)s: %(levelname)s]: %(log_color)s%(message)s\
 """
 
-DEFAULT_DICTCONFIG_FORMAT = """\
+DEFAULT_COLOR_FORMAT = """\
 %(log_color)s%(levelname)-8s%(reset)s %(white)s%(message)s\
 """
 
@@ -80,7 +80,7 @@ DEFAULT_LOGGING = {
         },
         'colored': {
             '()': 'colorlog.ColoredFormatter',
-            'format': DEFAULT_DICTCONFIG_FORMAT,
+            'format': DEFAULT_COLOR_FORMAT,
             'log_colors': DEFAULT_COLORS,
         },
     },

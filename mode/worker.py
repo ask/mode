@@ -1,4 +1,5 @@
 import asyncio
+import logging as _logging
 import reprlib
 import signal
 import sys
@@ -142,7 +143,7 @@ class Worker(Service):
                 logformat=self.logformat,
                 loghandlers=self.loghandlers,
             )
-            self.on_setup_root_logger(logging.root, _loglevel)
+            self.on_setup_root_logger(_logging.root, _loglevel)
         else:
             logging.configure_logging(self.logging_config)
 
