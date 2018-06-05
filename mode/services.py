@@ -593,7 +593,7 @@ class Service(ServiceBase, ServiceCallbacks):
                         *,
                         timeout: Seconds = None) -> WaitResult:
         coro = asyncio.wait(
-            coros,
+            cast(Iterable[Awaitable[Any]], coros),
             return_when=asyncio.ALL_COMPLETED,
             timeout=timeout,
         )
