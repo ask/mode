@@ -794,7 +794,6 @@ class Service(ServiceBase, ServiceCallbacks):
                 # _futures non-empty when loop starts,
                 # but empty when asyncio.wait receives it.
 
-
     async def restart(self) -> None:
         """Restart this service."""
         self.restart_count += 1
