@@ -1,4 +1,4 @@
-:Version: 1.13.0
+:Version: 1.14.1
 :Web: http://mode.readthedocs.org/
 :Download: http://pypi.python.org/pypi/mode
 :Source: http://github.com/ask/mode

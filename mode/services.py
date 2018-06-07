@@ -589,6 +589,16 @@ class Service(ServiceBase, ServiceCallbacks):
             await self._wait_stopped(timeout=timeout)
             return WaitResult(None, True)
 
+    async def wait_many(self, coros: Iterable[WaitArgT],
+                        *,
+                        timeout: Seconds = None) -> WaitResult:
+        coro = asyncio.wait(
+            cast(Iterable[Awaitable[Any]], coros),
+            return_when=asyncio.ALL_COMPLETED,
+            timeout=timeout,
+        )
+        return await self._wait_one(coro, timeout=timeout)
+
     async def _wait_one(self, coro: WaitArgT,
                         *,
                         timeout: Seconds = None) -> WaitResult:
@@ -752,31 +762,37 @@ class Service(ServiceBase, ServiceCallbacks):
         await self._default_stop_futures()
 
     async def _default_stop_futures(self) -> None:
+        await self._wait_for_futures(timeout=0)
         for future in self._futures:
             future.cancel()
         await self._gather_futures()
 
-    async def _gather_futures(self) -> None:
+    async def _gather_futures(self, *, timeout: float = None) -> None:
         while self._futures:
             # Gather all futures added via .add_future
+            try:
+                await self._wait_for_futures(timeout=timeout)
+            except asyncio.CancelledError:
+                continue
+            else:
+                break
+        self._futures.clear()
+
+    async def _wait_for_futures(self, *, timeout: float = None) -> None:
+        if self._futures:
             try:
                 await asyncio.shield(asyncio.wait(
                     self._futures,
                     return_when=asyncio.ALL_COMPLETED,
                     loop=self.loop,
+                    timeout=timeout,
                 ))
-            except asyncio.CancelledError:
-                continue
             except ValueError:
                 if self._futures:
                     raise
                 # race condition:
                 # _futures non-empty when loop starts,
                 # but empty when asyncio.wait receives it.
-                break
-            else:
-                break
-        self._futures.clear()
 
     async def restart(self) -> None:
         """Restart this service."""

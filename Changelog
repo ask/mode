@@ -4,6 +4,26 @@
  Change history
 ================
 
+.. _version-1.14.1:
+
+1.14.1
+======
+:release-date: 2018-06-06 1:26 P.M PDT
+:release-by: Ask Solem
+
+- Service: Fixed "coroutine x was never awaited" for background
+  tasks (``@Service.task`` decorator) when service is started and stopped
+  in quick succession.
+
+.. _version-1.14.0:
+
+1.14.0
+======
+:release-date: 2018-06-05 12:13 P.M PDT
+:release-by: Ask Solem
+
+- Adds method ``Service.wait_many(futures, *, timeout=None)``
+
 .. _version-1.13.0:
 
 1.13.0
