@@ -4,7 +4,6 @@ import reprlib
 import signal
 import sys
 import typing
-import warnings
 from contextlib import suppress
 from logging import Logger, StreamHandler
 from typing import Any, Dict, IO, Iterable, List, Optional, Tuple, Union, cast
@@ -42,10 +41,9 @@ class Worker(Service):
     debug: bool
     quiet: bool
     blocking_timeout: Seconds
-    logging_config: Dict
+    logging_config: Optional[Dict]
     loglevel: Optional[Union[str, int]]
     logfile: Optional[Union[str, IO]]
-    logformat: Optional[str]
     console_port: int
     loghandlers: List[StreamHandler]
     redirect_stdouts: bool
@@ -62,13 +60,12 @@ class Worker(Service):
             logging_config: Dict = None,
             loglevel: Union[str, int] = None,
             logfile: Union[str, IO] = None,
-            logformat: str = None,
-            loghandlers: List[StreamHandler] = None,
             redirect_stdouts: bool = True,
             redirect_stdouts_level: logging.Severity = None,
             stdout: IO = sys.stdout,
             stderr: IO = sys.stderr,
             console_port: int = 50101,
+            loghandlers: List[StreamHandler] = None,
             blocking_timeout: Seconds = 10.0,
             loop: asyncio.AbstractEventLoop = None,
             **kwargs: Any) -> None:
@@ -78,7 +75,6 @@ class Worker(Service):
         self.logging_config = logging_config
         self.loglevel = loglevel
         self.logfile = logfile
-        self.logformat = logformat
         self.loghandlers = loghandlers or []
         self.redirect_stdouts = redirect_stdouts
         self.redirect_stdouts_level = logging.level_number(
@@ -133,19 +129,24 @@ class Worker(Service):
 
     def _setup_logging(self) -> None:
         _loglevel: int = 0
-        if self.redirect_stdouts:
-            self._redirect_stdouts()
-        if self.loglevel:
-            warnings.warn("deprecated", DeprecationWarning)
+        try:
             _loglevel = logging.setup_logging(
                 loglevel=self.loglevel,
                 logfile=self.logfile,
-                logformat=self.logformat,
+                logging_config=self.logging_config,
                 loghandlers=self.loghandlers,
             )
-            self.on_setup_root_logger(_logging.root, _loglevel)
-        else:
-            logging.configure_logging(self.logging_config)
+        except Exception as exc:
+            try:
+                sys.stderr.write(f'CANNOT SETUP LOGGING: {exc!r} from ')
+                import traceback
+                traceback.print_stack(file=sys.stderr)
+            except Exception as exc:
+                pass
+            raise
+        self.on_setup_root_logger(_logging.root, _loglevel)
+        if self.redirect_stdouts:
+            self._redirect_stdouts()
 
     def _redirect_stdouts(self) -> None:
         self.add_context(

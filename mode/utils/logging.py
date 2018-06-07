@@ -56,13 +56,8 @@ __all__ = [
 ]
 
 DEVLOG: bool = bool(os.environ.get('DEVLOG', ''))
-DEFAULT_FORMAT: str = """\
-[%(asctime)s: %(levelname)s]: %(log_color)s%(message)s\
-"""
-
-DEFAULT_COLOR_FORMAT = """\
-%(log_color)s%(levelname)-8s%(reset)s %(white)s%(message)s\
-"""
+DEFAULT_FORMAT: str = '[%(asctime)s: %(levelname)s]: %(message)s'
+DEFAULT_COLOR_FORMAT = '[%(asctime)s: %(levelname)s]: %(log_color)s%(message)s'
 
 DEFAULT_COLORS = {
     **colorlog.default_log_colors,
@@ -70,44 +65,43 @@ DEFAULT_COLORS = {
     'DEBUG': 'blue',
 }
 
-DEFAULT_LOGGING = {
-    'version': 1,
-    # disable existing loggers from other modules.
-    'disable_existing_loggers': True,
-    'formatters': {
-        'simple': {
-            'format': '[%(asctime)s: %(levelname)s]: %(message)s',
-        },
-        'colored': {
-            '()': 'colorlog.ColoredFormatter',
-            'format': DEFAULT_COLOR_FORMAT,
-            'log_colors': DEFAULT_COLORS,
-        },
+
+DEFAULT_FORMATTERS = {
+    'default': {
+        'format': '[%(asctime)s: %(levelname)s]: %(message)s',
     },
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'mode.worker': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'colored',
-        },
-    },
-    'loggers': {
-        '': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-        'mode.worker': {
-            'handlers': ['mode.worker'],
-            'level': 'INFO',
-            'propagate': False,
-        },
+    'colored': {
+        '()': 'mode.utils.logging.ExtensionFormatter',
+        'format': DEFAULT_COLOR_FORMAT,
+        'log_colors': DEFAULT_COLORS,
     },
 }
+
+
+def _logger_config(handlers: List[str],
+                   level: Union[str, int] = 'INFO') -> Dict:
+    return {
+        'handlers': handlers,
+        'level': level,
+    }
+
+
+def create_logconfig(version: int = 1,
+                     disable_existing_loggers: bool = False,
+                     formatters: Dict = DEFAULT_FORMATTERS,
+                     handlers: Dict = None,
+                     root: Dict = None) -> Dict:
+    return {
+        'version': version,
+        # do not disable existing loggers from other modules.
+        # see https://www.caktusgroup.com/blog/2015/01/27/
+        #    Django-Logging-Configuration-logging_config-default-settings-logger/
+        'disable_existing_loggers': disable_existing_loggers,
+        'formatters': formatters,
+        'handlers': handlers,
+        'root': root,
+    }
+
 
 #: Set by ``setup_logging`` if logging target file is a TTY.
 LOG_ISATTY: bool = False
@@ -241,19 +235,12 @@ def _(loglevel: str) -> int:
     return logging.getLevelName(loglevel.upper())  # type: ignore
 
 
-def configure_logging(logging_config: Dict) -> None:
-    if logging_config is None:
-        logging_config = DEFAULT_LOGGING
-    logging.config.dictConfig(logging_config)
-
-
 def setup_logging(
         *,
         loglevel: Union[str, int] = None,
         logfile: Union[str, IO] = None,
-        logformat: str = None,
         loghandlers: List[logging.StreamHandler] = None,
-        log_colors: Mapping[str, str] = DEFAULT_COLORS) -> int:
+        logging_config: Dict = None) -> int:
     """Setup logging to file/stream."""
     stream: IO = None
     _loglevel: int = level_number(loglevel)
@@ -273,42 +260,50 @@ def setup_logging(
         level=_loglevel,
         filename=logfile,
         stream=stream,
-        format=logformat or DEFAULT_FORMAT,
-        log_colors=log_colors,
-        handlers=loghandlers,
+        logging_config=logging_config,
+        loghandlers=loghandlers,
     )
     return _loglevel
 
 
 def _setup_logging(*,
+                   level: Union[int, str] = None,
                    filename: str = None,
                    stream: IO = None,
-                   format: str = DEFAULT_FORMAT,
-                   log_colors: Mapping[str, str] = DEFAULT_COLORS,
-                   handlers: List[logging.StreamHandler] = None,
-                   **kwargs: Any) -> None:
+                   loghandlers: List[logging.StreamHandler] = None,
+                   logging_config: Dict = None) -> None:
     if filename:
         assert stream is None
-        logging.basicConfig(filename=filename, **kwargs)
-    if stream:
-        assert filename is None
-        handlers = handlers or []
-        handlers.append(_setup_console_handler(
-            stream=stream,
-            format=format,
-            log_colors=log_colors,
-        ))
-        logging.basicConfig(handlers=handlers, **kwargs)
-
-
-def _setup_console_handler(*,
-                           stream: IO = None,
-                           format: str = DEFAULT_FORMAT,
-                           log_colors: Mapping[str, str] = DEFAULT_COLORS):
-    console_handler = colorlog.StreamHandler(stream)
-    formatter = ExtensionFormatter(format, log_colors=log_colors)
-    console_handler.setFormatter(formatter)
-    return console_handler
+        handlers = {
+            'default': {
+                'level': level,
+                'class': 'logging.FileHandler',
+                'formatter': 'default',
+                'filename': filename,
+            },
+        }
+    elif stream:
+        handlers = {
+            'default': {
+                'level': level,
+                'class': 'colorlog.StreamHandler',
+                'formatter': 'colored',
+            },
+        }
+    config = create_logconfig(handlers=handlers, root={
+        'level': level,
+        'handlers': ['default'],
+    })
+    if logging_config is None:
+        logging_config = config
+    elif logging_config.pop('merge', False):
+        logging_config = {**config, **logging_config}
+        for k in ('formatters', 'filters', 'handlers', 'loggers', 'root'):
+            logging_config[k] = {**config.get(k, {}),
+                                 **logging_config.get(k, {})}
+    logging.config.dictConfig(logging_config)
+    if loghandlers is not None:
+        logging.root.handlers.extend(loghandlers)
 
 
 class Logwrapped(object):

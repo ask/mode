@@ -3,10 +3,11 @@ from mode.utils.mocks import Mock, patch
 import pytest
 
 
-class TestWorker:
+class test_Worker:
 
         def setup_method(self, method):
-            self.setup_logging_patch = patch("mode.worker.setup_logging")
+            self.setup_logging_patch = patch(
+                'mode.utils.logging.setup_logging')
             self.setup_logging = self.setup_logging_patch.start()
 
         def teardown_method(self):
@@ -22,23 +23,13 @@ class TestWorker:
             worker_inst = Worker(
                 loglevel=5,
                 logfile="TEMP",
-                logformat="LOGFORMAT",
+                logging_config=None,
                 loghandlers=loghandlers,
             )
             worker_inst._setup_logging()
             self.setup_logging.assert_called_once_with(
                 loglevel=5,
                 logfile="TEMP",
-                logformat="LOGFORMAT",
-                loghandlers=loghandlers,
+                logging_config=None,
+                loghandlers=loghandlers or [],
             )
-
-        def test_setup_logging_no_log_level(self):
-            mock_log_handler = Mock()
-            worker_inst = Worker(
-                logfile="TEMP",
-                logformat="LOGFORMAT",
-                loghandlers=[mock_log_handler],
-            )
-            worker_inst._setup_logging()
-            self.setup_logging.assert_not_called()
