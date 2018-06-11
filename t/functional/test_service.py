@@ -1,6 +1,7 @@
 import asyncio
 from typing import ContextManager
 from mode.utils.compat import AsyncContextManager
+from mode.utils.mocks import AsyncMock
 import mode
 import pytest
 
@@ -232,3 +233,86 @@ async def test_wait__when_crashed():
         assert await service.wait_for_stopped(fut)
 
         fut2.cancel()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('latency', [
+    0.0, 0.1, 0.5
+])
+async def test_concurrent_start_stop(latency):
+
+    class Service(mode.Service):
+        got_cancel_on = None
+
+        def __post_init__(self) -> None:
+            self.progress1 = AsyncMock(name='progress1')
+            self.progress2 = AsyncMock(name='progress2')
+            self.progress3 = AsyncMock(name='progress3')
+
+        async def on_start(self) -> None:
+            try:
+                await asyncio.sleep(0.08)
+                await self.progress1()
+            except asyncio.CancelledError:
+                self.got_cancel_on = 1
+                raise
+
+            try:
+                await asyncio.sleep(0.3)
+                await self.progress2()
+            except asyncio.CancelledError:
+                self.got_cancel_on = 2
+                raise
+
+            try:
+                await asyncio.sleep(1.0)
+                await self.progress3()
+            except asyncio.CancelledError:
+                self.got_cancel_on = 3
+                raise
+
+    service = Service()
+
+    class Starter(mode.Service):
+
+        async def on_start(self) -> None:
+            await service.start()
+
+    class Stopper(mode.Service):
+
+        async def on_start(self) -> None:
+            await service.stop()
+
+    starter = Starter()
+    stopper = Stopper()
+
+    fut1 = asyncio.ensure_future(starter.start())
+    await asyncio.sleep(latency)
+    fut2 = asyncio.ensure_future(stopper.start())
+
+    await service.wait_until_stopped()
+
+    if latency < 1.0:
+        service.progress3.assert_not_called()
+    else:
+        service.progress3.assert_called_once_with()
+    if latency < 0.5:
+        service.progress2.assert_not_called()
+    else:
+        service.progress2.assert_called_once_with()
+    if latency < 0.1:
+        service.progress1.assert_not_called()
+    else:
+        service.progress1.assert_called_once_with()
+
+    if latency >= 1.0:
+        assert service.got_cancel_on == 3
+    elif latency >= 0.5:
+        assert service.got_cancel_on == 3
+    elif latency >= 0.1:
+        assert service.got_cancel_on == 2
+    elif latency >= 0.0:
+        assert service.got_cancel_on == 1
+
+    await fut1
+    await fut2

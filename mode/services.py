@@ -361,6 +361,8 @@ class Service(ServiceBase, ServiceCallbacks):
     # calling service.start() again will add the future again.
     _futures: Set[asyncio.Future]
 
+    _pending_start: Optional[asyncio.Future] = None
+
     #: The ``@Service.task`` decorator adds names of attributes
     #: that are ServiceTasks to this list (which is a class variable).
     _tasks: ClassVar[Optional[Dict[str, Set[str]]]] = None
@@ -654,7 +656,13 @@ class Service(ServiceBase, ServiceCallbacks):
         assert self._crashed.is_set() or self._stopped.is_set()
 
     async def start(self) -> None:
-        await self._default_start()
+        self._pending_start = asyncio.ensure_future(self._default_start())
+        try:
+            await self._pending_start
+        except asyncio.CancelledError:
+            pass
+        finally:
+            self._pending_start = None
 
     async def _default_start(self) -> None:
         """Start the service."""
@@ -663,26 +671,16 @@ class Service(ServiceBase, ServiceCallbacks):
         if not self.restart_count:
             self._children.extend(self.on_init_dependencies())
             await self.on_first_start()
-        if self.should_stop:
-            return
         self.exit_stack.__enter__()
         await self.async_exit_stack.__aenter__()
         try:
-            if self.should_stop:
-                return
             self.log.info('Starting...')
             await self.on_start()
-            if self.should_stop:
-                return
             for task in self._get_tasks():
                 self.add_future(task.fun(self))
             for child in self._children:
                 if child is not None:
                     await child.maybe_start()
-                if self.should_stop:
-                    return
-            if self.should_stop:
-                return
             self.log.debug('Started.')
             await self.on_started()
         except BaseException as exc:
@@ -742,6 +740,10 @@ class Service(ServiceBase, ServiceCallbacks):
     async def stop(self) -> None:
         """Stop the service."""
         if not self._stopped.is_set():
+            pending_start = self._pending_start
+            if pending_start is not None and not pending_start.done():
+                pending_start.cancel()
+
             self.log.info('Stopping...')
             self._stopped.set()
             await self.on_stop()
@@ -806,6 +808,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     async def restart(self) -> None:
         """Restart this service."""
+        await self.stop()
         self.service_reset()
         await self.on_restart()
         await self.start()
@@ -817,7 +820,6 @@ class Service(ServiceBase, ServiceCallbacks):
                    self._shutdown,
                    self._crashed):
             ev.clear()
-        await self.stop()
         self._crash_reason = None
         for child in self._children:
             if child is not None:
