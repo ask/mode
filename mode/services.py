@@ -805,6 +805,8 @@ class Service(ServiceBase, ServiceCallbacks):
                 # race condition:
                 # _futures non-empty when loop starts,
                 # but empty when asyncio.wait receives it.
+            except asyncio.CancelledError:
+                pass
 
     async def restart(self) -> None:
         """Restart this service."""
