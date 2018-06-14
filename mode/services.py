@@ -656,7 +656,12 @@ class Service(ServiceBase, ServiceCallbacks):
         assert self._crashed.is_set() or self._stopped.is_set()
 
     async def start(self) -> None:
-        self._pending_start = asyncio.ensure_future(self._default_start())
+        await self._default_start()
+
+    async def _default_start(self) -> None:
+        assert not self._started.is_set()
+        self._started.set()
+        self._pending_start = asyncio.ensure_future(self._actually_start())
         try:
             await self._pending_start
         except asyncio.CancelledError:
@@ -664,10 +669,8 @@ class Service(ServiceBase, ServiceCallbacks):
         finally:
             self._pending_start = None
 
-    async def _default_start(self) -> None:
+    async def _actually_start(self) -> None:
         """Start the service."""
-        assert not self._started.is_set()
-        self._started.set()
         if not self.restart_count:
             self._children.extend(self.on_init_dependencies())
             await self.on_first_start()
