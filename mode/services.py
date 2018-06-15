@@ -361,8 +361,6 @@ class Service(ServiceBase, ServiceCallbacks):
     # calling service.start() again will add the future again.
     _futures: Set[asyncio.Future]
 
-    _pending_start: Optional[asyncio.Future] = None
-
     #: The ``@Service.task`` decorator adds names of attributes
     #: that are ServiceTasks to this list (which is a class variable).
     _tasks: ClassVar[Optional[Dict[str, Set[str]]]] = None
@@ -574,7 +572,7 @@ class Service(ServiceBase, ServiceCallbacks):
         try:
             await asyncio.wait_for(
                 self._stopped.wait(), timeout=want_seconds(n), loop=self.loop)
-        except (asyncio.CancelledError, asyncio.TimeoutError):
+        except asyncio.TimeoutError:
             pass
 
     async def wait_for_stopped(self, *coros: WaitArgT,
@@ -661,13 +659,7 @@ class Service(ServiceBase, ServiceCallbacks):
     async def _default_start(self) -> None:
         assert not self._started.is_set()
         self._started.set()
-        self._pending_start = asyncio.ensure_future(self._actually_start())
-        try:
-            await self._pending_start
-        except asyncio.CancelledError:
-            pass
-        finally:
-            self._pending_start = None
+        await self._actually_start()
 
     async def _actually_start(self) -> None:
         """Start the service."""
@@ -695,7 +687,7 @@ class Service(ServiceBase, ServiceCallbacks):
         try:
             await task
         except asyncio.CancelledError:
-            self.log.debug('Terminating cancelled task: %r', task)
+            self.log.info('Terminating cancelled task: %r', task)
         except RuntimeError as exc:
             if 'Event loop is closed' in str(exc):
                 self.log.info('Cancelled task %r: %s', task, exc)
@@ -743,10 +735,6 @@ class Service(ServiceBase, ServiceCallbacks):
     async def stop(self) -> None:
         """Stop the service."""
         if not self._stopped.is_set():
-            pending_start = self._pending_start
-            if pending_start is not None and not pending_start.done():
-                pending_start.cancel()
-
             self.log.info('Stopping...')
             self._stopped.set()
             await self.on_stop()
