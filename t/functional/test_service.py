@@ -1,7 +1,6 @@
 import asyncio
 from typing import ContextManager
 from mode.utils.compat import AsyncContextManager
-from mode.utils.mocks import AsyncMock
 import mode
 import pytest
 

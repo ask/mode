@@ -1,4 +1,3 @@
-import logging as sys_logging
 from mode.utils import logging
 from mode.utils.logging import get_logger
 from mode.utils.mocks import ANY, Mock, patch
@@ -41,4 +40,5 @@ class test_FeedController:
         mock_handler = Mock()
         logging._setup_logging(stream=Mock(), loghandlers=[mock_handler])
         self.logging.config.dictConfig.assert_called_once_with(ANY)
-        self.logging.root.handlers.extend.assert_called_once_with([mock_handler])
+        self.logging.root.handlers.extend.assert_called_once_with(
+            [mock_handler])
