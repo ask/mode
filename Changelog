@@ -4,6 +4,25 @@
  Change history
 ================
 
+.. _version-1.14.2:
+
+1.15.0
+======
+:release-date: 2016-06-14 7:25 P.M PDT
+:release-by: Ask Solem
+
+- Worker: Logging can now be set up using dictionary config, by passing
+  the ``logging_config`` argument to :class:`mode.Worker`.
+
+    Contributed by Allison Wang.
+
+- Worker: No longer supports the ``logformat`` argument.
+
+    To set up custom log format you must now pass in dict configuration
+    via the ``logging_config`` argument.
+
+- Service: ``start()`` accidentally silenced :exc:`asyncio.CancelledError`.
+
 .. _version-1.14.1:
 
 1.14.1
