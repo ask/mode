@@ -128,7 +128,6 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
             to_start: List[ServiceT] = []
             to_restart: List[ServiceT] = []
             for service in services:
-                assert service.supervisor
                 if service.started:
                     if not self.service_operational(service):
                         to_restart.append(service)
