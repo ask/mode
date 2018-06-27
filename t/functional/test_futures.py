@@ -4,8 +4,6 @@ from mode.utils.futures import StampedeWrapper
 from mode.utils.mocks import Mock
 
 
-
-
 @pytest.mark.asyncio
 async def test_StampedeWrapper_concurrent():
     t = Mock()
@@ -35,12 +33,7 @@ async def test_StampedeWrapper_sequential():
 
     x = StampedeWrapper(wrapped)
 
-    for i in range(10):
+    for _ in range(10):
         assert await x() is t.return_value
 
     assert t.call_count == 10
-
-
-
-
-
