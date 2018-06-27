@@ -4,11 +4,9 @@
  Change history
 ================
 
-.. _version-1.14.2:
-
 1.15.0
 ======
-:release-date: 2016-06-14 7:25 P.M PDT
+:release-date: 2018-06-27 1:39 P.M PDT
 :release-by: Ask Solem
 
 - Worker: Logging can now be set up using dictionary config, by passing
@@ -22,6 +20,9 @@
     via the ``logging_config`` argument.
 
 - Service: ``start()`` accidentally silenced :exc:`asyncio.CancelledError`.
+
+- Service: Invalid assert caused :class:`~mode.CrashingSupervisor` to
+  crash with strange error
 
 .. _version-1.14.1:
 
