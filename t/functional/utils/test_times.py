@@ -2,7 +2,7 @@ import asyncio
 from datetime import timedelta
 from time import monotonic
 import pytest
-from mode.utils.times import rate_limit, want_seconds
+from mode.utils.times import humanize_seconds, rate_limit, want_seconds
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -58,3 +58,23 @@ async def test_rate_limit_raising():
         for _ in range(20):
             async with bucket:
                 pass
+
+
+@pytest.mark.parametrize('seconds,expected', [
+    (4 * 60 * 60 * 24, '4.00 days'),
+    (1 * 60 * 60 * 24, '1.00 day'),
+    (4 * 60 * 60, '4.00 hours'),
+    (1 * 60 * 60, '1.00 hour'),
+    (4 * 60, '4.00 minutes'),
+    (1 * 60, '1.00 minute'),
+    (4, '4.00 seconds'),
+    (1, '1.00 second'),
+    (4.3567631221, '4.36 seconds'),
+    (0, 'now'),
+])
+def test_humanize_seconds(seconds, expected):
+    assert humanize_seconds(seconds) == expected
+
+
+def test_humanize_seconds__prefix():
+    assert humanize_seconds(4, prefix='about ') == 'about 4.00 seconds'
