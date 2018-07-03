@@ -1,9 +1,19 @@
+import abc
+import sys
 from typing import Generic
 from mode import Service, ServiceT
 from mode.services import ServiceBase, ServiceCallbacks
-from mode.utils.compat import AsyncContextManager
 from mode.utils.objects import cached_property, iter_mro_reversed
+from mode.utils.mocks import ANY
 import pytest
+
+PY37 = sys.version_info >= (3, 7)
+
+EXTRA_GENERIC_INHERITS_FROM = []
+if PY37:
+    # typing.Generic started inheriting from abc.ABC in Python 3.7.0,
+    # so this is needed for iter_mro_reversed test below.
+    EXTRA_GENERIC_INHERITS_FROM = [abc.ABC]
 
 
 class D(Service):
@@ -27,11 +37,15 @@ class A(B):
     (B, Service, [D, C, B]),
     (C, Service, [D, C]),
     (D, Service, [D]),
-    (A, object, [
-        ServiceCallbacks, Generic, AsyncContextManager,
-        ServiceT, ServiceBase, Service,
-        D, C, B, A,
-    ]),
+    (A,
+     object,
+     ([ServiceCallbacks, Generic] +
+      EXTRA_GENERIC_INHERITS_FROM +
+      [ANY,
+       ServiceT,
+       ServiceBase,
+       Service,
+       D, C, B, A])),
     (A, B, [A]),
     (A, C, [B, A]),
     (A, D, [C, B, A]),
