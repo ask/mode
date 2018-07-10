@@ -128,7 +128,6 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
             to_start: List[ServiceT] = []
             to_restart: List[ServiceT] = []
             for service in services:
-                assert service.supervisor
                 if service.started:
                     if not self.service_operational(service):
                         to_restart.append(service)
@@ -150,14 +149,14 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
                     raise
                 except Exception as exc:
                     self.log.exception(
-                        'Cannot stop service %r: %r', service, exc)
+                        'Unable to stop service %r: %r', service, exc)
 
     async def start_services(self, services: List[ServiceT]) -> None:
         for service in services:
             await self.start_service(service)
 
     async def start_service(self, service: ServiceT) -> None:
-        await service.start()
+        await service.maybe_start()
 
     async def restart_services(self, services: List[ServiceT]) -> None:
         for service in services:

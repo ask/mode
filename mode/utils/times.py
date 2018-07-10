@@ -4,8 +4,9 @@ from datetime import timedelta
 from functools import singledispatch
 from time import monotonic
 from types import TracebackType
-from typing import Callable, Mapping, Optional, Type, Union
+from typing import Callable, List, Mapping, NamedTuple, Optional, Type, Union
 
+from .text import pluralize
 from .compat import AsyncContextManager
 
 __all__ = [
@@ -19,6 +20,20 @@ __all__ = [
 
 #: Seconds can be expressed as float or :class:`~datetime.timedelta`,
 Seconds = Union[timedelta, float, str]
+
+
+class Unit(NamedTuple):
+    name: str
+    value: float
+    format: Callable[[float], str]  # noqa: E701
+
+
+TIME_UNITS: List[Unit] = [
+    Unit('day', 60 * 60 * 24.0, lambda n: format(n, '.2f')),
+    Unit('hour', 60 * 60.0, lambda n: format(n, '.2f')),
+    Unit('minute', 60.0, lambda n: format(n, '.2f')),
+    Unit('second', 1.0, lambda n: format(n, '.2f')),
+]
 
 #: What the characters in a "rate" string means.
 #: E.g. 8/s is "eight in one second"
@@ -206,3 +221,30 @@ def _(s: str) -> float:
 @want_seconds.register(timedelta)  # noqa: F811
 def _(s: timedelta) -> float:
     return s.total_seconds()
+
+
+def humanize_seconds(secs: float, *,
+                     prefix: str = '',
+                     sep: str = '',
+                     now: str = 'now',
+                     microseconds: bool = False) -> str:
+    """Show seconds in human form.
+
+    For example, 60 becomes "1 minute", and 7200 becomes "2 hours".
+
+    Arguments:
+        prefix (str): can be used to add a preposition to the output
+            (e.g., 'in' will give 'in 1 second', but add nothing to 'now').
+        now (str): Literal 'now'.
+        microseconds (bool): Include microseconds.
+    """
+    secs = float(format(float(secs), '.2f'))
+    for unit, divider, formatter in TIME_UNITS:
+        if secs >= divider:
+            w = secs / float(divider)
+            return '{0}{1}{2} {3}'.format(prefix, sep, formatter(w),
+                                          pluralize(w, unit))
+    if microseconds and secs > 0.0:
+        return '{prefix}{sep}{0:.2f} seconds'.format(
+            secs, sep=sep, prefix=prefix)
+    return now

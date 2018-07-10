@@ -30,6 +30,7 @@ classes = """
     License :: OSI Approved :: BSD License
     Programming Language :: Python :: 3 :: Only
     Programming Language :: Python :: 3.6
+    Programming Language :: Python :: 3.7
     Programming Language :: Python :: Implementation :: CPython
     Operating System :: POSIX
     Operating System :: Microsoft :: Windows
