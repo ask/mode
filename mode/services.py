@@ -71,7 +71,7 @@ class ServiceBase(ServiceT):
     log: CompositeLogger
 
     #: Logger used by this service.
-    #: IF not explicitly set this will be based on get_logger(cls.__name__)
+    #: If not explicitly set this will be based on get_logger(cls.__name__)
     logger: Optional[logging.Logger] = None
 
     def __init_subclass__(self) -> None:
