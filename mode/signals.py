@@ -98,7 +98,7 @@ class BaseSignal(BaseSignalT[T]):
             if not args:
                 raise TypeError('Signal.send requires at least one argument')
             if len(args) > 1:
-                sender, *args = args
+                sender, *args = args  # type: ignore
             else:
                 sender, args = args[0], ()
         return sender, args
