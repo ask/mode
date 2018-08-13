@@ -350,14 +350,12 @@ def iter_mro_reversed(cls: Type, stop: Type) -> Iterable[Type]:
             wanted = subcls == stop
 
 
-def guess_concrete_type(
-        typ: Type,
-        *,
-        set_types: Tuple[Type, ...] = SET_TYPES,
-        list_types: Tuple[Type, ...] = LIST_TYPES,
-        tuple_types: Tuple[Type, ...] = TUPLE_TYPES,
-        dict_types: Tuple[Type, ...] = DICT_TYPES) -> Tuple[Type, Type]:
-    """Try to find the real type of an abstract type."""
+def remove_optional(typ: Type) -> Type:
+    _, typ = _remove_optional(typ)
+    return typ
+
+
+def _remove_optional(typ: Type) -> Tuple[List[Any], Type]:
     args = getattr(typ, '__args__', ())
     if typ.__class__.__name__ == '_GenericAlias':  # Py3.7
         if typ.__origin__ is typing.Union:
@@ -371,6 +369,18 @@ def guess_concrete_type(
           args[1] is type(None)):  # noqa
         # Optional[x] actually returns Union[x, type(None)]
         typ = args[0]
+    return args, typ
+
+
+def guess_concrete_type(
+        typ: Type,
+        *,
+        set_types: Tuple[Type, ...] = SET_TYPES,
+        list_types: Tuple[Type, ...] = LIST_TYPES,
+        tuple_types: Tuple[Type, ...] = TUPLE_TYPES,
+        dict_types: Tuple[Type, ...] = DICT_TYPES) -> Tuple[Type, Type]:
+    """Try to find the real type of an abstract type."""
+    args, typ = _remove_optional(typ)
     if not issubclass(typ, (str, bytes)):
         if issubclass(typ, tuple_types):
             # Tuple[x]
