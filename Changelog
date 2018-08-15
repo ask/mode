@@ -8,7 +8,7 @@
 
 1.15.1
 ======
-:release-date: 2018-08-13 4:48 P.M PDT
+:release-date: 2018-08-15 11:17 A.M PDT
 :release-by: Ask Solem
 
 - Tests now passing on CPython 3.7.0
