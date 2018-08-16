@@ -1,6 +1,6 @@
 :Version: 1.15.1
 :Web: http://mode.readthedocs.org/
-:Download: http://pypi.python.org/pypi/mode
+:Download: http://pypi.org/projects/mode
 :Source: http://github.com/ask/mode
 :Keywords: async, service, framework, actors, bootsteps, graph
 

@@ -6,7 +6,7 @@
 
 :Version: 1.15.1
 :Web: http://mode.readthedocs.org/
-:Download: http://pypi.python.org/pypi/mode
+:Download: http://pypi.org/projects/mode
 :Source: http://github.com/ask/mode
 :Keywords: async, service, framework, actors, bootsteps, graph
 
@@ -242,7 +242,7 @@ Downloading and installing from source
 --------------------------------------
 
 Download the latest version of Mode from
-http://pypi.python.org/pypi/mode
+http://pypi.org/projects/mode
 
 You can install it by doing the following::
 
@@ -452,13 +452,13 @@ version 1.2.0 available at http://contributor-covenant.org/version/1/2/0/.
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/mode.svg
     :alt: Mode can be installed via wheel
-    :target: http://pypi.python.org/pypi/mode/
+    :target: http://pypi.org/projects/mode/
 
 .. |pyversion| image:: https://img.shields.io/pypi/pyversions/mode.svg
     :alt: Supported Python versions.
-    :target: http://pypi.python.org/pypi/mode/
+    :target: http://pypi.org/projects/mode/
 
 .. |pyimp| image:: https://img.shields.io/pypi/implementation/mode.svg
     :alt: Supported Python implementations.
-    :target: http://pypi.python.org/pypi/mode/
+    :target: http://pypi.org/projects/mode/
 

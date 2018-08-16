@@ -16,7 +16,7 @@ Downloading and installing from source
 --------------------------------------
 
 Download the latest version of Mode from
-http://pypi.python.org/pypi/mode
+http://pypi.org/projects/mode
 
 You can install it by doing the following::
 

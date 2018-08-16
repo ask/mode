@@ -22,12 +22,12 @@
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/mode.svg
     :alt: Mode can be installed via wheel
-    :target: http://pypi.python.org/pypi/mode/
+    :target: http://pypi.org/projects/mode/
 
 .. |pyversion| image:: https://img.shields.io/pypi/pyversions/mode.svg
     :alt: Supported Python versions.
-    :target: http://pypi.python.org/pypi/mode/
+    :target: http://pypi.org/projects/mode/
 
 .. |pyimp| image:: https://img.shields.io/pypi/implementation/mode.svg
     :alt: Supported Python implementations.
-    :target: http://pypi.python.org/pypi/mode/
+    :target: http://pypi.org/projects/mode/
