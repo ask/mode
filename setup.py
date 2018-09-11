@@ -123,7 +123,7 @@ setup(
     platforms=['any'],
     license='BSD',
     keywords='asyncio service bootsteps graph coroutine',
-    packages=find_packages(exclude=['ez_setup', 'tests', 'tests.*']),
+    packages=find_packages(exclude=['t']),
     include_package_data=True,
     # PEP-561: https://www.python.org/dev/peps/pep-0561/
     package_data={'mode': ['py.typed']},
