@@ -4,6 +4,33 @@
  Change history
 ================
 
+.. _version-1.16.0:
+
+1.16.0
+======
+:release-date: 2018-09-11 1:37 P.M PDT
+:release-by: Ask Solem
+
+- **Requirements**
+
+    + Now depends on :ref:`Mode 1.15.1 <mode:version-1.15.1>`.
+
+        Contributed by Michael Seifert
+
+- **Distribution**: Installing mode no longer installs the ``t`` directory
+                    containing tests as a Python package.
+
+    Contributed by Michael Seifert
+
+- **Testing**: New :class:`~mode.utils.mocks.AsyncContextManagerMock`
+
+    You can use this to mock asynchronous context managers.
+
+    Please see :class:`~mode.utils.mocks.AsyncContextManagerMock` for
+    an example.
+
+- **CI**: Python 3.7.0 and 3.6.0 was added to the build matrix.
+
 .. _version-1.15.1:
 
 1.15.1
