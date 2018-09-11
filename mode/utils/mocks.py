@@ -27,6 +27,49 @@ class AsyncMock(unittest.mock.Mock):
 
 
 class AsyncContextManagerMock(unittest.mock.Mock):
+    """Mock for :class:`typing.AsyncContextManager`
+
+    You can use this to mock asynchronous context managers,
+    when an object with a fully defined ``__aenter__`` and ``__aexit__``
+    is required.
+
+    Here's an example mocking an :pypi:`aiohttp` client:
+
+    .. code-block:: python
+
+        import http
+        from aiohttp.client import ClientSession
+        from aiohttp.web import Response
+        from mode.utils.mocks import AsyncContextManagerMock, AsyncMock, Mock
+
+        @pytest.fixture()
+        def session(monkeypatch):
+            session = Mock(
+                name='http_client',
+                autospec=ClientSession,
+                request=Mock(
+                    return_value=AsyncContextManagerMock(
+                        return_value=Mock(
+                            autospec=Response,
+                            status=http.HTTPStatus.OK,
+                            json=AsyncMock(
+                                return_value={'hello': 'json'},
+                            ),
+                        ),
+                    ),
+                ),
+            )
+            monkeypatch.setattr('where.is.ClientSession', session)
+            return session
+
+        @pytest.mark.asyncio
+        async def test_session(session):
+            from where.is import ClientSession
+            session = ClientSession()
+            async with session.get('http://example.com') as response:
+                assert response.status == http.HTTPStatus.OK
+                assert await response.json() == {'hello': 'json'}
+    """
 
     def __init__(self, *args: Any,
                  aenter_return: Any = None,
