@@ -4,6 +4,41 @@
  Change history
 ================
 
+.. _version-1.17.0:
+
+1.17.0
+======
+:release-date: 2018-09-12 5:39 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- New async iterator utility: :class:`~mode.utils.aiter.arange`
+
+    Like :class:`range` but returns an async iterator::
+
+        async for n in arange(0, 10, 2):
+            ...
+
+- New async iterator utility: :func:`~mode.utils.aiter.aslice`
+
+    Like :class:`itertools.islice` but works on asynchronous iterators.
+
+- New async iterator utility: :func:`~mode.utils.aiter.chunks`
+
+    :class:`~mode.utils.aiter.chunks` takes an async iterable and divides
+    it up into chunks of size n::
+
+        # Split range of 100 numbers into chunks of 10 each.
+        async for chunk in chunks(arange(100), 10):
+            yield chunk
+
+    This gives chunks like this::
+
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            ...,
+        ]
+
 .. _version-1.16.0:
 
 1.16.0
