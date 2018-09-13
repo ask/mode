@@ -58,7 +58,7 @@ __all__ = [
     'annotations',
     'eval_type',
     'iter_mro_reversed',
-    'guess_concrete_type',
+    'guess_polymorphic_type',
     'cached_property',
     'label',
     'shortlabel',
@@ -372,14 +372,27 @@ def _remove_optional(typ: Type) -> Tuple[List[Any], Type]:
     return args, typ
 
 
-def guess_concrete_type(
+def guess_polymorphic_type(
         typ: Type,
         *,
         set_types: Tuple[Type, ...] = SET_TYPES,
         list_types: Tuple[Type, ...] = LIST_TYPES,
         tuple_types: Tuple[Type, ...] = TUPLE_TYPES,
         dict_types: Tuple[Type, ...] = DICT_TYPES) -> Tuple[Type, Type]:
-    """Try to find the real type of an abstract type."""
+    """Try to find the polymorphic and concrete type of an abstract type.
+
+    Returns tuple of ``(polymorphic_type, concrete_type)``.
+
+    Examples:
+        >>> guess_polymorphic_type(List[int])
+        (list, int)
+
+        >>> guess_polymorphic_type(Optional[List[int]])
+        (list, int)
+
+        >>> guess_polymorphic_type(MutableMapping[int, str])
+        (dict, str)
+    """
     args, typ = _remove_optional(typ)
     if not issubclass(typ, (str, bytes)):
         if issubclass(typ, tuple_types):
@@ -395,6 +408,9 @@ def guess_concrete_type(
             # Dict[_, x]
             return dict, args[1] if args and len(args) > 1 else Any
     raise TypeError(f'Not a generic type: {typ!r}')
+
+
+guess_concrete_type = guess_polymorphic_type  # XXX compat
 
 
 def _unary_type_arg(args: List[Type]) -> Any:
