@@ -2,7 +2,7 @@ import asyncio
 import sys
 import pytest
 from mode.threads import ServiceThread
-from mode.utils.mocks import AsyncMock, Mock, patch
+from mode.utils.mocks import ANY, AsyncMock, Mock, patch
 
 
 class test_ServiceThread:
@@ -149,4 +149,4 @@ class test_ServiceThread:
     def test_on_crash(self, *, thread):
         with patch('traceback.print_exc') as print_exc:
             thread.on_crash('foo {0!r}', 10)
-            print_exc.assert_called_once_with(None, sys.stderr)
+            print_exc.assert_called_once_with(None, ANY)
