@@ -192,7 +192,6 @@ def annotations(cls: Type,
                 invalid_types: Set = None,
                 alias_types: Mapping = None,
                 skip_classvar: bool = False,
-                optional_is_default: bool = True,
                 globalns: Dict[str, Any] = None,
                 localns: Dict[str, Any] = None) -> Tuple[
                     FieldMapping, DefaultsMapping]:
@@ -204,10 +203,6 @@ def annotations(cls: Type,
         invalid_types: Set of types that if encountered should raise
           :exc:`InvalidAnnotation` (does not test for subclasses).
         alias_types: Mapping of original type to replacement type.
-        optional_is_default: Include ``Optional[...]`` and
-            ``Union[..., NoneType]`` in default mapping, even if
-            no class attribute have been actually
-            set (initialized to :const:`None`)
         globalns: Global namespace to use when evaluating forward
             references (see :class:`typing.ForwardRef`).
         localns: Local namespace to use when evaluating forward
