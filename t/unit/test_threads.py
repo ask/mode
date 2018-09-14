@@ -1,5 +1,4 @@
 import asyncio
-import sys
 import pytest
 from mode.threads import ServiceThread
 from mode.utils.mocks import ANY, AsyncMock, Mock, patch
