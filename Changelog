@@ -4,6 +4,19 @@
  Change history
 ================
 
+.. _version-1.17.1:
+
+1.17.1
+======
+:release-date: 2018-09-13 6:27 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Fixes several bugs related to unwrapping ``Optional[List[..]]``
+  in :func:`mode.utils.objects.annotations`.
+
+    This functionality is not really related to mode at all, so
+    should be moved out of this library.  Faust uses it for models.
+
 .. _version-1.17.0:
 
 1.17.0
