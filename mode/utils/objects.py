@@ -192,6 +192,7 @@ def annotations(cls: Type,
                 invalid_types: Set = None,
                 alias_types: Mapping = None,
                 skip_classvar: bool = False,
+                optional_is_default: bool = True,
                 globalns: Dict[str, Any] = None,
                 localns: Dict[str, Any] = None) -> Tuple[
                     FieldMapping, DefaultsMapping]:
@@ -203,6 +204,10 @@ def annotations(cls: Type,
         invalid_types: Set of types that if encountered should raise
           :exc:`InvalidAnnotation` (does not test for subclasses).
         alias_types: Mapping of original type to replacement type.
+        optional_is_default: Include ``Optional[...]`` and
+            ``Union[..., NoneType]`` in default mapping, even if
+            no class attribute have been actually
+            set (initialized to :const:`None`)
         globalns: Global namespace to use when evaluating forward
             references (see :class:`typing.ForwardRef`).
         localns: Local namespace to use when evaluating forward
@@ -355,20 +360,41 @@ def remove_optional(typ: Type) -> Type:
     return typ
 
 
-def _remove_optional(typ: Type) -> Tuple[List[Any], Type]:
+def is_optional(typ: Type) -> bool:
     args = getattr(typ, '__args__', ())
     if typ.__class__.__name__ == '_GenericAlias':  # Py3.7
         if typ.__origin__ is typing.Union:
             for arg in args:
+                if arg is type(None):  # noqa
+                    return True
+    elif (typ.__class__.__name__ == '_Union' and args and  # Py3.6
+          args[1] is type(None)):  # noqa
+        # Optional[x] actually returns Union[x, type(None)]
+        return True
+
+
+def _remove_optional(typ: Type, *,
+                     find_origin: bool = False) -> Tuple[List[Any], Type]:
+    args = getattr(typ, '__args__', ())
+    if typ.__class__.__name__ == '_GenericAlias':  # Py3.7
+        if typ.__origin__ is typing.Union:
+            # Optional[List[int]] -> Union[List[int], NoneType]
+            for arg in args:
                 if arg is not type(None):  # noqa
-                    typ = arg
-                    break
+                    # returns ((int,), list)
+                    final_args = getattr(arg, '__args__', ())
+                    final_typ = arg
+                    if find_origin:
+                        final_typ = getattr(arg, '__origin__', arg)
+                    return final_args, final_typ
         else:
             typ = typ.__origin__  # for List this is list, etc.
     elif (typ.__class__.__name__ == '_Union' and args and  # Py3.6
           args[1] is type(None)):  # noqa
-        # Optional[x] actually returns Union[x, type(None)]
-        typ = args[0]
+        # Optional[List[int]] gives Union[List[int], type(None)]
+        # returns: ((int,), list)
+        return (getattr(args[0], '__args__', ()),
+                getattr(args[0], '__origin__', args[0]))
     return args, typ
 
 
@@ -393,8 +419,8 @@ def guess_polymorphic_type(
         >>> guess_polymorphic_type(MutableMapping[int, str])
         (dict, str)
     """
-    args, typ = _remove_optional(typ)
-    if not issubclass(typ, (str, bytes)):
+    args, typ = _remove_optional(typ, find_origin=True)
+    if typ is not str and typ is not bytes:
         if issubclass(typ, tuple_types):
             # Tuple[x]
             return tuple, _unary_type_arg(args)
