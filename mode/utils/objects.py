@@ -251,14 +251,14 @@ def annotations(cls: Type,
     return fields, defaults
 
 
-def local_annotations(cls: Type,
-                      *,
-                      invalid_types: Set = None,
-                      alias_types: Mapping = None,
-                      skip_classvar: bool = False,
-                      globalns: Dict[str, Any] = None,
-                      localns: Dict[str, Any] = None) -> Tuple[
-                        FieldMapping, DefaultsMapping]:
+def local_annotations(
+        cls: Type,
+        *,
+        invalid_types: Set = None,
+        alias_types: Mapping = None,
+        skip_classvar: bool = False,
+        globalns: Dict[str, Any] = None,
+        localns: Dict[str, Any] = None) -> Iterable[Tuple[str, Type]]:
     return _resolve_refs(
         cls.__annotations__,
         globalns if globalns is not None else _get_globalns(cls),
