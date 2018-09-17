@@ -172,7 +172,7 @@ class BaseSignal(BaseSignalT[T]):
             ref: SignalHandlerRefT) -> Tuple[bool, Optional[SignalHandlerT]]:
         if isinstance(ref, ReferenceType):
             value = ref()
-            return (True, value) if value is not None else (False, None)
+            return value is not None, value
         return True, ref()
 
     def _create_ref(self, fun: SignalHandlerT) -> SignalHandlerRefT:
