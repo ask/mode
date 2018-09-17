@@ -17,6 +17,8 @@
     This also silences a ``DeprecationWarning`` that was being emitted
     on Python 3.7.
 
+- Type annotations now passes on :pypi:`mypy` 0.630.
+
 .. _version-1.17.1:
 
 1.17.1
