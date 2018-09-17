@@ -4,6 +4,19 @@
  Change history
 ================
 
+.. _version-1.17.2:
+
+1.17.2
+======
+:release-date: 2018-09-17 3:00 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Removed and fixed import from ``collections`` that will be moved
+  to ``collections.abc`` in Python 3.8.
+
+    This also silences a ``DeprecationWarning`` that was being emitted
+    on Python 3.7.
+
 .. _version-1.17.1:
 
 1.17.1
