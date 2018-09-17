@@ -1,5 +1,5 @@
 """Async iterator lost and found missing methods: aiter, anext, etc."""
-import collections
+import collections.abc
 import sys
 from functools import singledispatch
 from typing import (
@@ -63,13 +63,13 @@ def aiter(it: Any) -> AsyncIterator:
 
 
 # XXX In Py3.7: register cannot take typing.AsyncIterator
-@aiter.register(collections.AsyncIterable)
+@aiter.register(collections.abc.AsyncIterable)
 def _aiter_async(it: AsyncIterable) -> AsyncIterator:
     return it.__aiter__()
 
 
 # XXX In Py3.7: register cannot take typing.Iterable
-@aiter.register(collections.Iterable)
+@aiter.register(collections.abc.Iterable)
 def _aiter_iter(it: Iterable) -> AsyncIterator:
     return AsyncIterWrapper(iter(it)).__aiter__()
 

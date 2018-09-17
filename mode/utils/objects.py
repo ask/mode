@@ -240,16 +240,33 @@ def annotations(cls: Type,
     for subcls in iter_mro_reversed(cls, stop=stop):
         defaults.update(subcls.__dict__)
         with suppress(AttributeError):
-            class_fields = _resolve_refs(
-                subcls.__annotations__,
-                globalns if globalns is not None else _get_globalns(subcls),
-                localns,
-                invalid_types or set(),
-                alias_types or {},
-                skip_classvar,
-            )
-            fields.update(class_fields)
+            fields.update(local_annotations(
+                subcls,
+                invalid_types=invalid_types,
+                alias_types=alias_types,
+                skip_classvar=skip_classvar,
+                globalns=globalns,
+                localns=localns,
+            ))
     return fields, defaults
+
+
+def local_annotations(cls: Type,
+                      *,
+                      invalid_types: Set = None,
+                      alias_types: Mapping = None,
+                      skip_classvar: bool = False,
+                      globalns: Dict[str, Any] = None,
+                      localns: Dict[str, Any] = None) -> Tuple[
+                        FieldMapping, DefaultsMapping]:
+    return _resolve_refs(
+        cls.__annotations__,
+        globalns if globalns is not None else _get_globalns(cls),
+        localns,
+        invalid_types or set(),
+        alias_types or {},
+        skip_classvar,
+    )
 
 
 def _resolve_refs(d: Dict[str, Any],
