@@ -26,7 +26,7 @@ from typing import (
 from .types import DiagT, ServiceT
 from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack, ExitStack
-from .utils.logging import CompositeLogger, get_logger
+from .utils.logging import CompositeLogger, get_logger, level_number
 from .utils.objects import iter_mro_reversed
 from .utils.text import maybecat
 from .utils.times import Seconds, want_seconds
@@ -331,6 +331,11 @@ class Service(ServiceBase, ServiceCallbacks):
     #: Current number of times this service instance has been restarted.
     restart_count = 0
 
+    #: The log level for mundane info such as `starting`, `stopping`, etc.
+    #: Set this to ``"debug"`` for less information.
+    mundane_level = 'info'
+    _mundane_level: int
+
     #: Event set when service started.
     _started: asyncio.Event
 
@@ -475,6 +480,7 @@ class Service(ServiceBase, ServiceCallbacks):
         self._beacon = Node(self) if beacon is None else beacon.new(self)
         self._children = []
         self._futures = set()
+        self._mundane_level = level_number(self.mundane_level)
         self.async_exit_stack = AsyncExitStack()
         self.exit_stack = ExitStack()
         self.on_init()
@@ -669,7 +675,7 @@ class Service(ServiceBase, ServiceCallbacks):
         self.exit_stack.__enter__()
         await self.async_exit_stack.__aenter__()
         try:
-            self.log.info('Starting...')
+            self._log_mundane('Starting...')
             await self.on_start()
             for task in self._get_tasks():
                 self.add_future(task.fun(self))
@@ -687,7 +693,7 @@ class Service(ServiceBase, ServiceCallbacks):
         try:
             await task
         except asyncio.CancelledError:
-            self.log.info('Terminating cancelled task: %r', task)
+            self._log_mundane('Terminating cancelled task: %r', task)
         except RuntimeError as exc:
             if 'Event loop is closed' in str(exc):
                 self.log.info('Cancelled task %r: %s', task, exc)
@@ -699,6 +705,9 @@ class Service(ServiceBase, ServiceCallbacks):
         """Start the service, if it has not already been started."""
         if not self._started.is_set():
             await self.start()
+
+    def _log_mundane(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self.log.log(self._mundane_level, msg, *args, **kwargs)
 
     async def crash(self, reason: BaseException) -> None:
         """Crash the service and all child services."""
@@ -735,7 +744,7 @@ class Service(ServiceBase, ServiceCallbacks):
     async def stop(self) -> None:
         """Stop the service."""
         if not self._stopped.is_set():
-            self.log.info('Stopping...')
+            self._log_mundane('Stopping...')
             self._stopped.set()
             await self.on_stop()
             await self._stop_children()
@@ -751,7 +760,7 @@ class Service(ServiceBase, ServiceCallbacks):
             self.exit_stack.__exit__(None, None, None)
             await self.async_exit_stack.__aexit__(None, None, None)
             await self.on_shutdown()
-            self.log.info('-Stopped!')
+            self._log_mundane('-Stopped!')
 
     async def _stop_children(self) -> None:
         await self._default_stop_children()
