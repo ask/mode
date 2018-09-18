@@ -4,6 +4,28 @@
  Change history
 ================
 
+.. _version-1.17.3:
+
+1.17.3
+======
+:release-date: 2018-09-18 4:00 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Service: New attribute ``mundane_level`` decides the logging level
+  of mundane logging events such as "[X] Starting...", for starting/stopping
+  and tasks being cancelled.
+
+    The value for this must be a logger level name, and is ``"info"`` by
+    default.
+
+    If logging for a service is noisy at info-level, you can move it
+    to debug level by setting this attribute to ``"debug"``:
+
+    .. sourcecode:: python
+
+        class X(Service):
+            mundane_level = 'debug'
+
 .. _version-1.17.2:
 
 1.17.2
