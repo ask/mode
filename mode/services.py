@@ -107,14 +107,14 @@ class ServiceBase(ServiceT):
 
     def __repr__(self) -> str:
         # Override _repr_info to add additional text to repr.
-        return '<{name}: {self.state}{info}>'.format(
-            name=type(self).__name__,
-            self=self,
-            info=maybecat(self._repr_info(), prefix=' ') or '',
-        )
+        info = maybecat(self._repr_info(), prefix=' ') or ''
+        return f'<{self._repr_name()}: {self.state}{info}>'
 
     def _repr_info(self) -> str:
         return ''
+
+    def _repr_name(self) -> str:
+        return type(self).__name__
 
 
 class Diag(DiagT):
@@ -871,7 +871,7 @@ class Service(ServiceBase, ServiceCallbacks):
     @property
     def label(self) -> str:
         """Label used for graphs."""
-        return type(self).__name__
+        return self._repr_name()
 
     @property
     def shortlabel(self) -> str:
