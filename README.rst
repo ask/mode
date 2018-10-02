@@ -167,7 +167,12 @@ services-based asyncio program from the console::
 
     if __name__ == '__main__':
         import mode
-        worker = mode.Worker(MyService(), loglevel='INFO', logfile=None)
+        worker = mode.Worker(
+            MyService(),
+            loglevel='INFO',
+            logfile=None,
+            daemon=False,
+        )
         worker.execute_from_commandline()
 
 It's a Graph!

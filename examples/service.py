@@ -19,4 +19,6 @@ if __name__ == '__main__':
         MyService(),
         loglevel='INFO',
         logfile=None,  # stderr
+        # when daemon the worker must be explicitly stopped to end.
+        daemon=True,
     ).execute_from_commandline()

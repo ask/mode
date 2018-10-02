@@ -165,4 +165,4 @@ app = App()
 
 if __name__ == '__main__':
     from mode.worker import Worker
-    Worker(app, loglevel='info').execute_from_commandline()
+    Worker(app, loglevel='info', daemon=True).execute_from_commandline()

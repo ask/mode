@@ -68,6 +68,7 @@ class Worker(Service):
             loghandlers: List[StreamHandler] = None,
             blocking_timeout: Seconds = 10.0,
             loop: asyncio.AbstractEventLoop = None,
+            daemon: bool = True,
             **kwargs: Any) -> None:
         self.services = services
         self.debug = debug
@@ -87,6 +88,7 @@ class Worker(Service):
         self.stderr = stderr
         self.console_port = console_port
         self.blocking_timeout = blocking_timeout
+        self.daemon = daemon
         super().__init__(loop=loop, **kwargs)
 
         if self.services:
@@ -239,7 +241,8 @@ class Worker(Service):
 
     async def start(self) -> None:
         await super().start()
-        await self.wait_until_stopped()
+        if self.daemon:
+            await self.wait_until_stopped()
 
     async def _add_monitor(self) -> Any:
         try:
