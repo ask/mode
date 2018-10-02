@@ -11,6 +11,16 @@
 :release-date: 2018-10-02 3:32 P.M PDT
 :release-by: Ask Solem (:github_user:`ask`)
 
+- **Worker**: Fixed error when starting :pypi:`aioconsole` on ``--debug``
+
+    The worker would crash with:
+
+    .. sourcecode:: text
+
+        TypeError: Use `self.add_context(ctx)` for non-async context
+
+    when started with the ``--debug`` flag.
+
 - **Worker**: New ``daemon`` argument controls shutdown of worker.
 
     When the flag is enabled, the default, the worker will not shut
