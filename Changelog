@@ -4,6 +4,68 @@
  Change history
 ================
 
+.. _version-1.18.0:
+
+1.18.0
+======
+:release-date: 2018-10-02 3:32 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- **Worker**: New ``daemon`` argument controls shutdown of worker.
+
+    When the flag is enabled, the default, the worker will not shut
+    down until the worker instance is either explicitly stopped, or
+    it receives a terminating process signal (:sig:`INT`/:sig:`TERM`/etc.)
+
+    When disabled, the worker for the given service will shut down as soon as
+    ``await service.start()`` returns.
+
+    You can think of it as a flag for daemons, but one that doesn't actually
+    do any of the UNIX daemonization stuff (detaching, etc.). It merely
+    means the worker continues to run in the background until stopped by
+    signal.
+
+- **Service**: Added class method: ``Service.from_awaitable``.
+
+    This can be used to create a service out of any coroutine
+    or :class:`~typing.Awaitable`:
+
+    .. sourcecode:: python
+
+        from mode import Service, Worker
+
+        async def me(interval=1.0):
+            print('ME STARTING')
+            await asyncio.sleep(interval)
+            print('ME STOPPING')
+
+        def run_worker(interval=1.0):
+            coro = me(interval=1.0)
+            Worker(Service.from_awaitable(coro)).execute_from_commandline()
+
+        if __name__ == '__main__':
+            run_worker()
+
+    .. note::
+
+        Using a service with ``await self.sleep(1.0)`` is often not what
+        you want, as stopping the service will have to wait for the sleep
+        to finish.
+
+        ``Service.from_awaitable`` is as such a last resort for cases
+        where you're provided a coroutine you cannot implement as a service.
+
+        ``Service.sleep()`` is useful as it will stop sleeping immediately
+        if the service is stopped:
+
+            class Me(Service):
+
+                async def on_start(self) -> None:
+                    await self.sleep(1.0)
+
+- **Service**: New method ``_repr_name`` can be used to override the service
+               class name used in ``repr(service)``.
+
 .. _version-1.17.3:
 
 1.17.3
