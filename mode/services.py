@@ -908,7 +908,7 @@ class _AwaitableService(Service):
         self.name = name
         super().__init__(**kwargs)
 
-    async def on_start(self):
+    async def on_start(self) -> None:
         await self.coro
 
     def _repr_name(self) -> str:
