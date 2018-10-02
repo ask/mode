@@ -371,6 +371,12 @@ class Service(ServiceBase, ServiceCallbacks):
     _tasks: ClassVar[Optional[Dict[str, Set[str]]]] = None
 
     @classmethod
+    def from_awaitable(cls, coro: Awaitable, *,
+                       name: str = None,
+                       **kwargs: Any) -> ServiceT:
+        return _AwaitableService(coro, name=name)
+
+    @classmethod
     def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
         """Decorator used to define a service background task.
 
@@ -890,3 +896,20 @@ class Service(ServiceBase, ServiceCallbacks):
 
 task = Service.task
 timer = Service.timer
+
+
+class _AwaitableService(Service):
+    mundane_level = 'debug'
+
+    def __init__(self, coro: Awaitable, *,
+                 name: str = None,
+                 **kwargs: Any) -> None:
+        self.coro = coro
+        self.name = name
+        super().__init__(**kwargs)
+
+    async def on_start(self):
+        await self.coro
+
+    def _repr_name(self) -> str:
+        return self.name or str(self.coro)
