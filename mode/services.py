@@ -901,7 +901,7 @@ timer = Service.timer
 class _AwaitableService(Service):
     mundane_level = 'debug'
 
-    _fut: Optional[asyncio.Task]
+    _fut: Optional[asyncio.Future]
 
     def __init__(self, coro: Awaitable, *,
                  name: str = None,

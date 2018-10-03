@@ -4,6 +4,54 @@
  Change history
 ================
 
+.. _version-1.18.1:
+
+1.18.1
+======
+:release-date: 2018-10-03 2:49 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- **Service**: ``Service.from_awaitable(coro)`` improvements.
+
+    The resulting ``service.start`` will now:
+
+    + Convert awaitable to :class:`asyncio.Task`.
+    + Wait for task to complete.
+
+    then ``service.stop`` will:
+
+    + Cancel the task.
+
+    This ensures an ``asyncio.sleep(10.0)`` within can be
+    cancelled. If you need some operation to absolutely finish you must
+    use `asyncio.shield`.
+
+- **Utils**: ``cached_property`` adds new ``.is_set(o)`` method on descriptor
+
+    This can be used to test for the attribute having been cached/used.
+
+    If you have a class with a ``cached_property``:
+
+    .. sourcecode:: python
+
+        from mode.utils.objects import cached_property
+
+        class X:
+
+            @cached_property
+            def foo(self):
+                return 42
+
+        x = X()
+        print(x.foo)
+
+    From an instance you can now check if the property was accessed:
+
+    .. sourcecode:: python
+
+        if type(x).foo.is_set(x):
+            print(f'Someone accessed x.foo and it was cached as: {x.foo}')
+
 .. _version-1.18.0:
 
 1.18.0
