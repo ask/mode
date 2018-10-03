@@ -100,8 +100,10 @@ class test_cached_property:
 
     def test_get(self, x):
         assert 'foo' not in x.__dict__
+        assert not type(x).foo.is_set(x)
         assert x.foo == 42
         assert x.__dict__['foo'] == 42
+        assert type(x).foo.is_set(x)
         assert x.foo == 42
 
     def test_get_class(self, x):

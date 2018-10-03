@@ -515,6 +515,9 @@ class cached_property(Generic[RT]):
         self.__module__ = fget.__module__
         self.class_attribute: str = class_attribute
 
+    def is_set(self, obj: Any) -> bool:
+        return self.__name__ in obj.__dict__
+
     def __get__(self,
                 obj: Any,
                 type: Type = None) -> RT:
