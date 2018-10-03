@@ -901,15 +901,28 @@ timer = Service.timer
 class _AwaitableService(Service):
     mundane_level = 'debug'
 
+    _fut: Optional[asyncio.Task]
+
     def __init__(self, coro: Awaitable, *,
                  name: str = None,
                  **kwargs: Any) -> None:
         self.coro = coro
+        self._fut = None
         self.name = name
         super().__init__(**kwargs)
 
     async def on_start(self) -> None:
-        await self.coro
+        # convert to future, so we can cancel on_stop
+        self._fut = asyncio.ensure_future(self.coro, loop=self.loop)
+        await self._fut
+
+    async def on_stop(self) -> None:
+        fut, self._fut = self._fut, None
+        if fut is not None:
+            if not fut.done():
+                fut.cancel()
+            else:
+                fut.result()
 
     def _repr_name(self) -> str:
         return self.name or str(self.coro)
