@@ -102,7 +102,10 @@ class ServiceBase(ServiceT):
                         exc_type: Type[BaseException] = None,
                         exc_val: BaseException = None,
                         exc_tb: TracebackType = None) -> Optional[bool]:
-        await self.stop()
+        try:
+            await self.stop()
+        finally:
+            self.service_reset()
         return None
 
     def __repr__(self) -> str:
