@@ -1,13 +1,17 @@
 import abc
 import sys
 import types
+import typing
 import _collections_abc
 from collections import deque
 from contextlib import AbstractContextManager
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, Tuple, Type, Union
 
-from .compat import AsyncContextManager, ContextManager, Deque
+if typing.TYPE_CHECKING:
+    from typing import AsyncContextManager, ContextManager, Deque
+else:
+    from .compat import AsyncContextManager, ContextManager, Deque
 
 __all__ = [
     'AbstractAsyncContextManager',
