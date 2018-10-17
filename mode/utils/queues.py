@@ -4,6 +4,7 @@ from collections import deque
 from typing import Any, TypeVar
 from weakref import WeakSet
 from .compat import Deque
+from .locks import Event
 
 _T = TypeVar('_T')
 
@@ -51,9 +52,9 @@ class FlowControlEvent:
     def __init__(self, *,
                  initially_suspended: bool = True,
                  loop: asyncio.AbstractEventLoop = None) -> None:
-        self.loop = loop or asyncio.get_event_loop()
-        self._resume = asyncio.Event(loop=self.loop)
-        self._suspend = asyncio.Event(loop=self.loop)
+        self.loop = loop
+        self._resume = Event(loop=self.loop)
+        self._suspend = Event(loop=self.loop)
         if initially_suspended:
             self._suspend.set()
         self._queues = WeakSet()

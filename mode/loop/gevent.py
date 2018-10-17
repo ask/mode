@@ -3,7 +3,6 @@ import warnings
 os.environ['GEVENT_LOOP'] = 'mode.loop._gevent_loop.Loop'
 try:
     import gevent
-    import gevent.core
     import gevent.monkey
 except ImportError:
     raise ImportError(

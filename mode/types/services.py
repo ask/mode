@@ -53,7 +53,7 @@ class ServiceT(AsyncContextManager):  # type: ignore
 
     shutdown_timeout: float
     wait_for_shutdown = False
-    loop: asyncio.AbstractEventLoop
+    _loop: Optional[asyncio.AbstractEventLoop]
     restart_count: int = 0
     supervisor: Optional[SupervisorStrategyT] = None
 
@@ -155,4 +155,13 @@ class ServiceT(AsyncContextManager):  # type: ignore
 
     @beacon.setter
     def beacon(self, beacon: NodeT) -> None:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def loop(self) -> asyncio.AbstractEventLoop:
+        ...
+
+    @loop.setter
+    def loop(self, loop: Optional[asyncio.AbstractEventLoop]) -> None:
         ...

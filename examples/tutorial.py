@@ -3,7 +3,6 @@ from typing import Any, MutableMapping
 
 from aiohttp.web import Application
 from mode import Service, ServiceT
-from mode.proxy import ServiceProxy
 from mode.threads import ServiceThread
 from mode.utils.objects import cached_property
 
@@ -97,11 +96,16 @@ class UserCache(Service):
         remove_expired_users(self._cache)
 
 
-class AppService(Service):
-    # the "real" service that App.start() will run
+class App(Service):
 
-    def __init__(self, app: 'App', **kwargs: Any) -> None:
-        self.app = app
+    def __init__(self,
+                 web_port: int = 8000,
+                 web_bind: str = None,
+                 websocket_port: int = 8001,
+                 **kwargs: Any) -> None:
+        self.web_port = web_port
+        self.web_bind = web_bind
+        self.websocket_port = websocket_port
         super().__init__(**kwargs)
 
     def on_init_dependencies(self) -> None:
@@ -121,23 +125,6 @@ class AppService(Service):
         print('WRITING GRAPH TO image.png')
         with open('image.png', 'wb') as fh:
             fh.write(graph.create_png())
-
-
-class App(ServiceProxy):
-
-    def __init__(self,
-                 web_port: int = 8000,
-                 web_bind: str = None,
-                 websocket_port: int = 8001,
-                 **kwargs: Any) -> None:
-        self.web_port = web_port
-        self.web_bind = web_bind
-        self.websocket_port = websocket_port
-        super().__init__(**kwargs)
-
-    @cached_property
-    def _service(self) -> ServiceT:
-        return AppService(self, loop=self.loop)
 
     @cached_property
     def websockets(self) -> Websockets:

@@ -16,7 +16,7 @@ class test_FlowControlEvent:
         assert FlowControlEvent(initially_suspended=False).is_active()
 
     def test_loop__default(self):
-        assert FlowControlEvent().loop
+        assert FlowControlEvent().loop is None
 
     def test_loop__custom(self):
         loop = Mock(name='loop')
