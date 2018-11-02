@@ -97,7 +97,7 @@
 
     When the flag is enabled, the default, the worker will not shut
     down until the worker instance is either explicitly stopped, or
-    it receives a terminating process signal (:sig:`INT`/:sig:`TERM`/etc.)
+    it receives a terminating process signal (``SIGINT``/``SIGTERM``/etc.)
 
     When disabled, the worker for the given service will shut down as soon as
     ``await service.start()`` returns.
