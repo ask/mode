@@ -704,7 +704,7 @@ class Service(ServiceBase, ServiceCallbacks):
                     await child.maybe_start()
             self.log.debug('Started.')
             await self.on_started()
-        except BaseException as exc:
+        except BaseException:
             self.exit_stack.__exit__(*sys.exc_info())
             await self.async_exit_stack.__aexit__(*sys.exc_info())
             raise

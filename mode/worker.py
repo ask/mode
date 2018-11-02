@@ -143,7 +143,7 @@ class Worker(Service):
                 sys.stderr.write(f'CANNOT SETUP LOGGING: {exc!r} from ')
                 import traceback
                 traceback.print_stack(file=sys.stderr)
-            except Exception as exc:
+            except Exception:
                 pass
             raise
         self.on_setup_root_logger(_logging.root, _loglevel)

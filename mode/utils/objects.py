@@ -145,7 +145,7 @@ class KeywordReduce:
     """
 
     def __reduce_keywords__(self) -> Mapping:
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def __reduce__(self) -> Tuple:
         return _restore_from_keywords, (type(self), self.__reduce_keywords__())
