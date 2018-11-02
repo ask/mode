@@ -87,7 +87,7 @@ class ServiceBase(ServiceT):
         # make sure class has a logger.
         if cls.logger is None or getattr(cls.logger, '__modex__', False):
             cls.logger = get_logger(cls.__module__)
-            cls.logger.__modex__ = True
+            cls.logger.__modex__ = True  # type: ignore
 
     def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
         self.log = CompositeLogger(self.logger, formatter=self._format_log)
@@ -561,7 +561,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
         The future will be joined when this service is stopped.
         """
-        fut = asyncio.ensure_future(self._execute_task(coro), loop=self._loop)
+        fut = asyncio.ensure_future(self._execute_task(coro), loop=self.loop)
         fut.__wrapped__ = coro  # type: ignore
         fut.add_done_callback(self._on_future_done)
         self._futures.add(fut)
@@ -594,7 +594,7 @@ class Service(ServiceBase, ServiceCallbacks):
         """Sleep for ``n`` seconds, or until service stopped."""
         try:
             await asyncio.wait_for(
-                self._stopped.wait(), timeout=want_seconds(n), loop=self._loop)
+                self._stopped.wait(), timeout=want_seconds(n), loop=self.loop)
         except asyncio.TimeoutError:
             pass
 
@@ -619,7 +619,7 @@ class Service(ServiceBase, ServiceCallbacks):
             cast(Iterable[Awaitable[Any]], coros),
             return_when=asyncio.ALL_COMPLETED,
             timeout=timeout,
-            loop=self._loop,
+            loop=self.loop,
         )
         return await self._wait_one(coro, timeout=timeout)
 
@@ -634,15 +634,15 @@ class Service(ServiceBase, ServiceCallbacks):
         fut = coro.wait() if isinstance(coro, EVENT_TYPES) else coro
         # asyncio.wait will also ensure_future, but we need the handle
         # so we can cancel them (if we don't they will leak).
-        fut = asyncio.ensure_future(fut, loop=self._loop)
-        stopped_fut = asyncio.ensure_future(stopped, loop=self._loop)
-        crashed_fut = asyncio.ensure_future(crashed, loop=self._loop)
+        fut = asyncio.ensure_future(fut, loop=self.loop)
+        stopped_fut = asyncio.ensure_future(stopped, loop=self.loop)
+        crashed_fut = asyncio.ensure_future(crashed, loop=self.loop)
         try:
             done, pending = await asyncio.wait(
                 (fut, stopped_fut, crashed_fut),
                 return_when=asyncio.FIRST_COMPLETED,
                 timeout=timeout,
-                loop=self._loop,
+                loop=self.loop,
             )
             for f in done:
                 if f.done() and f.exception() is not None:
@@ -669,7 +669,7 @@ class Service(ServiceBase, ServiceCallbacks):
             [stopped, crashed],
             return_when=asyncio.FIRST_COMPLETED,
             timeout=timeout,
-            loop=self._loop,
+            loop=self.loop,
         )
         for fut in done:
             fut.result()  # propagate exceptions
@@ -773,7 +773,7 @@ class Service(ServiceBase, ServiceCallbacks):
                 self.log.debug('Waiting for shutdown')
                 await asyncio.wait_for(
                     self._shutdown.wait(), self.shutdown_timeout,
-                    loop=self._loop,
+                    loop=self.loop,
                 )
                 self.log.debug('Shutting down now')
             await self._stop_futures()
@@ -816,7 +816,7 @@ class Service(ServiceBase, ServiceCallbacks):
                 await asyncio.shield(asyncio.wait(
                     self._futures,
                     return_when=asyncio.ALL_COMPLETED,
-                    loop=self._loop,
+                    loop=self.loop,
                     timeout=timeout,
                 ))
             except ValueError:
@@ -863,16 +863,16 @@ class Service(ServiceBase, ServiceCallbacks):
     @property
     def started(self) -> bool:
         """Was the service started?"""
-        return self._started.is_set()
+        return bool(self._started.is_set())
 
     @property
     def crashed(self) -> bool:
-        return self._crashed.is_set()
+        return bool(self._crashed.is_set())
 
     @property
     def should_stop(self) -> bool:
         """Should the service stop ASAP?"""
-        return self._stopped.is_set()
+        return bool(self._stopped.is_set())
 
     @property
     def state(self) -> str:
