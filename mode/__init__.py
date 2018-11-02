@@ -37,6 +37,9 @@ del(_match)
 del(_temp)
 del(re)
 
+if sys.version_info <= (3, 7):
+    import aiocontextvars
+
 if typing.TYPE_CHECKING:  # pragma: no cover
     from .services import Service, task, timer            # noqa: E402
     from .signals import BaseSignal, Signal, SyncSignal   # noqa: E402

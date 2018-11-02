@@ -118,6 +118,13 @@ packages = find_packages(
 )
 assert not any(package.startswith('t.') for package in packages)
 
+
+# -*- Install Requires -*-
+
+install_requires = reqs('default.txt')
+if sys.version_info < (3, 7):
+    install_requires += reqs('py36.txt')
+
 setup(
     name=NAME,
     version=meta['version'],
@@ -133,7 +140,7 @@ setup(
     # PEP-561: https://www.python.org/dev/peps/pep-0561/
     package_data={'mode': ['py.typed']},
     zip_safe=False,
-    install_requires=reqs('default.txt'),
+    install_requires=install_requires,
     tests_require=reqs('test.txt'),
     extras_require=extras_require(),
     python_requires='~=3.6',
