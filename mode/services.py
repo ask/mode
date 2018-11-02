@@ -927,7 +927,7 @@ class _AwaitableService(Service):
 
     async def on_start(self) -> None:
         # convert to future, so we can cancel on_stop
-        self._fut = asyncio.ensure_future(self.coro, loop=self._loop)
+        self._fut = asyncio.ensure_future(self.coro, loop=self.loop)
         await self._fut
 
     async def on_stop(self) -> None:
