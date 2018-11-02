@@ -21,6 +21,12 @@ from typing import (
     VT,
 )
 
+try:
+    from asyncio import current_task  # type: ignore
+except ImportError:
+    import asyncio
+    current_task = asyncio.Task.current_task
+
 __all__ = [
     'AsyncContextManager',
     'ChainMap',
@@ -31,8 +37,8 @@ __all__ = [
     'want_bytes',
     'want_str',
     'isatty',
+    'current_task',
 ]
-
 
 #: Dictionaries are ordered by default in Python 3.6
 OrderedDict = dict
