@@ -4,6 +4,30 @@
  Change history
 ================
 
+.. _version-2.0.0:
+
+2.0.0
+=====
+:release-date: 2018-11-02 9:12 A.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Services now create the event loop on demand.
+
+    This means the event loop is no longer created in `Service.__init__`
+    so that services can be defined at module scope without initializing
+    the loop.
+
+    This makes the ``ServiceProxy`` pattern redundant for most use cases.
+
+- Adds ``.utils.compat.current_task`` as alias for
+  :mod:`asyncio.current_task`.
+
+- Adds support for contextvars in Python 3.6 using :pypi:`aiocontextvars`.
+
+    In mode services you can now use :mod:`contextvars` module even
+    on Python 3.6, thanks to the work of :github_user:`fantix`.
+
+
 .. _version-1.18.1:
 
 1.18.1
