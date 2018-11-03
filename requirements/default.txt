@@ -1,1 +1,2 @@
 colorlog>=2.9.0
+aiocontextvars>=0.2 ; python_version<'3.7'
