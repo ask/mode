@@ -125,6 +125,9 @@ install_requires = reqs('default.txt')
 if sys.version_info < (3, 7):
     install_requires += reqs('py36.txt')
 
+
+print('INSTALL REQUIRES: %r' % (install_requires,))
+
 setup(
     name=NAME,
     version=meta['version'],

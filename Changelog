@@ -4,6 +4,15 @@
  Change history
 ================
 
+.. _version-2.0.1:
+
+2.0.1
+=====
+:release-date: 2018-11-02 7:38 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Now depends on :pypi:`aiocontextvars` 0.2
+
 .. _version-2.0.0:
 
 2.0.0
