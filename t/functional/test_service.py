@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import ContextManager
 from mode.utils.compat import AsyncContextManager
+from mode.utils.locks import Event
 from mode.utils.mocks import Mock
 import mode
 import pytest
@@ -234,6 +235,34 @@ async def test_wait__when_crashed():
         assert await service.wait_for_stopped(fut)
 
         fut2.cancel()
+
+
+@pytest.mark.asyncio
+async def test_wait__multiple_events():
+    async with X() as service:
+        event1 = Event()
+        event2 = Event()
+
+        async def loser():
+            await asyncio.sleep(1)
+            event1.set()
+
+        async def winner():
+            await asyncio.sleep(0.1)
+            event2.set()
+
+        fut1 = asyncio.ensure_future(loser())
+        try:
+            fut2 = asyncio.ensure_future(winner())
+            try:
+                result = await service.wait_first(event1, event2)
+                assert not result.stopped
+                assert event2 in result.done
+                assert event1 not in result.done
+            finally:
+                fut2.cancel()
+        finally:
+            fut1.cancel()
 
 
 class MundaneLogsDefault(mode.Service):

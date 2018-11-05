@@ -13,6 +13,8 @@ from typing import (
     Dict,
     Generator,
     Iterable,
+    List,
+    Mapping,
     MutableSequence,
     NamedTuple,
     Optional,
@@ -50,6 +52,12 @@ FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
 WaitArgT = Union[FutureT, asyncio.Event, Event]
 
 EVENT_TYPES = (asyncio.Event, Event)
+
+
+class WaitResults(NamedTuple):
+    done: List[WaitArgT]
+    results: List[Any]
+    stopped: bool
 
 
 class WaitResult(NamedTuple):
@@ -623,23 +631,28 @@ class Service(ServiceBase, ServiceCallbacks):
         )
         return await self._wait_one(coro, timeout=timeout)
 
-    async def _wait_one(self, coro: WaitArgT,
-                        *,
-                        timeout: Seconds = None) -> WaitResult:
-        fut: FutureT
+    async def wait_first(self, *coros: WaitArgT,
+                         timeout: Seconds = None) -> WaitResults:
+        _coros: Mapping[WaitArgT, FutureT]
         timeout = want_seconds(timeout) if timeout is not None else None
-        stopped = self._stopped.wait()
-        crashed = self._crashed.wait()
+        stopped = self._stopped
+        crashed = self._crashed
+        loop = self.loop
 
-        fut = coro.wait() if isinstance(coro, EVENT_TYPES) else coro
         # asyncio.wait will also ensure_future, but we need the handle
         # so we can cancel them (if we don't they will leak).
-        fut = asyncio.ensure_future(fut, loop=self.loop)
-        stopped_fut = asyncio.ensure_future(stopped, loop=self.loop)
-        crashed_fut = asyncio.ensure_future(crashed, loop=self.loop)
+        futures = {
+            coro: asyncio.ensure_future(
+                (coro.wait() if isinstance(coro, EVENT_TYPES) else coro),
+                loop=loop,
+            )
+            for coro in coros
+        }
+        futures[stopped] = asyncio.ensure_future(stopped.wait(), loop=loop)
+        futures[crashed] = asyncio.ensure_future(crashed.wait(), loop=loop)
         try:
             done, pending = await asyncio.wait(
-                (fut, stopped_fut, crashed_fut),
+                futures.values(),
                 return_when=asyncio.FIRST_COMPLETED,
                 timeout=timeout,
                 loop=self.loop,
@@ -647,19 +660,31 @@ class Service(ServiceBase, ServiceCallbacks):
             for f in done:
                 if f.done() and f.exception() is not None:
                     f.result()  # propagate exceptions
-            if fut.done():
-                return WaitResult(fut.result(), False)
-            else:
-                if fut.cancelled():
+            winners: List[WaitArgT] = []
+            results: List[Any] = []
+            for coro, fut in futures.items():
+                if fut.done():
+                    winners.append(coro)
+                    results.append(fut.result())
+                elif fut.cancelled():
                     raise asyncio.CancelledError()
-                return WaitResult(None, True)
+            if winners and not stopped.is_set() and not crashed.is_set():
+                return WaitResults(winners, results, False)
+            else:
+                return WaitResults([], [], True)
         finally:
-            if not stopped_fut.done():
-                stopped_fut.cancel()
-            if not crashed_fut.done():
-                crashed_fut.cancel()
-            if not fut.done():
-                fut.cancel()
+            # cleanup
+            for fut in futures.values():
+                if not fut.done():
+                    fut.cancel()
+
+    async def _wait_one(self, coro: WaitArgT,
+                        *,
+                        timeout: Seconds = None) -> WaitResult:
+        results = await self.wait_first(coro, timeout=timeout)
+        if results.stopped:
+            return WaitResult(None, True)
+        return WaitResult(results.results[0], False)
 
     async def _wait_stopped(self, timeout: Seconds = None) -> None:
         timeout = want_seconds(timeout) if timeout is not None else None
