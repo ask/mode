@@ -4,6 +4,24 @@
  Change history
 ================
 
+.. _version-2.0.3:
+
+2.0.3
+=====
+:release-date: 2018-11-05 5:20 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds `Service.wait_first(*coros)`
+
+    Wait for the first coroutine to return, where coroutines can also
+    be :class:`asyncio.Event`.
+
+    Returns :class:`mode.services.WaitResults` with fields:
+
+        - ``.done`` - List of arguments that are now done.
+        - ``.results`` - List of return values in order of ``.done``.
+        - ``.stopped`` - Set to True if the service was stopped.
+
 .. _version-2.0.2:
 
 2.0.2
