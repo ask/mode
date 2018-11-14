@@ -2,7 +2,7 @@
 import abc
 import collections
 import threading
-from collections import OrderedDict, UserDict, UserList
+from collections import OrderedDict, UserList
 from typing import (
     AbstractSet,
     Any,
@@ -51,40 +51,52 @@ VT = TypeVar('VT')
 _Setlike = Union[AbstractSet[T], Iterable[T]]
 
 
-class FastUserDict(UserDict):
+class FastUserDict(MutableMapping[KT, VT]):
     """Proxy to dict.
 
     Like :class:`collection.UserDict` but reimplements some methods
     for better performance when the underlying dictionary is a real dict.
     """
 
-    data: MutableMapping
+    data: MutableMapping[KT, VT]
 
-    # Mypy forces us to redefine these, for some reason:
+    @classmethod
+    def fromkeys(cls,
+                 iterable: Iterable[KT],
+                 value: VT = None) -> 'FastUserSet':
+        d = cls()
+        d.update({k: value for k in iterable})
+        return d
 
-    def __getitem__(self, key: Any) -> Any:
+    def __getitem__(self, key: KT) -> VT:
         if not hasattr(self, '__missing__'):
             return self.data[key]
         if key in self.data:
             return self.data[key]
         return self.__missing__(key)  # type: ignore
 
-    def __setitem__(self, key: Any, value: Any) -> None:
+    def __setitem__(self, key: KT, value: VT) -> None:
         self.data[key] = value
 
-    def __delitem__(self, key: Any) -> None:
+    def __delitem__(self, key: KT) -> None:
         del self.data[key]
 
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[KT]:
         return iter(self.data)
 
     # Rest is fast versions of generic slow MutableMapping methods.
 
-    def __contains__(self, key: Any) -> bool:
+    def __contains__(self, key: KT) -> bool:
         return key in self.data
+
+    def __repr__(self) -> str:
+        return repr(self.data)
+
+    def copy(self) -> dict:
+        return self.data.copy()
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         self.data.update(*args, **kwargs)
