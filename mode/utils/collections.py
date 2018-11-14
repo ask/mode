@@ -4,6 +4,7 @@ import collections
 import threading
 from collections import OrderedDict, UserDict, UserList
 from typing import (
+    AbstractSet,
     Any,
     ContextManager,
     Dict,
@@ -14,8 +15,10 @@ from typing import (
     Mapping,
     MutableMapping,
     MutableSet,
+    Set,
     Tuple,
     TypeVar,
+    Union,
     ValuesView,
     cast,
 )
@@ -41,8 +44,11 @@ __all__ = [
     'force_mapping',
 ]
 
+T = TypeVar('T')
 KT = TypeVar('KT')
 VT = TypeVar('VT')
+
+_Setlike = Union[AbstractSet[T], Iterable[T]]
 
 
 class FastUserDict(UserDict):
@@ -96,34 +102,138 @@ class FastUserDict(UserDict):
         return self.data.values()
 
 
-class FastUserSet(MutableSet):
+class FastUserSet(MutableSet[T]):
     """Proxy to set."""
 
-    data: MutableMapping[Any, bool]
+    data: MutableSet[T]
+
+    # -- Immutable Methods --
+
+    def __and__(self, other: Set) -> Set:
+        return self.data.__and__(other)
 
     def __contains__(self, key: Any) -> bool:
-        return key in self.data
+        return self.data.__contains__(key)
 
-    def __iter__(self) -> Iterator:
+    def __ge__(self, other: AbstractSet[T]) -> bool:
+        return self.data.__ge__(other)
+
+    def __iter__(self) -> Iterator[T]:
         return iter(self.data)
+
+    def __le__(self, other: AbstractSet[T]) -> bool:
+        return self.data.__le__(other)
 
     def __len__(self) -> int:
         return len(self.data)
 
-    def add(self, key: Any) -> None:
-        self.data[key] = True
+    def __or__(self, other: AbstractSet[T]) -> Set[T]:
+        return self.data.__or__(other)
 
-    def discard(self, key: Any) -> None:
-        self.data.pop(key, None)
+    def __rand__(self, other: AbstractSet[T]) -> Set[T]:
+        return self.__and__(other)
 
-    def update(self, d: Iterable) -> None:
-        for item in d:
-            self.add(item)
+    def __reduce__(self) -> tuple:
+        return self.data.__reduce__()
 
-    # Rest is fast versions of generic slow MutableSet methods.
+    def __reduce_ex__(self) -> tuple:
+        return self.data.__reduce_ex__()
+
+    def __repr__(self) -> str:
+        return repr(self.data)
+
+    def __ror__(self, other: AbstractSet[T]) -> Set[T]:
+        return self.data.__ror__(other)
+
+    def __rsub__(self, other: AbstractSet[T]) -> Set[T]:
+        return other.__rsub__(self.data)
+
+    def __rxor__(self, other: AbstractSet[T]) -> Set[T]:
+        return other.__rxor__(self.data)
+
+    def __sizeof__(self) -> int:
+        return self.data.__sizeof__()
+
+    def __str__(self) -> str:
+        return str(self.data)
+
+    def __sub__(self, other: AbstractSet[T]) -> Set[T]:
+        return self.data.__sub__(other)
+
+    def __xor__(self, other: AbstractSet[T]) -> Set[T]:
+        return self.data.__xor__(other)
+
+    def copy(self) -> Set[T]:
+        return self.data.copy()
+
+    def difference(self, other: _Setlike[T]) -> Set[T]:
+        return self.data.difference(other)
+
+    def intersection(self, other: _Setlike[T]) -> Set[T]:
+        return self.data.intersection(other)
+
+    def isdisjoint(self, other: AbstractSet[T]) -> bool:
+        return self.data.isdisjoint(other)
+
+    def issubset(self, other: AbstractSet[T]) -> bool:
+        return self.data.issubset(other)
+
+    def issuperset(self, other: AbstractSet[T]) -> bool:
+        return self.data.issuperset(other)
+
+    def symmetric_difference(self, other: _Setlike[T]) -> Set[T]:
+        return self.data.symmetric_difference(other)
+
+    def union(self, other: _Setlike[T]) -> Set[T]:
+        return self.data.union(other)
+
+    # -- Mutable Methods --
+
+    def __iand__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.data.__iand__(other)
+        return self
+
+    def __ior__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.data.__ior__(other)
+        return self
+
+    def __isub__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.data.__isub__(other)
+        return self
+
+    def __ixor__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.data.__ixor__(other)
+        return self
+
+    def add(self, element: T) -> None:
+        self.data.add(element)
 
     def clear(self) -> None:
         self.data.clear()
+
+    def difference_update(self, other: _Setlike[T]) -> None:
+        self.data.difference_update(other)
+
+    def discard(self, element: T) -> None:
+        self.data.discard(element)
+
+    def intersection_update(self, other: _Setlike[T]) -> None:
+        self.data.intersection_update(other)
+
+    def pop(self) -> T:
+        return self.data.pop()
+
+    def remove(self, element: T) -> None:
+        self.data.remove(element)
+
+    def symmetric_difference_update(self, other: _Setlike[T]) -> None:
+        self.data.symmetric_difference_update(other)
+
+    def union_update(self, other: _Setlike[T]) -> None:
+        self.data.union_update(other)
+
+    def update(self, d: _Setlike[T]) -> None:
+        self.data.update(d)
 
 
 class FastUserList(UserList):
@@ -278,39 +388,83 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
         self._mutex = self._new_lock()
 
 
-class ManagedUserSet(FastUserSet):
+class ManagedUserSet(FastUserSet[T]):
     """A MutableSet that adds callbacks for when keys are get/set/deleted."""
 
-    def on_key_get(self, key: Any) -> None:
+    def on_add(self, value: T) -> None:
         ...
 
-    def on_key_set(self, key: Any) -> None:
-        ...
-
-    def on_key_del(self, key: Any) -> None:
+    def on_discard(self, value: T) -> None:
         ...
 
     def on_clear(self) -> None:
         ...
 
-    def __contains__(self, key: Any) -> bool:
-        self.on_key_get(key)
-        return super().__contains__(key)
+    def on_change(self, added: Set[T], removed: Set[T]) -> None:
+        ...
 
-    def add(self, key: Any) -> None:
-        self.on_key_set(key)
-        return super().add(key)
-
-    def discard(self, key: Any) -> None:
-        self.on_key_del(key)
-        return super().discard(key)
+    def add(self, element: T) -> None:
+        self.on_add(element)
+        return super().add(element)
 
     def clear(self) -> None:
         self.on_clear()
         return super().clear()
 
+    def discard(self, element: T) -> None:
+        self.on_discard(element)
+        return super().discard(element)
+
+    def pop(self) -> T:
+        element = self.data.pop()
+        self.on_discard(element)
+        return element
+
     def raw_update(self, *args: Any, **kwargs: Any) -> None:
         self.data.update(*args, **kwargs)
+
+    def __iand__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.on_change(added=set(), removed=self.difference(other))
+        self.data.__iand__(other)
+
+    def __ior__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.on_change(added=other.difference(self), removed=set())
+        self.data.__ior__(other)
+        return self
+
+    def __isub__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.on_change(added=set(), removed=self.data.intersection(other))
+        self.data.__isub__(other)
+        return self
+
+    def __ixor__(self, other: AbstractSet[T]) -> 'FastUserSet':
+        self.on_change(
+            added=other.difference(self.data),
+            removed=self.data.intersection(other),
+        )
+        return self.data.__ixor__(other)
+
+    def difference_update(self, other: _Setlike[T]) -> None:
+        self.on_change(added=set(), removed=self.data.intersection(other))
+        self.data.difference_update(other)
+
+    def intersection_update(self, other: _Setlike[T]) -> None:
+        self.data.intersection_update(other)
+        self.on_change(added=set(), removed=self.difference(other))
+
+    def symmetric_difference_update(self, other: _Setlike[T]) -> None:
+        self.on_change(
+            added=other.difference(self.data),
+            removed=self.data.intersection(other),
+        )
+        self.data.symmetric_difference_update(other)
+
+    def union_update(self, other: _Setlike[T]) -> None:
+        self.on_change(added=other.difference(self), removed=set())
+        self.data.union_update(other)
+
+    def update(self, d: _Setlike[T]) -> None:
+        self.union_update(set(d))
 
 
 class ManagedUserDict(FastUserDict):
