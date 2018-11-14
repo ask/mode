@@ -4,11 +4,21 @@
  Change history
 ================
 
+.. _version-2.0.4:
+
+2.0.4
+=====
+:release-date: 2018-11-14 9:18 A.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Collections: ``FastUserSet`` and ``ManagedUserSet`` now implements
+  all :class:`set` operations.
+
 .. _version-2.0.3:
 
 2.0.3
 =====
-:release-date: 2018-11-05 5:20 P.M PST
+:release-date: 2018-11-05 5:20 P.M PDT
 :release-by: Ask Solem (:github_user:`ask`)
 
 - Adds `Service.wait_first(*coros)`
