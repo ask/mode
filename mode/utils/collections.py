@@ -229,11 +229,8 @@ class FastUserSet(MutableSet[T]):
     def symmetric_difference_update(self, other: _Setlike[T]) -> None:
         self.data.symmetric_difference_update(other)
 
-    def union_update(self, other: _Setlike[T]) -> None:
-        self.data.union_update(other)
-
-    def update(self, d: _Setlike[T]) -> None:
-        self.data.update(d)
+    def update(self, other: _Setlike[T]) -> None:
+        self.data.update(other)
 
 
 class FastUserList(UserList):
@@ -404,16 +401,18 @@ class ManagedUserSet(FastUserSet[T]):
         ...
 
     def add(self, element: T) -> None:
-        self.on_add(element)
-        return super().add(element)
+        if element not in self.data:
+            self.on_add(element)
+            self.data.add(element)
 
     def clear(self) -> None:
         self.on_clear()
-        return super().clear()
+        self.data.clear()
 
     def discard(self, element: T) -> None:
-        self.on_discard(element)
-        return super().discard(element)
+        if element in self.data:
+            self.on_discard(element)
+            self.data.discard(element)
 
     def pop(self) -> T:
         element = self.data.pop()
@@ -426,6 +425,7 @@ class ManagedUserSet(FastUserSet[T]):
     def __iand__(self, other: AbstractSet[T]) -> 'FastUserSet':
         self.on_change(added=set(), removed=self.difference(other))
         self.data.__iand__(other)
+        return self
 
     def __ior__(self, other: AbstractSet[T]) -> 'FastUserSet':
         self.on_change(added=other.difference(self), removed=set())
@@ -442,15 +442,16 @@ class ManagedUserSet(FastUserSet[T]):
             added=other.difference(self.data),
             removed=self.data.intersection(other),
         )
-        return self.data.__ixor__(other)
+        self.data.__ixor__(other)
+        return self
 
     def difference_update(self, other: _Setlike[T]) -> None:
         self.on_change(added=set(), removed=self.data.intersection(other))
         self.data.difference_update(other)
 
     def intersection_update(self, other: _Setlike[T]) -> None:
-        self.data.intersection_update(other)
         self.on_change(added=set(), removed=self.difference(other))
+        self.data.intersection_update(other)
 
     def symmetric_difference_update(self, other: _Setlike[T]) -> None:
         self.on_change(
@@ -459,12 +460,10 @@ class ManagedUserSet(FastUserSet[T]):
         )
         self.data.symmetric_difference_update(other)
 
-    def union_update(self, other: _Setlike[T]) -> None:
+    def update(self, other: _Setlike[T]) -> None:
+        # union update
         self.on_change(added=other.difference(self), removed=set())
-        self.data.union_update(other)
-
-    def update(self, d: _Setlike[T]) -> None:
-        self.union_update(set(d))
+        self.data.update(other)
 
 
 class ManagedUserDict(FastUserDict):
