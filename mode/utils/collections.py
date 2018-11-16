@@ -478,18 +478,18 @@ class ManagedUserSet(FastUserSet[T]):
         self.data.update(other)
 
 
-class ManagedUserDict(FastUserDict):
+class ManagedUserDict(FastUserDict[KT, VT]):
     """A UserDict that adds callbacks for when keys are get/set/deleted."""
 
-    def on_key_get(self, key: Any) -> None:
+    def on_key_get(self, key: KT) -> None:
         """Handle that key is being retrieved."""
         ...
 
-    def on_key_set(self, key: Any, value: Any) -> None:
+    def on_key_set(self, key: KT, value: VT) -> None:
         """Handle that value for a key is being set."""
         ...
 
-    def on_key_del(self, key: Any) -> None:
+    def on_key_del(self, key: KT) -> None:
         """Handle that a key is deleted."""
         ...
 
@@ -497,15 +497,15 @@ class ManagedUserDict(FastUserDict):
         """Handle that the mapping is being cleared."""
         ...
 
-    def __getitem__(self, key: Any) -> Any:
+    def __getitem__(self, key: KT) -> Any:
         self.on_key_get(key)
         return super().__getitem__(key)
 
-    def __setitem__(self, key: Any, value: Any) -> None:
+    def __setitem__(self, key: KT, value: VT) -> None:
         self.on_key_set(key, value)
         self.data[key] = value
 
-    def __delitem__(self, key: Any) -> None:
+    def __delitem__(self, key: KT) -> None:
         self.on_key_del(key)
         del self.data[key]
 
