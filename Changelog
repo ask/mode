@@ -6,13 +6,15 @@
 
 .. _version-2.0.4:
 
-2.0.4
+2.1.0
 =====
-:release-date: 2018-11-14 9:18 A.M PDT
+:release-date: 2018-11-15 4:08 P.M PDT
 :release-by: Ask Solem (:github_user:`ask`)
 
 - Collections: ``FastUserSet`` and ``ManagedUserSet`` now implements
   all :class:`set` operations.
+
+- Collections are now generic types.
 
 .. _version-2.0.3:
 
