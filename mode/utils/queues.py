@@ -131,6 +131,9 @@ class ThrowableQueue(FlowControlQueue):
     def clear(self) -> None:
         self._queue.clear()  # type: ignore
         self._errors.clear()
+        for putter in self._putters:
+            putter.cancel()
+        self._putters.clear()
 
     def get_nowait(self) -> _T:
         if self._errors:
