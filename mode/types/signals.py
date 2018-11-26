@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     Union,
 )
+from mypy_extensions import Arg, KwArg, NamedArg, VarArg
 
 __all__ = [
     'BaseSignalT',
@@ -30,8 +31,14 @@ T = TypeVar('T')
 T_contra = TypeVar('T_contra', contravariant=True)
 
 SignalHandlerT = Union[
-    Callable[..., None],
-    Callable[..., Awaitable[None]],
+    Callable[
+        [T, VarArg(), NamedArg('BaseSignalT', name='signal'), KwArg()],
+        None,
+    ],
+    Callable[
+        [T, VarArg(), NamedArg('BaseSignalT', name='signal'), KwArg()],
+        Awaitable[None],
+    ],
 ]
 
 if typing.TYPE_CHECKING:
