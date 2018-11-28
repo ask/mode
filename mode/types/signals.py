@@ -14,7 +14,7 @@ from typing import (
     TypeVar,
     Union,
 )
-from mypy_extensions import Arg, KwArg, NamedArg, VarArg
+from mypy_extensions import KwArg, NamedArg, VarArg
 
 __all__ = [
     'BaseSignalT',
