@@ -8,17 +8,32 @@ use the ``on_thread_stop`` callback instead of the on_stop callback.
 """
 import asyncio
 import sys
+import threading
 import traceback
 from concurrent.futures import Executor
-from typing import Any
+from typing import Any, Optional
 
 from .services import Service
 
 __all__ = ['ServiceThread']
 
 
+class WorkerThread(threading.Thread):
+    serivce: 'ServiceThread'
+
+    def __init__(self, service: 'ServiceThread', **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.service = service
+        self.daemon = True
+
+    def run(self) -> None:
+        self.service._start_thread()
+
+
 class ServiceThread(Service):
     wait_for_shutdown = True
+
+    _thread: Optional[WorkerThread] = None
 
     def __init__(self,
                  *,
@@ -78,13 +93,13 @@ class ServiceThread(Service):
         # it is stopped with `await service.stop()`
         assert not self._thread_started.is_set()
         self._thread_started.set()
-        self.add_future(self.loop.run_in_executor(
-            self.executor, self._start_thread))
+        self._thread = WorkerThread(self)
+        self._thread.start()
 
     def _start_thread(self) -> None:
         # set the default event loop for this thread
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self._serve())
+        asyncio.set_event_loop(self.thread_loop)
+        self.thread_loop.run_until_complete(self._serve())
 
     async def _stop_children(self) -> None:
         ...   # called by thread instead of .stop()
@@ -97,6 +112,8 @@ class ServiceThread(Service):
         await self.on_thread_stop()
         self.set_shutdown()
         await self._default_stop_futures()
+        if self._thread is not None:
+            self._thread.join()
 
     async def _serve(self) -> None:
         try:
