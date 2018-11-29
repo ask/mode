@@ -1,8 +1,7 @@
 """Async I/O Future utilities."""
 import asyncio
-import collections.abc
-from functools import singledispatch
-from typing import Any, Awaitable, Callable, Optional, Type
+from inspect import isawaitable
+from typing import Any, Callable, Optional, Type
 
 # These used to be here, now moved to .queues
 from .queues import FlowControlEvent, FlowControlQueue  # noqa: F401
@@ -98,7 +97,6 @@ def done_future(result: Any = None, *,
     return f
 
 
-@singledispatch
 async def maybe_async(res: Any) -> Any:
     """Await future if argument is Awaitable.
 
@@ -106,13 +104,9 @@ async def maybe_async(res: Any) -> Any:
         >>> await maybe_async(regular_function(arg))
         >>> await maybe_async(async_function(arg))
     """
+    if isawaitable(res):
+        return await res
     return res
-
-
-# XXX In Py3.7: register does not work with typing.Awaitable
-@maybe_async.register(collections.abc.Awaitable)
-async def _(res: Awaitable) -> Any:
-    return await res
 
 
 def notify(fut: Optional[asyncio.Future], result: Any = None) -> None:
