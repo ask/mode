@@ -798,12 +798,10 @@ class Service(ServiceBase, ServiceCallbacks):
                 self.log.debug('Waiting for shutdown')
                 await asyncio.wait_for(
                     self._shutdown.wait(), self.shutdown_timeout,
-                    loop=self.loop,
                 )
                 self.log.debug('Shutting down now')
             await self._stop_futures()
-            self.exit_stack.__exit__(None, None, None)
-            await self.async_exit_stack.__aexit__(None, None, None)
+            await self._stop_exit_stacks()
             await self.on_shutdown()
             self._log_mundane('-Stopped!')
 
@@ -817,6 +815,13 @@ class Service(ServiceBase, ServiceCallbacks):
 
     async def _stop_futures(self) -> None:
         await self._default_stop_futures()
+
+    async def _stop_exit_stacks(self) -> None:
+        await self._default_stop_exit_stacks()
+
+    async def _default_stop_exit_stacks(self) -> None:
+        self.exit_stack.__exit__(None, None, None)
+        await self.async_exit_stack.__aexit__(None, None, None)
 
     async def _default_stop_futures(self) -> None:
         await self._wait_for_futures(timeout=0)
