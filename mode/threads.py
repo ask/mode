@@ -14,20 +14,40 @@ from concurrent.futures import Executor
 from typing import Any, Optional
 
 from .services import Service
+from .utils.locks import Event
+from .utils.loops import clone_loop
 
 __all__ = ['ServiceThread']
 
 
 class WorkerThread(threading.Thread):
-    serivce: 'ServiceThread'
+    service: 'ServiceThread'
+    _is_stopped: threading.Event
 
     def __init__(self, service: 'ServiceThread', **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.service = service
-        self.daemon = True
+        self.daemon = False
+        self._is_stopped = threading.Event()
 
     def run(self) -> None:
-        self.service._start_thread()
+        try:
+            self.service._start_thread()
+        finally:
+            self._set_stopped()
+
+    def _set_stopped(self) -> None:
+        try:
+            self._is_stopped.set()
+        except TypeError:  # pragma: no cover
+            # we lost the race at interpreter shutdown,
+            # so gc collected built-in modules.
+            pass
+
+    def stop(self) -> None:
+        self._is_stopped.wait()
+        if self.is_alive():
+            self.join(threading.TIMEOUT_MAX)
 
 
 class ServiceThread(Service):
@@ -43,11 +63,13 @@ class ServiceThread(Service):
                  **kwargs: Any) -> None:
         # cannot share loop between threads, so create a new one
         assert asyncio.get_event_loop()
-        self.executor = executor
+        if executor is not None:
+            raise NotImplementedError('executor is no longer supported')
         self.parent_loop = loop or asyncio.get_event_loop()
-        self.thread_loop = thread_loop or asyncio.new_event_loop()
-        self._thread_started = asyncio.Event(loop=self.parent_loop)
-        super().__init__(loop=thread_loop, **kwargs)
+        self.thread_loop = thread_loop or clone_loop(self.parent_loop)
+        self._thread_started = Event(loop=self.parent_loop)
+        super().__init__(loop=self.thread_loop, **kwargs)
+        assert self._shutdown.loop is self.parent_loop
 
     async def on_thread_stop(self) -> None:
         ...
@@ -67,8 +89,7 @@ class ServiceThread(Service):
     #
     # Original ._started event is owned by parent loop
     #
-    #    X calls await Y.start(): which schedules the thread to be
-    #       started in the loop.default_executor ThreadPool.
+    #    X calls await Y.start(): this starts a thread running Y._start_thread
     #    Y starts the thread, and the thread calls super().start to start
     #    the ServiceThread inside that thread.
     #    After starting the thread will wait for _stopped to be set.
@@ -77,10 +98,11 @@ class ServiceThread(Service):
     #      parent sets _stopped.set(), thread calls _stopped.wait()
     #      and only wait needs the loop.
     # ._shutdown is owned by parent loop
-    #      thread calls _shutdown.set(), thread calls _shutdown.wait()
+    #      thread calls _shutdown.set(), parent calls _shutdown.wait()
 
-    def _new_shutdown_event(self) -> asyncio.Event:
-        return asyncio.Event(loop=self.parent_loop)
+    def _new_shutdown_event(self) -> Event:
+        return Event(loop=self.parent_loop)
+
 
     async def maybe_start(self) -> None:
         if not self._thread_started.is_set():
@@ -113,7 +135,7 @@ class ServiceThread(Service):
         self.set_shutdown()
         await self._default_stop_futures()
         if self._thread is not None:
-            self._thread.join()
+            self._thread.stop()
 
     async def _serve(self) -> None:
         try:

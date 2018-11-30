@@ -59,6 +59,7 @@ Utils
     mode.utils.graphs
     mode.utils.imports
     mode.utils.logging
+    mode.utils.loops
     mode.utils.mocks
     mode.utils.objects
     mode.utils.queues

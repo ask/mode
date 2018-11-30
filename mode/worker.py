@@ -259,6 +259,13 @@ class Worker(Service):
     def _repr_info(self) -> str:
         return _repr(self.services)
 
+    @Service.task
+    async def _keepalive(self) -> None:
+        while not self.should_stop:
+            # Keeps MainThread loop alive, by ensuring it wakes up
+            # every second.
+            await asyncio.sleep(1.0)
+
     @property
     def blocking_detector(self) -> BlockingDetector:
         if self._blocking_detector is None:

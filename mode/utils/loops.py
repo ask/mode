@@ -40,7 +40,7 @@ def call_asap(callback: Callable,
               loop: asyncio.AbstractEventLoop = None) -> asyncio.Handle:
     assert loop
     if _is_unix_loop(loop):
-        return _call_asap(callback, *args, context=context)
+        return _call_asap(loop, callback, *args, context=context)
     if context is not None:
         return loop.call_soon_threadsafe(callback, *args, context=context)
     return loop.call_soon_threadsafe(callback, *args)
