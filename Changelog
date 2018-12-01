@@ -71,6 +71,9 @@
 - :func:`~mode.utils.futures.maybe_async` utility now
   also works with ``@asyncio.coroutine`` decorated coroutines.
 
+- Worker: SIGUSR1 cry handler: Fixed crash when coroutine does not have
+  ``__name__`` attribute.
+
 .. _version-2.0.3:
 
 2.0.3
