@@ -1,27 +1,28 @@
 import asyncio
 import pytest
 from mode.threads import ServiceThread
+from mode.utils.locks import Event
 from mode.utils.mocks import ANY, AsyncMock, Mock, patch
 
 
 class test_ServiceThread:
 
     @pytest.fixture
-    def executor(self):
-        return Mock(name='executor')
-
-    @pytest.fixture
-    def loop(self):
-        return Mock(name='loop')
+    def loop(self, *, event_loop):
+        return event_loop
 
     @pytest.fixture
     def thread_loop(self):
         return Mock(name='thread_loop')
 
     @pytest.fixture
-    def thread(self, *, executor, loop, thread_loop):
+    def Worker(self):
+        return Mock(name='Worker')
+
+    @pytest.fixture
+    def thread(self, *, Worker, loop, thread_loop):
         return ServiceThread(
-            executor=executor,
+            Worker=Worker,
             loop=loop,
             thread_loop=thread_loop)
 
@@ -31,7 +32,7 @@ class test_ServiceThread:
 
     def test_new_shutdown_event(self, *, thread):
         event = thread._new_shutdown_event()
-        assert isinstance(event, asyncio.Event)
+        assert isinstance(event, Event)
         assert not event.is_set()
 
     @pytest.mark.asyncio
@@ -46,18 +47,23 @@ class test_ServiceThread:
         thread.start.assert_called_once_with()
 
     @pytest.mark.asyncio
-    async def test_start(self, *, thread):
+    async def test_start(self, *, event_loop, thread):
         thread.add_future = AsyncMock(name='thread.add_future')
+        thread._thread_running = None
+        assert thread.parent_loop == event_loop
+        asyncio.ensure_future(self._wait_for_event(thread))
         await thread.start()
 
-        thread.loop.run_in_executor.assert_called_once_with(
-            thread.executor, thread._start_thread,
-        )
-
-        thread.add_future.assert_called_once_with(
-            thread.loop.run_in_executor())
+        thread.Worker.assert_called_once_with(thread)
+        thread.Worker.return_value.start.assert_called_once_with()
 
         assert thread._thread_started.is_set()
+
+    async def _wait_for_event(self, thread):
+        while thread._thread_running is None:
+            await asyncio.sleep(0.1)
+        if not thread._thread_running.done():
+            thread._thread_running.set_result(None)
 
     @pytest.mark.asyncio
     async def test_start__already_started_raises(self, *, thread):

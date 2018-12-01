@@ -10,16 +10,29 @@ import asyncio
 import sys
 import threading
 import traceback
-from concurrent.futures import Executor
 from inspect import isawaitable
-from typing import Any, Awaitable, Callable, Dict, NamedTuple, Optional, Tuple
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Type,
+)
 
 from .services import Service
 from .utils.futures import notify
 from .utils.locks import Event
 from .utils.loops import clone_loop
 
-__all__ = ['ServiceThread']
+__all__ = [
+    'QueuedMethod',
+    'WorkerThread',
+    'ServiceThread',
+    'QueueServiceThread',
+]
 
 
 class QueuedMethod(NamedTuple):
@@ -29,7 +42,39 @@ class QueuedMethod(NamedTuple):
     kwargs: Dict[str, Any]
 
 
+class WorkerThread(threading.Thread):
+    service: 'ServiceThread'
+    _is_stopped: threading.Event
+
+    def __init__(self, service: 'ServiceThread', **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.service = service
+        self.daemon = False
+        self._is_stopped = threading.Event()
+
+    def run(self) -> None:
+        try:
+            self.service._start_thread()
+        finally:
+            self._set_stopped()
+
+    def _set_stopped(self) -> None:
+        try:
+            self._is_stopped.set()
+        except TypeError:  # pragma: no cover
+            # we lost the race at interpreter shutdown,
+            # so gc collected built-in modules.
+            pass
+
+    def stop(self) -> None:
+        self._is_stopped.wait()
+        if self.is_alive():
+            self.join(threading.TIMEOUT_MAX)
+
+
 class ServiceThread(Service):
+    Worker: Type[WorkerThread] = WorkerThread
+
     abstract = True
     wait_for_shutdown = True
 
@@ -43,17 +88,20 @@ class ServiceThread(Service):
 
     def __init__(self,
                  *,
-                 executor: Executor = None,
+                 executor: Any = None,
                  loop: asyncio.AbstractEventLoop = None,
                  thread_loop: asyncio.AbstractEventLoop = None,
+                 Worker: Type[WorkerThread] = None,
                  **kwargs: Any) -> None:
         # cannot share loop between threads, so create a new one
         assert asyncio.get_event_loop()
         if executor is not None:
-            raise NotImplementedError('executor is no longer supported')
+            raise NotImplementedError('executor argument no longer supported')
         self.parent_loop = loop or asyncio.get_event_loop()
         self.thread_loop = thread_loop or clone_loop(self.parent_loop)
         self._thread_started = Event(loop=self.parent_loop)
+        if Worker is not None:
+            self.Worker = Worker
         super().__init__(loop=self.thread_loop, **kwargs)
         assert self._shutdown.loop is self.parent_loop
 
@@ -105,7 +153,7 @@ class ServiceThread(Service):
         self._thread_started.set()
         self._thread_running = asyncio.Future(loop=self.parent_loop)
         try:
-            self._thread = WorkerThread(self)
+            self._thread = self.Worker(self)
             self._thread.start()
             if not self.should_stop and self.wait_for_thread:
                 # thread exceptions do not propagate to the main thread,
@@ -173,36 +221,6 @@ class ServiceThread(Service):
         traceback.print_exc(None, sys.stderr)
 
 
-class WorkerThread(threading.Thread):
-    service: ServiceThread
-    _is_stopped: threading.Event
-
-    def __init__(self, service: ServiceThread, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        self.service = service
-        self.daemon = False
-        self._is_stopped = threading.Event()
-
-    def run(self) -> None:
-        try:
-            self.service._start_thread()
-        finally:
-            self._set_stopped()
-
-    def _set_stopped(self) -> None:
-        try:
-            self._is_stopped.set()
-        except TypeError:  # pragma: no cover
-            # we lost the race at interpreter shutdown,
-            # so gc collected built-in modules.
-            pass
-
-    def stop(self) -> None:
-        self._is_stopped.wait()
-        if self.is_alive():
-            self.join(threading.TIMEOUT_MAX)
-
-
 class MethodQueue(Service):
 
     _queue: asyncio.Queue
@@ -267,6 +285,11 @@ class MethodQueue(Service):
 
 
 class QueueServiceThread(ServiceThread):
+    """Service running in separate thread.
+
+    Uses a queue to run functions inside the thread,
+    so you can delegate calls.
+    """
     abstract = True
 
     _method_queue: Optional[MethodQueue] = None
