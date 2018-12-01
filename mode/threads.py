@@ -10,7 +10,6 @@ import asyncio
 import sys
 import threading
 import traceback
-from inspect import isawaitable
 from typing import (
     Any,
     Awaitable,
@@ -23,7 +22,7 @@ from typing import (
 )
 
 from .services import Service
-from .utils.futures import notify
+from .utils.futures import maybe_async, notify
 from .utils.locks import Event
 from .utils.loops import clone_loop
 
@@ -266,8 +265,7 @@ class MethodQueue(Service):
         promise, method, args, kwargs = p
         if not promise.cancelled():
             try:
-                ret = method(*args, **kwargs)
-                result = await ret if isawaitable(ret) else ret
+                result = await maybe_async(method(*args, **kwargs))
             except BaseException as exc:
                 if not promise.cancelled():
                     promise.set_exception(exc)
