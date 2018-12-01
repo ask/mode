@@ -397,7 +397,12 @@ def cry(file: IO,
                 for task in asyncio.Task.all_tasks(loop=loop):
                     coro = task._coro  # type: ignore
                     wrapped = getattr(task, '__wrapped__', None)
-                    print(f'  TASK {coro.__name__}', file=file)  # noqa: T003
+                    coro_name = getattr(coro, '__name__', None)
+                    if coro_name is None:
+                        # some coroutines does not have a __name__ attribute
+                        # e.g. async_generator_asend
+                        coro_name = repr(coro)
+                    print(f'  TASK {coro_name}', file=file)      # noqa: T003
                     if wrapped:
                         print(f'  -> {wrapped}', file=file)      # noqa: T003
                     print(f'  {task!r}', file=file)              # noqa: T003
