@@ -136,6 +136,15 @@
     In mode services you can now use :mod:`contextvars` module even
     on Python 3.6, thanks to the work of :github_user:`fantix`.
 
+.. _version-1.18.2:
+
+1.18.2
+======
+:release-date: 2018-11-30 6:23 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Worker: SIGUSR1 cry handler: Fixed crash when coroutine does not have
+  ``__name__`` attribute.
 
 .. _version-1.18.1:
 
