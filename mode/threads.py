@@ -24,7 +24,6 @@ from typing import (
 from .services import Service
 from .utils.futures import maybe_async, notify
 from .utils.locks import Event
-from .utils.loops import clone_loop
 
 __all__ = [
     'QueuedMethod',
@@ -97,7 +96,7 @@ class ServiceThread(Service):
         if executor is not None:
             raise NotImplementedError('executor argument no longer supported')
         self.parent_loop = loop or asyncio.get_event_loop()
-        self.thread_loop = thread_loop or clone_loop(self.parent_loop)
+        self.thread_loop = thread_loop or asyncio.new_event_loop()
         self._thread_started = Event(loop=self.parent_loop)
         if Worker is not None:
             self.Worker = Worker
