@@ -215,6 +215,17 @@ class ServiceThread(Service):
         finally:
             await self._shutdown_thread()
 
+    @Service.task
+    async def _thread_keepalive(self):
+        while not self.should_stop:
+            # The consumer thread will have a separate event loop,
+            # and so we use this trick to make sure our loop is
+            # being scheduled to run something at all times.
+            #
+            # If we don't do this, anything waiting for new
+            # stuff in the method queue may never get it.
+            await asyncio.sleep(1, loop=self.thread_loop)
+
     def on_crash(self, msg: str, *fmt: Any, **kwargs: Any) -> None:
         print(msg.format(*fmt), file=sys.stderr)
         traceback.print_exc(None, sys.stderr)
@@ -329,14 +340,3 @@ class QueueServiceThread(ServiceThread):
                           **kwargs: Any) -> None:
         # Enqueue method to be called by thread (asynchronous).
         await self.method_queue.cast(fun, *args, **kwargs)
-
-    @Service.task
-    async def _keepalive(self) -> None:
-        while not self.should_stop:
-            # The consumer thread will have a separate event loop,
-            # and so we use this trick to make sure our loop is
-            # being scheduled to run something at all times.
-            #
-            # If we don't do this, anything waiting for new
-            # stuff in the method queue may never get it.
-            await asyncio.sleep(1, loop=self.thread_loop)
