@@ -53,6 +53,12 @@ class Worker(Service):
 
     _blocking_detector: Optional[BlockingDetector] = None
 
+    # signals can be called multiple times,
+    # so when stopped by signal we record the time to make sure
+    # we don't start the process multiple times.
+    _signal_stop_time: float = None
+    _signal_stop_future: asyncio.Future = None
+
     def __init__(
             self, *services: ServiceT,
             debug: bool = False,
@@ -170,10 +176,10 @@ class Worker(Service):
 
     def _on_sigint(self) -> None:
         self.carp('-INT- -INT- -INT- -INT- -INT- -INT-')
-        asyncio.ensure_future(self._stop_on_signal(), loop=self.loop)
+        self._schedule_shutdown(signal.SIGINT)
 
     def _on_sigterm(self) -> None:
-        asyncio.ensure_future(self._stop_on_signal(), loop=self.loop)
+        self._schedule_shutdown(signal.SIGTERM)
 
     def _on_sigusr1(self) -> None:
         self.add_future(self._cry())
@@ -181,21 +187,30 @@ class Worker(Service):
     async def _cry(self) -> None:
         logging.cry(file=self.stderr)
 
-    async def _stop_on_signal(self) -> None:
-        self.log.info('Stopping on signal received...')
+    def _schedule_shutdown(self, signal: signal.Signals):
+        if not self._signal_stop_time:
+            self._signal_stop_time = self.loop.time()
+            self._signal_stop_future = asyncio.ensure_future(
+                self._stop_on_signal(signal), loop=self.loop)
+
+    async def _stop_on_signal(self, signal: signal.Signals) -> None:
+        self.log.info('Signal received: %s (%s)', signal, signal.value)
         await self.stop()
 
     def execute_from_commandline(self) -> None:
         try:
-            with suppress(asyncio.CancelledError):
-                self.loop.run_until_complete(self.start())
+            self.loop.run_until_complete(self.start())
+        except asyncio.CancelledError:
+            pass
         except Exception as exc:
             self.log.exception('Error: %r', exc)
         finally:
             self.stop_and_shutdown()
 
     def stop_and_shutdown(self) -> None:
-        if not self._stopped.is_set():
+        if self._signal_stop_future and not self._signal_stop_future.done():
+            self.loop.run_until_complete(self._signal_stop_future)
+        elif not self._stopped.is_set():
             self.loop.run_until_complete(self.stop())
         self._shutdown_loop()
 
