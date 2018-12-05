@@ -124,18 +124,18 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
                 pass
             finally:
                 self._please_wakeup = None
+            if not self.should_stop:
+                to_start: List[ServiceT] = []
+                to_restart: List[ServiceT] = []
+                for service in services:
+                    if service.started:
+                        if not self.service_operational(service):
+                            to_restart.append(service)
+                    else:
+                        to_start.append(service)
 
-            to_start: List[ServiceT] = []
-            to_restart: List[ServiceT] = []
-            for service in services:
-                if service.started:
-                    if not self.service_operational(service):
-                        to_restart.append(service)
-                else:
-                    to_start.append(service)
-
-            await self.start_services(to_start)
-            await self.restart_services(to_restart)
+                await self.start_services(to_start)
+                await self.restart_services(to_restart)
 
     async def on_start(self) -> None:
         await self.start_services(self._services)
@@ -238,3 +238,7 @@ class CrashingSupervisor(SupervisorStrategy):
         #   - if the exception is handled by another supervisor
         #       that supervisor decides what to do with it.
         pass
+
+    def wakeup(self) -> None:
+        self._stopped.set()
+        super().wakeup()
