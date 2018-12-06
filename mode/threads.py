@@ -215,7 +215,7 @@ class ServiceThread(Service):
             await self._shutdown_thread()
 
     @Service.task
-    async def _thread_keepalive(self):
+    async def _thread_keepalive(self) -> None:
         while not self.should_stop:
             # The consumer thread will have a separate event loop,
             # and so we use this trick to make sure our loop is

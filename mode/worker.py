@@ -56,8 +56,8 @@ class Worker(Service):
     # signals can be called multiple times,
     # so when stopped by signal we record the time to make sure
     # we don't start the process multiple times.
-    _signal_stop_time: float = None
-    _signal_stop_future: asyncio.Future = None
+    _signal_stop_time: Optional[float] = None
+    _signal_stop_future: Optional[asyncio.Future] = None
 
     def __init__(
             self, *services: ServiceT,
@@ -188,7 +188,7 @@ class Worker(Service):
     async def _cry(self) -> None:
         logging.cry(file=self.stderr)
 
-    def _schedule_shutdown(self, signal: signal.Signals):
+    def _schedule_shutdown(self, signal: signal.Signals) -> None:
         if not self._signal_stop_time:
             self._signal_stop_time = self.loop.time()
             self._signal_stop_future = asyncio.ensure_future(
