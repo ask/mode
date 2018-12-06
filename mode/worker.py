@@ -206,7 +206,11 @@ class Worker(Service):
         except Exception as exc:
             self.log.exception('Error: %r', exc)
         finally:
+            self.on_worker_shutdown()
             self.stop_and_shutdown()
+
+    def on_worker_shutdown(self) -> None:
+        ...
 
     def stop_and_shutdown(self) -> None:
         if self._signal_stop_future and not self._signal_stop_future.done():
