@@ -113,11 +113,12 @@ class Worker(Service):
     def _say(self,
              msg: str,
              file: Optional[IO] = None,
-             end: str = '\n') -> None:
+             end: str = '\n',
+             **kwargs: Any) -> None:
         if file is None:
             file = self.stdout
         if not self.quiet:
-            print(msg, file=file, end=end)  # noqa: T003
+            print(msg, file=file, end=end, **kwargs)  # noqa: T003
 
     def on_init_dependencies(self) -> Iterable[ServiceT]:
         return self.services
