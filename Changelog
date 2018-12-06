@@ -4,7 +4,27 @@
  Change history
 ================
 
-.. _version-2.0.4:
+.. _version-3.0.1:
+
+3.0.1
+=====
+:release-date: 2018-12-06 10:20 A.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Worker: Added new callback ``on_worker_shutdown``.
+
+- Worker: Do not stop twice, instead wait for original stop to complete.
+
+    Signals would start multiple stopping coroutines, leading to
+    the worker shutting down too fast.
+
+- Threads: All ``ServiceThread`` services needs a keepalive
+  coroutine to be scheduled.
+
+- Supervisor: Fixed issue with ``CrashingSupervisor`` where
+  service would not crash.
+
+.. _version-3.0.0:
 
 3.0.0
 =====
