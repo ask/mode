@@ -171,6 +171,15 @@ class Worker(Service):
             await self.blocking_detector.maybe_start()
 
     def install_signal_handlers(self) -> None:
+        if sys.platform == 'win32':
+            self._install_signal_handlers_windows()
+        else:
+            self._install_signal_handlers_unix()
+
+    def _add_signal_handlers_windows(self) -> None:
+        signal.signal(signal.SIGTERM, self._on_win_sigterm)
+
+    def _add_signal_handlers_unix(self) -> None:
         self.loop.add_signal_handler(signal.SIGINT, self._on_sigint)
         self.loop.add_signal_handler(signal.SIGTERM, self._on_sigterm)
         self.loop.add_signal_handler(signal.SIGUSR1, self._on_sigusr1)
@@ -181,6 +190,9 @@ class Worker(Service):
 
     def _on_sigterm(self) -> None:
         self._schedule_shutdown(signal.SIGTERM)
+
+    def _on_win_sigterm(self, signum: int, frame: Any) -> None:
+        self._scheduled_shutdown(signal.SIGTERM)
 
     def _on_sigusr1(self) -> None:
         self.add_future(self._cry())
