@@ -54,7 +54,9 @@ __all__ = [
     'KeywordReduce',
     'InvalidAnnotation',
     'qualname',
+    'shortname',
     'canoname',
+    'canonshortname',
     'annotations',
     'eval_type',
     'iter_mro_reversed',
@@ -159,9 +161,25 @@ def qualname(obj: Any) -> str:
     return '.'.join((obj.__module__, name))
 
 
+def shortname(obj: Any) -> str:
+    """Get object name (non-qualified)."""
+    if not hasattr(obj, '__name__') and hasattr(obj, '__class__'):
+        obj = obj.__class__
+    return '.'.join((obj.__module__, obj.__name__))
+
+
 def canoname(obj: Any, *, main_name: str = None) -> str:
     """Get qualname of obj, trying to resolve the real name of ``__main__``."""
     name = qualname(obj)
+    parts = name.split('.')
+    if parts[0] == '__main__':
+        return '.'.join([main_name or _detect_main_name()] + parts[1:])
+    return name
+
+
+def canonshortname(obj: Any, *, main_name: str = None) -> str:
+    """Get non-qualified name of obj, resolve real name of ``__main__``."""
+    name = shortname(obj)
     parts = name.split('.')
     if parts[0] == '__main__':
         return '.'.join([main_name or _detect_main_name()] + parts[1:])
