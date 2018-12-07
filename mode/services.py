@@ -743,7 +743,8 @@ class Service(ServiceBase, ServiceCallbacks):
         try:
             await task
         except asyncio.CancelledError:
-            self._log_mundane('Terminating cancelled task: %r', task)
+            if not self.should_stop:
+                self._log_mundane('Terminating cancelled task: %r', task)
         except RuntimeError as exc:
             if 'Event loop is closed' in str(exc):
                 self.log.info('Cancelled task %r: %s', task, exc)
@@ -808,7 +809,7 @@ class Service(ServiceBase, ServiceCallbacks):
             await self._stop_futures()
             await self._stop_exit_stacks()
             await self.on_shutdown()
-            self._log_mundane('-Stopped!')
+            self.log.debug('-Stopped!')
 
     async def _stop_children(self) -> None:
         await self._default_stop_children()
@@ -816,7 +817,11 @@ class Service(ServiceBase, ServiceCallbacks):
     async def _default_stop_children(self) -> None:
         for child in reversed(self._children):
             if child is not None:
-                await child.stop()
+                try:
+                    await asyncio.shield(child.stop())
+                except Exception as exc:
+                    self.log.exception(
+                        'Error while stopping child %r: %r', child, exc)
 
     async def _stop_futures(self) -> None:
         await self._default_stop_futures()
