@@ -94,6 +94,15 @@
 - Worker: SIGUSR1 cry handler: Fixed crash when coroutine does not have
   ``__name__`` attribute.
 
+.. _version-2.0.4:
+
+2.0.4
+=====
+:release-date: 2018-11-19 1:07 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- ``FlowControlQueue.clear`` now cancels all waiting for ``Queue.put``.
+
 .. _version-2.0.3:
 
 2.0.3
