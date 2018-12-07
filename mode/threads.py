@@ -174,7 +174,13 @@ class ServiceThread(Service):
     def _start_thread(self) -> None:
         # set the default event loop for this thread
         asyncio.set_event_loop(self.thread_loop)
-        self.thread_loop.run_until_complete(self._serve())
+        try:
+            self.thread_loop.run_until_complete(self._serve())
+        except Exception:
+            # if self._serve raises an exception we need to set
+            # shutdown here, since _shutdown_thread will not execute.
+            self.set_shutdown()
+            raise
 
     async def _stop_children(self) -> None:
         ...   # called by thread instead of .stop()
