@@ -9,6 +9,7 @@ from .queues import FlowControlEvent, FlowControlQueue  # noqa: F401
 __all__ = [
     'done_future',
     'maybe_async',
+    'maybe_cancel',
     'stampede',
     'notify',
 ]
@@ -107,6 +108,12 @@ async def maybe_async(res: Any) -> Any:
     if isawaitable(res):
         return await res
     return res
+
+
+def maybe_cancel(fut: asyncio.Future) -> bool:
+    if fut is not None and not fut.done():
+        return fut.cancel()
+    return False
 
 
 def notify(fut: Optional[asyncio.Future], result: Any = None) -> None:

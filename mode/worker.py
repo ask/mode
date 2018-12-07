@@ -11,6 +11,7 @@ from typing import Any, Dict, IO, Iterable, List, Optional, Tuple, Union, cast
 from .services import Service
 from .types import ServiceT
 from .utils import logging
+from .utils.futures import maybe_cancel
 from .utils.imports import symbol_by_name
 from .utils.times import Seconds
 
@@ -52,6 +53,7 @@ class Worker(Service):
     services: Iterable[ServiceT]
 
     _blocking_detector: Optional[BlockingDetector] = None
+    _starting_fut: Optional[asyncio.Future] = None
 
     # signals can be called multiple times,
     # so when stopped by signal we record the time to make sure
@@ -209,15 +211,18 @@ class Worker(Service):
     async def _stop_on_signal(self, signal: signal.Signals) -> None:
         self.log.info('Signal received: %s (%s)', signal, signal.value)
         await self.stop()
+        maybe_cancel(self._starting_fut)
 
     def execute_from_commandline(self) -> None:
+        self._starting_fut = asyncio.ensure_future(self.start())
         try:
-            self.loop.run_until_complete(self.start())
+            self.loop.run_until_complete(self._starting_fut)
         except asyncio.CancelledError:
             pass
         except Exception as exc:
             self.log.exception('Error: %r', exc)
         finally:
+            maybe_cancel(self._starting_fut)
             self.on_worker_shutdown()
             self.stop_and_shutdown()
 
@@ -263,8 +268,8 @@ class Worker(Service):
         await asyncio.sleep(1.0, loop=self.loop)
 
     def _gather_all(self) -> None:
-        # sleeps for at most 40 * 0.1s
-        for _ in range(1):
+        # sleeps for at most 10 * 0.1s
+        for _ in range(10):
             if not len(asyncio.Task.all_tasks(loop=self.loop)):
                 break
             self.loop.run_until_complete(asyncio.sleep(0.1))

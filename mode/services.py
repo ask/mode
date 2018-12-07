@@ -714,25 +714,30 @@ class Service(ServiceBase, ServiceCallbacks):
 
     async def _actually_start(self) -> None:
         """Start the service."""
-        if not self.restart_count:
-            self._children.extend(self.on_init_dependencies())
-            await self.on_first_start()
-        self.exit_stack.__enter__()
-        await self.async_exit_stack.__aenter__()
-        try:
-            self._log_mundane('Starting...')
-            await self.on_start()
-            for task in self._get_tasks():
-                self.add_future(task.fun(self))
-            for child in self._children:
-                if child is not None:
-                    await child.maybe_start()
-            self.log.debug('Started.')
-            await self.on_started()
-        except BaseException:
-            self.exit_stack.__exit__(*sys.exc_info())
-            await self.async_exit_stack.__aexit__(*sys.exc_info())
-            raise
+        for _ in [1]:  # to use break
+            if not self.restart_count:
+                self._children.extend(self.on_init_dependencies())
+                await self.on_first_start()
+            self.exit_stack.__enter__()
+            await self.async_exit_stack.__aenter__()
+            try:
+                self._log_mundane('Starting...')
+                await self.on_start()
+                if self.should_stop:
+                    break
+                for task in self._get_tasks():
+                    self.add_future(task.fun(self))
+                for child in self._children:
+                    if child is not None:
+                        await child.maybe_start()
+                    if self.should_stop:
+                        break
+                self.log.debug('Started.')
+                await self.on_started()
+            except BaseException:
+                self.exit_stack.__exit__(*sys.exc_info())
+                await self.async_exit_stack.__aexit__(*sys.exc_info())
+                raise
 
     async def _execute_task(self, task: Awaitable) -> None:
         try:
