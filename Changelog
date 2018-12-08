@@ -4,6 +4,24 @@
  Change history
 ================
 
+.. _version-3.0.3:
+
+3.0.3
+=====
+:release-date: 2018-12-07 3:22 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Threads: Fixed delay in shutdown if ``on_thread_stop`` callback raises
+  exception.
+
+- Service: Stopping of children no longer propagates exceptions, to ensure
+  other services are still stopped.
+
+- Worker: Fixed race condition if worker stopped before being fully started.
+
+    This would lead the worker to shutdown early before fully stopping
+    all dependent services.
+
 .. _version-3.0.2:
 
 3.0.2
