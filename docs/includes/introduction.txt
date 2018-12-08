@@ -1,4 +1,4 @@
-:Version: 3.0.3
+:Version: 3.0.4
 :Web: http://mode.readthedocs.org/
 :Download: http://pypi.org/project/mode
 :Source: http://github.com/ask/mode
