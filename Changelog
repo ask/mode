@@ -22,6 +22,8 @@
     This would lead the worker to shutdown early before fully stopping
     all dependent services.
 
+- Tests: Adds :class:`~mode.utils.mocks.AsyncMagicMock`
+
 .. _version-3.0.2:
 
 3.0.2

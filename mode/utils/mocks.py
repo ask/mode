@@ -5,6 +5,7 @@ from typing import Any
 
 __all__ = [
     'ANY',
+    'AsyncMagicMock',
     'AsyncMock',
     'AsyncContextManagerMock',
     'FutureMock',
@@ -22,6 +23,17 @@ class AsyncMock(unittest.mock.Mock):
                  **kwargs: Any) -> None:
         super().__init__(name=name)
         coro = Mock(*args, **kwargs)
+        self.attach_mock(coro, 'coro')
+        self.side_effect = coroutine(coro)
+
+
+class AsyncMagicMock(unittest.mock.MagicMock):
+
+    def __init__(self, *args: Any,
+                 name: str = None,
+                 **kwargs: Any) -> None:
+        super().__init__(name=name)
+        coro = MagicMock(*args, **kwargs)
         self.attach_mock(coro, 'coro')
         self.side_effect = coroutine(coro)
 
