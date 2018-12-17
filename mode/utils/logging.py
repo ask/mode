@@ -74,7 +74,7 @@ DEFAULT_FORMATTERS = {
         '()': 'mode.utils.logging.ExtensionFormatter',
         'format': DEFAULT_COLOR_FORMAT,
         'log_colors': DEFAULT_COLORS,
-        'stream': sys.stdout
+        'stream': sys.stdout,
     },
 }
 
