@@ -185,6 +185,9 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):
     Extends :pypi:`colorlog`.
     """
 
+    def __init__(self, stream: IO = None, **kwargs: Any) -> None:
+        super().__init__(stream=stream or sys.stdout, **kwargs)
+
     def format(self, record: logging.LogRecord) -> str:
         self._format_args(record)
         return super().format(record)
