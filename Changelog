@@ -4,6 +4,17 @@
  Change history
 ================
 
+.. _version-3.0.5:
+
+3.0.5
+=====
+:release-date: 2018-12-19 04:40 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Fixes compatibility with :pypi:`colorlog` 4.0.x.
+
+    Contributed by Ryan Whitten (:github_user:`rwhitten577`).
+
 .. _version-3.0.4:
 
 3.0.4
