@@ -56,8 +56,10 @@ __all__ = [
 ]
 
 DEVLOG: bool = bool(os.environ.get('DEVLOG', ''))
-DEFAULT_FORMAT: str = '[%(asctime)s: %(levelname)s]: %(message)s'
-DEFAULT_COLOR_FORMAT = '[%(asctime)s: %(levelname)s]: %(log_color)s%(message)s'
+DEFAULT_FORMAT: str = '[%(asctime)s: %(levelname)s]: %(message)s %(extra)s'
+DEFAULT_COLOR_FORMAT = '''\
+[%(asctime)s: %(levelname)s]: %(log_color)s%(message)s %(extra)s\
+'''
 
 DEFAULT_COLORS = {
     **colorlog.default_log_colors,
@@ -68,7 +70,8 @@ DEFAULT_COLORS = {
 
 DEFAULT_FORMATTERS = {
     'default': {
-        'format': '[%(asctime)s: %(levelname)s]: %(message)s',
+        '()': 'mode.utils.logging.DefaultFormatter',
+        'format': DEFAULT_FORMAT,
     },
     'colored': {
         '()': 'mode.utils.logging.ExtensionFormatter',
@@ -180,6 +183,19 @@ def formatter(fun: FormatterHandler) -> FormatterHandler:
     return fun
 
 
+def _format_extra(record: logging.LogRecord) -> str:
+    return ', '.join(
+        f'{k}={v!r}' for k, v in record.__dict__.get('data', {}).items()
+    )
+
+
+class DefaultFormatter(logging.Formatter):
+
+    def format(self, record: logging.LogRecord) -> str:
+        record.extra = _format_extra(record)
+        return super().format(record)
+
+
 class ExtensionFormatter(colorlog.TTYColoredFormatter):
     """Formatter that can register callbacks to format args.
 
@@ -191,6 +207,7 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):
 
     def format(self, record: logging.LogRecord) -> str:
         self._format_args(record)
+        record.extra = _format_extra(record)
         return super().format(record)
 
     def _format_args(self, record: logging.LogRecord) -> None:
