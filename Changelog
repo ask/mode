@@ -4,6 +4,19 @@
  Change history
 ================
 
+.. _version-3.0.6:
+
+3.0.6
+=====
+:release-date: 2019-01-07 12:10 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds ``%(extra)s`` as log format option.
+
+    To add additional context to your logging statements use for example::
+
+        logger.error('Foo', extra={'data': {'database': 'db1'}})
+
 .. _version-3.0.5:
 
 3.0.5
