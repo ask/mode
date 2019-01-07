@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """AsyncIO Service-based programming."""
-# :copyright: (c) 2017, Robinhood Markets
+# :copyright: (c) 2017-2019, Robinhood Markets
 #             All rights reserved.
 # :license:   BSD (3 Clause), see LICENSE for more details.
 import re
