@@ -182,6 +182,10 @@ class ServiceThread(Service):
             self.set_shutdown()
             raise
 
+    async def stop(self) -> None:
+        if self._started.is_set():
+            await super().stop()
+
     async def _stop_children(self) -> None:
         ...   # called by thread instead of .stop()
 
