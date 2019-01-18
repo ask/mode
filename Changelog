@@ -4,6 +4,18 @@
  Change history
 ================
 
+.. _version-3.0.7:
+
+3.0.7
+=====
+:release-date: 2019-01-18 01:12 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- **ServiceThread** ``.stop()`` would wait for thread shutdown
+  even if thread was never started.
+
+- **CI**: Adds CPython 3.7.2 and 3.6.8 to build matrix
+
 .. _version-3.0.6:
 
 3.0.6
