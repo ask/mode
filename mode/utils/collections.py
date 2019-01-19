@@ -1,6 +1,6 @@
 """Custom data structures."""
 import abc
-import collections
+import collections.abc
 import threading
 from collections import OrderedDict, UserList
 from typing import (
@@ -616,7 +616,7 @@ class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
         obj = self.obj
         for key in self:
             yield key, getattr(obj, key)
-collections.MutableMapping.register(DictAttribute)  # noqa: E305
+collections.abc.MutableMapping.register(DictAttribute)  # noqa: E305
 
 
 def force_mapping(m: Any) -> Mapping:
