@@ -66,6 +66,9 @@ matrix:
       env: TOXENV=3.7 IDENT="3.7.2" RUN_SUITE=y
       os: linux
       dist: xenial
+    - python: 3.7.0
+      env: TOXENV=3.7 IDENT="3.7.0" RUN_SUITE=y
+      os: windows
 
 before_install:
 install:
