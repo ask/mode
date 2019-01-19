@@ -1,8 +1,12 @@
 import asyncio
 from datetime import timedelta
-from time import monotonic
 import pytest
-from mode.utils.times import humanize_seconds, rate_limit, want_seconds
+from mode.utils.times import (
+    TIME_MONOTONIC,
+    humanize_seconds,
+    rate_limit,
+    want_seconds,
+)
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -23,13 +27,13 @@ def test_want_seconds(input, expected):
 
 @pytest.mark.asyncio
 async def test_rate_limit():
-    time_start = monotonic()
+    time_start = TIME_MONOTONIC()
     x = 0
     bucket = rate_limit(10, 1.0)
     for _ in range(20):
         async with bucket:
             x += 1
-    spent = monotonic() - time_start
+    spent = TIME_MONOTONIC() - time_start
     assert spent > 1.0
 
 

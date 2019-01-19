@@ -1,8 +1,9 @@
 import abc
 import asyncio
+import sys
+import time
 from datetime import timedelta
 from functools import singledispatch
-from time import monotonic
 from types import TracebackType
 from typing import Callable, List, Mapping, NamedTuple, Optional, Type, Union
 
@@ -17,6 +18,12 @@ __all__ = [
     'rate_limit',
     'want_seconds',
 ]
+
+TIME_MONOTONIC: Callable[[], float]
+if sys.platform == 'win32':
+    TIME_MONOTONIC = time.time
+else:
+    TIME_MONOTONIC = time.monotonic
 
 #: Seconds can be expressed as float or :class:`~datetime.timedelta`,
 Seconds = Union[timedelta, float, str]
@@ -149,7 +156,7 @@ class TokenBucket(Bucket):
     _last_pour: float
 
     def __post_init__(self) -> None:
-        self._last_pour = monotonic()
+        self._last_pour = TIME_MONOTONIC()
 
     def pour(self, tokens: int = 1) -> bool:
         need = tokens
@@ -167,7 +174,7 @@ class TokenBucket(Bucket):
 
     @property
     def tokens(self) -> float:
-        now = monotonic()
+        now = TIME_MONOTONIC()
         if now < self._last_pour:
             return self._tokens
         if self._tokens < self.capacity:
