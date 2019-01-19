@@ -69,10 +69,15 @@ matrix:
     - python: 3.7.0
       env: TOXENV=3.7 IDENT="3.7.0" RUN_SUITE=y
       os: windows
+      language: sh
+      before_install:
+        - choco install python
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - python -m pip install --upgrade pip wheel
 
 before_install:
 install:
-- travis_retry pip install -U tox
+- python -m pip install --upgrade tox
 script: tox -v -- -v
 notifications:
   slack:
