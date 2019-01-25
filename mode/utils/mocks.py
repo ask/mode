@@ -1,7 +1,12 @@
 import asyncio
+import builtins
+import sys
+import types
 import unittest.mock
 from asyncio import coroutine
-from typing import Any
+from contextlib import contextmanager
+from itertools import count
+from typing import Any, List, Optional
 
 __all__ = [
     'ANY',
@@ -14,6 +19,27 @@ __all__ = [
     'call',
     'patch',
 ]
+
+MOCK_CALL_COUNT = count(0)
+
+
+class Mock(unittest.mock.Mock):
+    global_call_count: Optional[int] = None
+    call_counts: List[int] = None
+
+    def __call__(self, *args, **kwargs):
+        ret = super().__call__(*args, **kwargs)
+        count = self.global_call_count = next(MOCK_CALL_COUNT)
+        if self.call_counts is None:
+            self.call_counts = [count]
+        else:
+            self.call_counts.append(count)
+        return ret
+
+    def reset_mock(self, *args, **kwargs):
+        super().reset_mock(*args, **kwargs)
+        if self.call_counts is not None:
+            self.call_counts.clear()
 
 
 class AsyncMock(unittest.mock.Mock):
@@ -119,8 +145,75 @@ class FutureMock(unittest.mock.Mock):
         assert not self.awaited
 
 
+@contextmanager
+def patch_module(*names: str, new_callable: Any = Mock):
+    """Mock one or modules such that every attribute is a :class:`Mock`."""
+    prev = {}
+
+    class MockModule(types.ModuleType):
+
+        def __getattr__(self, attr):
+            setattr(self, attr, new_callable())
+            return types.ModuleType.__getattribute__(self, attr)
+
+    mods = []
+    for name in names:
+        try:
+            prev[name] = sys.modules[name]
+        except KeyError:
+            pass
+        mod = sys.modules[name] = MockModule(name)
+        mods.append(mod)
+    try:
+        yield mods
+    finally:
+        for name in names:
+            try:
+                sys.modules[name] = prev[name]
+            except KeyError:
+                try:
+                    del(sys.modules[name])
+                except KeyError:
+                    pass
+
+
+@contextmanager
+def mask_module(*modnames):
+    """Ban some modules from being importable inside the context.
+
+    For example::
+
+        >>> with mask_module('sys'):
+        ...     try:
+        ...         import sys
+        ...     except ImportError:
+        ...         print('sys not found')
+        sys not found
+
+        >>> import sys  # noqa
+        >>> sys.version
+        (2, 5, 2, 'final', 0)
+
+    Taken from
+    http://bitbucket.org/runeh/snippets/src/tip/missing_modules.py
+
+    """
+    realimport = builtins.__import__
+
+    def myimp(name, *args, **kwargs):
+        if name in modnames:
+            raise ImportError('No module named %s' % name)
+        else:
+            return realimport(name, *args, **kwargs)
+
+    builtins.__import__ = myimp
+    try:
+        yield
+    finally:
+        builtins.__import__ = realimport
+
+
 ANY = unittest.mock.ANY
-Mock = unittest.mock.Mock
 MagicMock = unittest.mock.MagicMock
 call = unittest.mock.call
 patch = unittest.mock.patch
