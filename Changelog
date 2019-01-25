@@ -4,6 +4,55 @@
  Change history
 ================
 
+.. _version-3.0.8:
+
+3.0.8
+=====
+:release-date: 2019-01-25 03:54 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Fixes ``DeprecationWarning`` importing from ``collections``.
+
+- stampede: Fixed edge case where stampede wrapped function
+  called multiple times.
+
+    Calling the same stampede wrapped function multiple times
+    within the same event loop iteration would previously call
+    the function multiple times.
+
+    For example using :func:`asyncio.gather`:
+
+    .. codeblock:: python
+
+        from mode.utils.futures import stampede
+
+        count = 0
+        @stampede
+        async def update_count():
+            global count
+            count += 1
+
+        async def main():
+            await asyncio.gather(
+                update_count(),
+                update_count(),
+                update_count(),
+                update_count(),
+            )
+
+            assert count == 1
+
+    Previously this would call the function four times, but with the
+    fix it's only called once and provides the expected result.
+
+- Mocks: Adds :func:`~mode.utils.mocks.mask_module` and
+         :func:`~mode.utils.mocks.patch_module`.
+
+- CI: Added Windows build.
+
+- CI: Enabled random order for tests.
+
+
 .. _version-3.0.7:
 
 3.0.7
