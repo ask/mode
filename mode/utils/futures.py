@@ -29,22 +29,25 @@ class StampedeWrapper:
         self.loop = loop
 
     async def __call__(self) -> Any:
+        await asyncio.sleep(0)
         fut = self.fut
         if fut is None:
-            fut = self.fut = asyncio.Future(loop=self.loop)
-            try:
-                result = await self.fun(*self.args, **self.kwargs)
-                fut.set_result(result)
-            except asyncio.CancelledError:
-                fut.cancel()
-                raise
-            finally:
-                self.fut = None
-            return result
-        else:
-            if fut.done():
-                return fut.result()
-            return await fut
+            fut = asyncio.Future(loop=self.loop)
+            if self.fut is None:
+                self.fut = fut
+                try:
+                    result = await self.fun(*self.args, **self.kwargs)
+                    fut.set_result(result)
+                except asyncio.CancelledError:
+                    fut.cancel()
+                    raise
+                finally:
+                    await asyncio.sleep(0)
+                    self.fut = None
+                return result
+        if fut.done():
+            return fut.result()
+        return await fut
 
 
 class stampede:
