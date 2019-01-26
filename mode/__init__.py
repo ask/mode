@@ -8,7 +8,7 @@ import sys
 import typing
 from typing import Any, Mapping, NamedTuple, Sequence
 
-__version__ = '3.0.7'
+__version__ = '3.0.8'
 __author__ = 'Robinhood Markets'
 __contact__ = 'opensource@robinhood.com'
 __homepage__ = 'https://github.com/ask/mode'
