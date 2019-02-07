@@ -718,8 +718,12 @@ class Service(ServiceBase, ServiceCallbacks):
             if not self.restart_count:
                 self._children.extend(self.on_init_dependencies())
                 await self.on_first_start()
+                if self.should_stop:
+                    break
             self.exit_stack.__enter__()
             await self.async_exit_stack.__aenter__()
+            if self.should_stop:
+                break
             try:
                 self._log_mundane('Starting...')
                 await self.on_start()
