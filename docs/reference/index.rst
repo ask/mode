@@ -65,6 +65,7 @@ Utils
     mode.utils.queues
     mode.utils.text
     mode.utils.times
+    mode.utils.tracebacks
     mode.utils.trees
     mode.utils.types.graphs
     mode.utils.types.trees

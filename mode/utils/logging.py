@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from functools import singledispatch, wraps
 from itertools import count
 from logging import Logger
-from pprint import pformat, pprint
+from pprint import pprint
 from time import asctime
 from types import TracebackType
 from typing import (
@@ -31,8 +31,10 @@ from typing import (
     Type,
     Union,
 )
-from .text import abbr, title
+from .compat import current_task
+from .text import title
 from .times import Seconds, want_seconds
+from .tracebacks import format_task_stack, print_task_stack
 
 import colorlog
 
@@ -394,9 +396,9 @@ def cry(file: IO,
     tmap = {t.ident: t for t in threading.enumerate()}
 
     current_thread = threading.current_thread()
-    sep1 = sep1 * seplen
-    sep2 = sep2 * seplen
-    sep3 = sep3 * seplen
+    sep1 = sep1 * seplen if len(sep1) == 1 else sep1
+    sep2 = sep2 * seplen if len(sep2) == 1 else sep2
+    sep3 = sep3 * seplen if len(sep3) == 1 else sep3
 
     for tid, frame in sys._current_frames().items():
         thread = tmap.get(tid)
@@ -416,30 +418,24 @@ def cry(file: IO,
                 print('TASKS', file=file)
                 print(sep2, file=file)
                 for task in asyncio.Task.all_tasks(loop=loop):
-                    coro = task._coro  # type: ignore
-                    wrapped = getattr(task, '__wrapped__', None)
-                    coro_name = getattr(coro, '__name__', None)
-                    if coro_name is None:
-                        # some coroutines does not have a __name__ attribute
-                        # e.g. async_generator_asend
-                        coro_name = repr(coro)
-                    print(f'  TASK {coro_name}', file=file)      # noqa: T003
-                    if wrapped:
-                        print(f'  -> {wrapped}', file=file)      # noqa: T003
-                    print(f'  {task!r}', file=file)              # noqa: T003
-                    print(f'  {sep3}', file=file)                # noqa: T003
-                    frames = task.get_stack()
-                    if frames:
-                        frame = frames[0]
-                        traceback.print_stack(frame, file=file)
-                        print(sep3, file=file)                   # noqa: T003
-                        print('  LOCAL VARIABLES', file=file)    # noqa: T003
-                        print(f'  {sep3}', file=file)            # noqa: T003
-                        for k, val in frame.f_locals.items():
-                            vals = abbr(pformat(val), 2000, suffix='[...]')
-                            print(f'  {k!r} = {vals}', file=file)  # noqa: T003
-                    print('\n', file=file)
+                    print_task_name(task, file=file)
+                    print(f'  {sep3}', file=file)
+                    print_task_stack(task, file=file, capture_locals=True)
             print('\n', file=file)                               # noqa: T003
+
+
+def print_task_name(task: asyncio.Task, file: IO) -> None:
+    coro = task._coro  # type: ignore
+    wrapped = getattr(task, '__wrapped__', None)
+    coro_name = getattr(coro, '__name__', None)
+    if coro_name is None:
+        # some coroutines does not have a __name__ attribute
+        # e.g. async_generator_asend
+        coro_name = repr(coro)
+    print(f'  TASK {coro_name}', file=file)
+    if wrapped:
+        print(f'   -> {wrapped}', file=file)
+    print(f'   {task!r}', file=file)
 
 
 class LogMessage(NamedTuple):
@@ -553,6 +549,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
     def activate(self) -> None:
         if self._fut:
             raise RuntimeError('{type(self).__name__} already activated')
+        self.enabled_by = current_task()
         self.started_at_date = asctime()
         self._fut = asyncio.ensure_future(self._waiting(), loop=self.loop)
 
@@ -580,17 +577,27 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         except asyncio.CancelledError:
             pass
         else:
-            logger = self.logger
-            ident = self._ident()
-            logger.warn('Warning: Task timed out!')
-            logger.warn('Please make sure it is hanging before restarting.')
-            if self._logs:
+            try:
+                logger = self.logger
+                ident = self._ident()
+                logger.warn('Warning: Task timed out!')
+                logger.warn('Please make sure it\'s hanging before restart.')
                 logger.info('[%s] (started at %s) Replaying logs...',
                             ident, self.started_at_date)
-                for severity, message, datestr, args, kwargs in self._logs:
-                    msg = f'[%s] (%s) {message}'
-                    logger.log(severity, msg, ident, datestr, *args, **kwargs)
+                if self._logs:
+                    for sev, msg, datestr, args, kwargs in self._logs:
+                        logger.log(
+                            sev, f'[%s] (%s) {msg}', ident, datestr,
+                            *args, **kwargs)
                 logger.info('[%s] -End of log-', ident)
+                logger.info('[%s] Task traceback', ident)
+                if self.enabled_by is not None:
+                    logger.info(format_task_stack(self.enabled_by))
+                else:
+                    logger.info('[%s] -missing-: not enabled by task')
+            except Exception as exc:
+                logger.exception('Flight recorder internal error: %r', exc)
+                raise
 
     def _ident(self) -> str:
         return f'{title(type(self).__name__)}-{self.id}'
