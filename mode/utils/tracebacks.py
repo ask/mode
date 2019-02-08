@@ -52,7 +52,7 @@ class _CustomCode:
 
     def __init__(self, filename: str, name: str) -> None:
         self.co_filename = filename
-        self.name = name
+        self.co_name = name
 
 
 class _CustomFrame:
@@ -67,6 +67,7 @@ class _CustomFrame:
         self.f_globals = globals
         self.f_fileno = fileno
         self.f_code = code
+        self.f_locals = {}
 
 
 class BaseTraceback:
@@ -78,7 +79,7 @@ class BaseTraceback:
 
 class _Truncated(BaseTraceback):
 
-    def __init__(self):
+    def __init__(self, filename='...', name='[rest of traceback truncated]'):
         self.tb_lineno = -1
         self.tb_frame = _CustomFrame(
             globals={
@@ -88,8 +89,8 @@ class _Truncated(BaseTraceback):
             },
             fileno=-1,
             code=_CustomCode(
-                filename='...',
-                name='[rest of traceback truncated]',
+                filename=filename,
+                name=name,
             ),
         )
         self.tb_next = None
@@ -117,7 +118,12 @@ class Traceback(BaseTraceback):
     def from_coroutine(cls, coro: Union[Coroutine, Generator], *,
                        depth: int = 0,
                        limit: int = DEFAULT_MAX_FRAMES) -> 'Traceback':
-        frame = cls._get_coroutine_frame(coro)
+        try:
+            frame = cls._get_coroutine_frame(coro)
+        except AttributeError:
+            if type(coro).__name__ == 'async_generator_asend':
+                return _Truncated(filename='async_generator_asend')
+            raise
         frames = []
         f = frame
         while f is not None:
@@ -148,12 +154,17 @@ class Traceback(BaseTraceback):
 
     @staticmethod
     def _get_coroutine_frame(coro: Union[Coroutine, Generator]) -> FrameType:
-        if inspect.isgenerator(coro):
-            # is a @asyncio.coroutine wrapped generator
-            return coro.gi_frame
-        else:
-            # is an async def function
-            return coro.cr_frame
+        try:
+            if inspect.isgenerator(coro):
+                # is a @asyncio.coroutine wrapped generator
+                return coro.gi_frame
+            else:
+                # is an async def function
+                return coro.cr_frame
+        except AttributeError as exc:
+            raise AttributeError(
+                'WHAT IS THIS? str=%s repr=%r typ=%r dir=%s' % (
+                    coro, coro, type(coro), dir(coro))) from exc
 
     @staticmethod
     def _get_coroutine_next(coro: Union[Coroutine, Generator]) -> Any:
