@@ -112,15 +112,15 @@ class BaseSignal(BaseSignalT[T]):
                  *,
                  weak: bool = True,
                  sender: Any = None) -> SignalHandlerT:
-            ref: SignalHandlerRefT
-            ref = self._create_ref(fun) if weak else lambda: fun
-            if self.default_sender is not None:
-                sender = self.default_sender
-            if sender is None:
-                self._receivers.add(ref)
-            else:
-                self._filter_receivers[self._create_id(sender)].add(ref)
-            return fun
+        ref: SignalHandlerRefT
+        ref = self._create_ref(fun) if weak else lambda: fun
+        if self.default_sender is not None:
+            sender = self.default_sender
+        if sender is None:
+            self._receivers.add(ref)
+        else:
+            self._filter_receivers[self._create_id(sender)].add(ref)
+        return fun
 
     def disconnect(self, fun: SignalHandlerT,
                    *,
