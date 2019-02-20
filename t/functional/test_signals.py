@@ -85,3 +85,17 @@ def test_sync_signals():
     x2.on_started.send()
 
     assert on_started_mock.call_count == 2
+
+
+def test_signal_name():
+    # Signal should have .name attribute set when created
+    # as a field in a class:
+
+    class X:
+        sig = Signal()
+        sig2 = SyncSignal()
+
+    assert X.sig.name == 'sig'
+    assert X.sig.owner is X
+    assert X.sig2.name == 'sig2'
+    assert X.sig2.owner is X

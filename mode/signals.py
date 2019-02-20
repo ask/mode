@@ -87,7 +87,7 @@ class BaseSignal(BaseSignalT[T]):
         #
         #    >>> X.starting
         #    <Signal: X.starting>
-        if self.name is None:
+        if not self.name:
             self.name = name
         if self.owner is None:
             self.owner = owner
