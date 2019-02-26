@@ -89,8 +89,7 @@ class BaseSignal(BaseSignalT[T]):
         #    <Signal: X.starting>
         if not self.name:
             self.name = name
-        if self.owner is None:
-            self.owner = owner
+        self.owner = owner
 
     def unpack_sender_from_args(self, *args: Any) -> Tuple[T, Tuple[Any, ...]]:
         sender = self.default_sender
@@ -189,6 +188,11 @@ class BaseSignal(BaseSignalT[T]):
 
     @property
     def ident(self) -> str:
+        # XXX compat: deprecate remove in future versions
+        return self.label
+
+    @property
+    def label(self) -> str:
         if self.owner:
             return f'{self.owner.__qualname__}.{self.name}'
         return self.name
@@ -197,7 +201,7 @@ class BaseSignal(BaseSignalT[T]):
         info = ''
         if self.default_sender:
             info = f' sender={self.default_sender!r}'
-        return f'<{type(self).__name__}: {self.ident}{info}>'
+        return f'<{type(self).__name__}: {self.label}{info}>'
 
 
 class Signal(BaseSignal[T], SignalT[T]):
