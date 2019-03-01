@@ -1,5 +1,5 @@
 -r flakes.txt
-asyncio-ipython-magic
+asyncio-ipython-magic==0.0.3
 bumpversion>=0.5.1
 packaging
 pytest-sugar
