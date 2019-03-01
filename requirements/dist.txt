@@ -7,6 +7,6 @@ setuptools>=36.2.0
 sphinx-autobuild==0.7.1
 sphinx2rst>=1.0
 tox>=2.3.1
-twine
+twine==1.13.0
 vulture
 wheel>=0.29.0
