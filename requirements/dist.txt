@@ -1,7 +1,7 @@
 -r flakes.txt
 asyncio-ipython-magic
 bumpversion>=0.5.1
-packaging
+packaging==19.0
 pytest-sugar
 setuptools>=36.2.0
 sphinx-autobuild
