@@ -4,7 +4,7 @@ bumpversion>=0.5.1
 packaging
 pytest-sugar
 setuptools>=36.2.0
-sphinx-autobuild
+sphinx-autobuild==0.7.1
 sphinx2rst>=1.0
 tox>=2.3.1
 twine
