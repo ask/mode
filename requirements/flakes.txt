@@ -7,6 +7,6 @@ flake8-commas
 flake8-comprehensions
 flake8-debugger
 flake8-import-order
-flake8-mock
+flake8-mock==0.3
 flake8-pyi
 flake8-tuple
