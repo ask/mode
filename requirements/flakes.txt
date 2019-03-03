@@ -6,7 +6,7 @@ flake8-class-newline
 flake8-commas
 flake8-comprehensions
 flake8-debugger
-flake8-import-order
+flake8-import-order==0.18
 flake8-mock
 flake8-pyi
 flake8-tuple
