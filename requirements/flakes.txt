@@ -8,5 +8,5 @@ flake8-comprehensions
 flake8-debugger
 flake8-import-order
 flake8-mock
-flake8-pyi
+flake8-pyi==19.3.0
 flake8-tuple
