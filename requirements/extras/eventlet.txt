@@ -1,2 +1,2 @@
 aioeventlet~=0.5.1
-dnspython
+dnspython==1.16.0
