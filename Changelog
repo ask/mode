@@ -24,6 +24,11 @@
 
 - Service: Stop faster if stopped immediately after start
 
+- Service: Correctly track dependencies for services added
+  using ``Service.on_init_dependencies`` (Issue #40).
+
+    Contributed by Nimi Wariboko Jr (:github_user:`nemosupremo`).
+
 .. _version-3.0.8:
 
 3.0.8
