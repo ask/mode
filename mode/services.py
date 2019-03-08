@@ -716,7 +716,8 @@ class Service(ServiceBase, ServiceCallbacks):
         """Start the service."""
         for _ in [1]:  # to use break
             if not self.restart_count:
-                self._children.extend(self.on_init_dependencies())
+                for dep in self.on_init_dependencies():
+                    self.add_dependency(dep)
                 await self.on_first_start()
                 if self.should_stop:
                     break
