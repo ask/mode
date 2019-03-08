@@ -15,6 +15,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    List,
     NamedTuple,
     Optional,
     Tuple,
@@ -240,20 +241,60 @@ class ServiceThread(Service):
         traceback.print_exc(None, sys.stderr)
 
 
+class MethodQueueWorker(Service):
+    index: int
+    method_queue: 'MethodQueue'
+
+    def __init__(self, method_queue: 'MethodQueue',
+                 *,
+                 index: int,
+                 **kwargs: Any) -> None:
+        self.method_queue = method_queue
+        self.index = index
+        super().__init__(**kwargs)
+
+    @Service.task
+    async def _method_queue_do_work(self) -> None:
+        method_queue = self.method_queue
+        queue_ready = method_queue._queue_ready
+        wait = method_queue.wait
+        get = method_queue._queue.get
+        process_enqueued = method_queue._process_enqueued
+        while not self.should_stop and not method_queue.should_stop:
+            await wait(queue_ready)
+            if not method_queue.should_stop:
+                item = await get()
+                await process_enqueued(item)
+
+
 class MethodQueue(Service):
+    Worker: Type[MethodQueueWorker] = MethodQueueWorker
 
     _queue: asyncio.Queue
     _queue_ready: Event
+    _workers: List[MethodQueueWorker]
 
     def __init__(self,
                  loop: asyncio.AbstractEventLoop,
+                 num_workers: int = 2,
                  **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._queue = asyncio.Queue(loop=self.loop)
         self._queue_ready = Event(loop=self.loop)
+        self.num_workers = num_workers
+        self._workers = []
+
+    async def on_start(self) -> None:
+        self._workers[:] = [
+            self.Worker(self, index=i, loop=self.loop, beacon=self.beacon)
+            for i in range(self.num_workers)
+        ]
+        for worker in self._workers:
+            await self.add_runtime_dependency(worker)
 
     async def on_stop(self) -> None:
         await self.flush()
+        self._workers[:] = []
 
     async def call(self,
                    promise: asyncio.Future,
@@ -293,13 +334,6 @@ class MethodQueue(Service):
                 if not promise.cancelled():
                     promise.set_result(result)
         return promise
-
-    @Service.task
-    async def _method_handler(self) -> None:
-        while not self.should_stop:
-            await self.wait(self._queue_ready)
-            if not self.should_stop:
-                await self._process_enqueued(await self._queue.get())
 
 
 class QueueServiceThread(ServiceThread):
