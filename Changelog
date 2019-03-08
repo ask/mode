@@ -4,6 +4,26 @@
  Change history
 ================
 
+.. _version-3.0.9:
+
+3.0.9
+=====
+:release-date: 2019-03-08 01:20 P.M PDT
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Threads: Add multiple workers for thread method queue.
+
+    Default number of workers is now 2, to allow for
+    two recursive calls.
+
+- Signal: Use `Signal.label` instead of ``.indent`` to be more consistent.
+
+- Signal: Properly set ``.name`` when signal is member of class.
+
+- Adds ability to log the FULL traceback of :class:`asyncio.Task`.
+
+- Service: Stop faster if stopped immediately after start
+
 .. _version-3.0.8:
 
 3.0.8
