@@ -1,12 +1,25 @@
 import asyncio
 import logging as _logging
+import os
 import reprlib
 import signal
 import sys
 import typing
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from logging import Logger, StreamHandler
-from typing import Any, Dict, IO, Iterable, List, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Dict,
+    IO,
+    Iterable,
+    Iterator,
+    List,
+    NoReturn,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .services import Service
 from .types import ServiceT
@@ -24,6 +37,9 @@ __all__ = ['Worker']
 
 logger = logging.get_logger(__name__)
 
+EX_OK = getattr(os, 'EX_OK', 0)
+EX_FAILURE = 1
+EX_OSERR = getattr(os, 'EX_OSERR', 71)
 BLOCK_DETECTOR = 'mode.debug:BlockingDetector'
 
 
@@ -33,6 +49,19 @@ class _TupleAsListRepr(reprlib.Repr):
         return self.repr_list(cast(list, x), level)
 # this repr formats tuples as if they are lists.
 _repr = _TupleAsListRepr().repr  # noqa: E305
+
+
+@contextmanager
+def exiting() -> Iterator[None]:
+    try:
+        yield
+    except MemoryError:
+        sys.exit(EX_OSERR)
+    except Exception:
+        sys.exit(EX_FAILURE)
+    else:
+        sys.exit(EX_OK)
+    sys.exit(EX_OK)
 
 
 class Worker(Service):
@@ -213,18 +242,23 @@ class Worker(Service):
         await self.stop()
         maybe_cancel(self._starting_fut)
 
-    def execute_from_commandline(self) -> None:
-        self._starting_fut = asyncio.ensure_future(self.start())
-        try:
-            self.loop.run_until_complete(self._starting_fut)
-        except asyncio.CancelledError:
-            pass
-        except Exception as exc:
-            self.log.exception('Error: %r', exc)
-        finally:
-            maybe_cancel(self._starting_fut)
-            self.on_worker_shutdown()
-            self.stop_and_shutdown()
+    def execute_from_commandline(self) -> NoReturn:
+        with exiting():
+            self._starting_fut = asyncio.ensure_future(self.start())
+            try:
+                self.loop.run_until_complete(self._starting_fut)
+            except asyncio.CancelledError:
+                pass
+            except MemoryError:
+                raise
+            except Exception as exc:
+                self.log.exception('Error: %r', exc)
+                raise
+            finally:
+                maybe_cancel(self._starting_fut)
+                self.on_worker_shutdown()
+                self.stop_and_shutdown()
+        raise SystemExit(EX_OK)  # for mypy NoReturn
 
     def on_worker_shutdown(self) -> None:
         ...
