@@ -4,6 +4,18 @@
  Change history
 ================
 
+.. _version-3.0.10:
+
+3.0.10
+======
+:release-date: 2019-03-12 03:55 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Worker: was giving successful exit code when an exception is raised.
+
+    The ``.execute_from_commandline`` method now always exits
+    (its return type is :class:`typing.NoReturn`).
+
 .. _version-3.0.9:
 
 3.0.9
