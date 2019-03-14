@@ -8,7 +8,7 @@
 
 3.0.10
 ======
-:release-date: 2019-03-12 03:55 P.M PST
+:release-date: 2019-03-14 03:55 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
 
 - Worker: was giving successful exit code when an exception is raised.
