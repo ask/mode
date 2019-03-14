@@ -16,6 +16,11 @@
     The ``.execute_from_commandline`` method now always exits
     (its return type is :class:`typing.NoReturn`).
 
+- Adds :class:`~mode.utils.compat.NoReturn` to :mod:`mode.utils.compat`.
+
+    Import :class:`typing.NoReturn` from here to support Python versions
+    before 3.6.3.
+
 .. _version-3.0.9:
 
 3.0.9
