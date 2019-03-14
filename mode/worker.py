@@ -14,7 +14,6 @@ from typing import (
     Iterable,
     Iterator,
     List,
-    NoReturn,
     Optional,
     Tuple,
     Union,
@@ -24,6 +23,7 @@ from typing import (
 from .services import Service
 from .types import ServiceT
 from .utils import logging
+from .utils.compat import NoReturn
 from .utils.futures import maybe_cancel
 from .utils.imports import symbol_by_name
 from .utils.times import Seconds

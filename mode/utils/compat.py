@@ -32,6 +32,7 @@ __all__ = [
     'ChainMap',
     'Counter',
     'Deque',
+    'NoReturn',
     'DummyContext',
     'OrderedDict',
     'want_bytes',
@@ -150,6 +151,31 @@ else:
                     return collections.deque(*args, **kwds)
                 return typing._generic_new(
                     collections.deque, cls, *args, **kwds)
+
+
+if typing.TYPE_CHECKING:
+    from typing import NoReturn
+else:
+    try:
+        from typing import NoReturn  # noqa: F811
+    except ImportError:
+        @typing.no_type_check
+        class _NoReturn(typing._FinalTypingBase, _root=True):
+            __slots__ = ('__type__',)
+
+            def __init__(self, tp: Any = None, **kwds: Any) -> None:
+                self.__type__ = tp
+
+            def __hash__(self) -> int:
+                return hash((type(self).__name__, self.__type__))
+
+        def __eq__(self, other) -> Any:
+            if not isinstance(other, _NoReturn):
+                return NotImplemented
+            if self.__type__ is not None:
+                return self.__type__ == other.__type__
+            return self is other
+        NoReturn = _NoReturn(_root=True)
 
 
 class DummyContext(ContextManager, AsyncContextManager):
