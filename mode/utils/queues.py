@@ -141,6 +141,9 @@ class ThrowableQueue(FlowControlQueue):
         return super().get_nowait()
 
     async def throw(self, exc: BaseException) -> None:
+        self._throw(exc)
+
+    def _throw(self, exc: BaseException) -> None:
         waiters = self._getters  # type: ignore
         while waiters:
             waiter = waiters.popleft()
