@@ -4,6 +4,15 @@
  Change history
 ================
 
+.. _version-3.0.11:
+
+3.0.11
+======
+:release-date: 2019-03-19 08:50 A.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds ThrowableQueue._throw() for non-async version of .throw().
+
 .. _version-3.0.10:
 
 3.0.10
