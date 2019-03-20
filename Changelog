@@ -4,6 +4,40 @@
  Change history
 ================
 
+.. _version-3.0.12:
+
+3.0.12
+======
+:release-date: 2019-03-20 03:23 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds :func:`~mode.utils.futures.all_tasks` as a backward compatible
+  :func:`asyncio.all_tasks`.
+
+- Signal: Fixes ``.connect()`` decorator to work with parens and without
+
+    Signal decorator now works with parens:
+
+    .. sourcecode:: python
+
+        @signal.connect()
+        def my_handler(sender, **kwargs):
+            ...
+
+    and without parens:
+
+    .. sourcecode:: python
+
+        @signal.connect
+        def my_handler(sender, **kwargs):
+        ...
+
+- Signal: Do not use weakref by default.
+
+    Using weakref by default meant it was too easy to connect
+    a signal handler to only have it disappear because there were
+    no more references to the object.
+
 .. _version-3.0.11:
 
 3.0.11
