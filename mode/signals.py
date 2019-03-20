@@ -109,7 +109,7 @@ class BaseSignal(BaseSignalT[T]):
 
     def _connect(self, fun: SignalHandlerT,
                  *,
-                 weak: bool = True,
+                 weak: bool = False,
                  sender: Any = None) -> SignalHandlerT:
         ref: SignalHandlerRefT
         ref = self._create_ref(fun) if weak else lambda: fun
@@ -123,7 +123,7 @@ class BaseSignal(BaseSignalT[T]):
 
     def disconnect(self, fun: SignalHandlerT,
                    *,
-                   weak: bool = True,
+                   weak: bool = False,
                    sender: Any = None) -> None:
         ref: SignalHandlerRefT = self._create_ref(fun) if weak else lambda: fun
         if self.default_sender is not None:
