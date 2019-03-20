@@ -202,7 +202,7 @@ def mask_module(*modnames):
 
     def myimp(name, *args, **kwargs):
         if name in modnames:
-            raise ImportError('No module named %s' % name)
+            raise ImportError(f'No module named {name}')
         else:
             return realimport(name, *args, **kwargs)
 

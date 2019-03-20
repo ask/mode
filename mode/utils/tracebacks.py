@@ -163,7 +163,7 @@ class Traceback(BaseTraceback):
                 return coro.cr_frame
         except AttributeError as exc:
             raise AttributeError(
-                'WHAT IS THIS? str=%s repr=%r typ=%r dir=%s' % (
+                'WHAT IS THIS? str={0} repr={1!r} typ={2!r} dir={3}'.format(
                     coro, coro, type(coro), dir(coro))) from exc
 
     @staticmethod
