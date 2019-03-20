@@ -183,7 +183,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
                 else:
                     await service.restart()
         except MaxRestartsExceeded as exc:
-            self.log.warn('Max restarts exceeded: %r', exc, exc_info=1)
+            self.log.warning('Max restarts exceeded: %r', exc, exc_info=1)
 
 
 class OneForOneSupervisor(SupervisorStrategy):

@@ -149,6 +149,9 @@ class LogSeverityMixin:
     def warn(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.WARN, msg, *args, **kwargs)
 
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.WARN, msg, *args, **kwargs)
+
     def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.ERROR, msg, *args, **kwargs)
 
@@ -585,8 +588,9 @@ class flight_recorder(ContextManager, LogSeverityMixin):
             try:
                 logger = self.logger
                 ident = self._ident()
-                logger.warn('Warning: Task timed out!')
-                logger.warn('Please make sure it\'s hanging before restart.')
+                logger.warning('Warning: Task timed out!')
+                logger.warning(
+                    'Please make sure it\'s hanging before restart.')
                 logger.info('[%s] (started at %s) Replaying logs...',
                             ident, self.started_at_date)
                 if self._logs:

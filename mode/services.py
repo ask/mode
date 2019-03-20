@@ -780,8 +780,8 @@ class Service(ServiceBase, ServiceCallbacks):
                 seen: Set[NodeT] = set()
                 for node in self.beacon.walk():
                     if node in seen:
-                        self.log.warn(
-                            f'Recursive loop in beacon: {node}: {seen}')
+                        self.log.warning(
+                            'Recursive loop in beacon: %r: %r', node, seen)
                         if root and root.data is not self:
                             cast(Service, self.beacon.root.data)._crash(reason)
                         break

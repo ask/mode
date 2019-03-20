@@ -319,7 +319,8 @@ class Worker(Service):
         try:
             import aiomonitor
         except ImportError:
-            self.log.warn('Cannot start console: aiomonitor is not installed')
+            self.log.warning(
+                'Cannot start console: aiomonitor is not installed')
         else:
             monitor = aiomonitor.start_monitor(
                 port=self.console_port,
