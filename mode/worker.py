@@ -24,7 +24,7 @@ from .services import Service
 from .types import ServiceT
 from .utils import logging
 from .utils.compat import NoReturn
-from .utils.futures import maybe_cancel
+from .utils.futures import all_tasks, maybe_cancel
 from .utils.imports import symbol_by_name
 from .utils.times import Seconds
 
@@ -304,10 +304,10 @@ class Worker(Service):
     def _gather_all(self) -> None:
         # sleeps for at most 10 * 0.1s
         for _ in range(10):
-            if not len(asyncio.Task.all_tasks(loop=self.loop)):
+            if not len(all_tasks(loop=self.loop)):
                 break
             self.loop.run_until_complete(asyncio.sleep(0.1))
-        for task in asyncio.Task.all_tasks(loop=self.loop):
+        for task in all_tasks(loop=self.loop):
             task.cancel()
 
     async def start(self) -> None:

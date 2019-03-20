@@ -32,6 +32,7 @@ from typing import (
     Union,
 )
 from .compat import current_task
+from .futures import all_tasks
 from .text import title
 from .times import Seconds, want_seconds
 from .tracebacks import format_task_stack, print_task_stack
@@ -417,7 +418,7 @@ def cry(file: IO,
             if loop is not None:
                 print('TASKS', file=file)
                 print(sep2, file=file)
-                for task in asyncio.Task.all_tasks(loop=loop):
+                for task in all_tasks(loop=loop):
                     print_task_name(task, file=file)
                     print(f'  {sep3}', file=file)
                     print_task_stack(task, file=file, capture_locals=True)

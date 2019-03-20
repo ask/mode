@@ -6,7 +6,15 @@ from typing import Any, Callable, Optional, Type
 # These used to be here, now moved to .queues
 from .queues import FlowControlEvent, FlowControlQueue  # noqa: F401
 
+try:  # pragma: no cover
+    from asyncio import all_tasks
+except ImportError:  # pragma: no cover
+    def all_tasks(
+            loop: asyncio.AbstractEventLoop) -> Set[asyncio.Task]:  # noqa
+        return asyncio.Task.all_tasks(loop=loop)
+
 __all__ = [
+    'all_tasks',
     'done_future',
     'maybe_async',
     'maybe_cancel',
