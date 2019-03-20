@@ -105,7 +105,7 @@ class BaseSignal(BaseSignalT[T]):
     def connect(self, fun: SignalHandlerT = None, **kwargs: Any) -> Callable:
         if fun is not None:
             return self._connect(fun, **kwargs)
-        return partial(self._connect(cast(SignalHandlerT, fun)))
+        return partial(self._connect, **kwargs)
 
     def _connect(self, fun: SignalHandlerT,
                  *,
