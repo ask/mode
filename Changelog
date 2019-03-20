@@ -4,6 +4,18 @@
  Change history
 ================
 
+.. _version-3.0.13:
+
+3.0.13
+======
+:release-date: 2019-03-20 04:58 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds ``CompositeLogger.warning`` alias to ``warn``.
+
+    :pypi:`flake8-logging-format` has a rule that says
+    you are only allowed to use ``.warning``, so going with that.
+
 .. _version-3.0.12:
 
 3.0.12
