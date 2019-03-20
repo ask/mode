@@ -1,7 +1,7 @@
 """Async I/O Future utilities."""
 import asyncio
 from inspect import isawaitable
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Optional, Set, Type
 
 # These used to be here, now moved to .queues
 from .queues import FlowControlEvent, FlowControlQueue  # noqa: F401
