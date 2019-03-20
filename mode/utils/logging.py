@@ -59,10 +59,14 @@ __all__ = [
 ]
 
 DEVLOG: bool = bool(os.environ.get('DEVLOG', ''))
-DEFAULT_FORMAT: str = '[%(asctime)s: %(levelname)s]: %(message)s %(extra)s'
-DEFAULT_COLOR_FORMAT = '''\
-[%(asctime)s: %(levelname)s]: %(log_color)s%(message)s %(extra)s\
-'''
+DEFAULT_FORMAT: str = '''
+[%(asctime)s: %(levelname)s]: %(message)s %(extra)s
+'''.strip()
+
+DEFAULT_COLOR_FORMAT = '''
+[%(asctime)s: %(levelname)s]: %(log_color)s%(message)s %(extra)s
+'''.strip()
+
 
 DEFAULT_COLORS = {
     **colorlog.default_log_colors,

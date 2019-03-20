@@ -92,7 +92,7 @@ else:
             def __subclasshook__(cls, C):
                 if cls is AsyncContextManager:
                     return _collections_abc._check_methods(
-                        C, "__aenter__", "__aexit__")
+                        C, '__aenter__', '__aexit__')
                 return NotImplemented
 
 

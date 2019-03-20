@@ -17,10 +17,10 @@ def dedent(s: str, n: int = 4, sep: str = '\n') -> str:
 class DOT:
     """Constants related to the dot format."""
 
-    HEAD = dedent("""
+    HEAD = dedent('''
         {IN}{type} {id} {{
         {INp}graph [{attrs}]
-    """)
+    ''')
     ATTR = '{name}={value}'
     NODE = '{INp}"{0}" [{attrs}]'
     EDGE = '{INp}"{0}" {dir} "{1}" [{attrs}]'

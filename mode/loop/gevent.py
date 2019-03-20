@@ -20,7 +20,7 @@ else:
         import psycogreen.gevent
     except ImportError:
         warnings.warn(
-            "psycopg2 installed, but not psycogreen: pg will be blocking")
+            'psycopg2 installed, but not psycogreen: pg will be blocking')
     else:
         psycogreen.gevent.patch_psycopg()
 
