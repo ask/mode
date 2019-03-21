@@ -23,7 +23,7 @@ from typing import (
     cast,
 )
 
-from .compat import DummyContext
+from .contexts import nullcontext
 
 try:
     from django.utils.functional import LazyObject, LazySettings
@@ -385,7 +385,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
     def _new_lock(self) -> ContextManager:
         if self.thread_safety:
             return cast(ContextManager, threading.RLock())
-        return DummyContext()
+        return nullcontext()
 
     def __getstate__(self) -> Mapping[str, Any]:
         d = dict(vars(self))

@@ -9,9 +9,9 @@ from typing import (
     Type,
 )
 
-from mode.utils.compat import AsyncContextManager
 from mode.utils.contexts import AsyncExitStack, ExitStack
 from mode.utils.types.trees import NodeT
+from mode.utils.typing import AsyncContextManager
 
 from .supervisors import SupervisorStrategyT
 

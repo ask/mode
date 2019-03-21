@@ -31,8 +31,7 @@ from typing import (
     Type,
     Union,
 )
-from .compat import current_task
-from .futures import all_tasks
+from .futures import all_tasks, current_task
 from .text import title
 from .times import Seconds, want_seconds
 from .tracebacks import format_task_stack, print_task_stack

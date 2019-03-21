@@ -1,9 +1,9 @@
 import asyncio
 import logging
 from typing import ContextManager
-from mode.utils.compat import AsyncContextManager
 from mode.utils.locks import Event
 from mode.utils.mocks import Mock
+from mode.utils.typing import AsyncContextManager
 import mode
 import pytest
 

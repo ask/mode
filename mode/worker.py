@@ -23,10 +23,10 @@ from typing import (
 from .services import Service
 from .types import ServiceT
 from .utils import logging
-from .utils.compat import NoReturn
 from .utils.futures import all_tasks, maybe_cancel
 from .utils.imports import symbol_by_name
 from .utils.times import Seconds
+from .utils.typing import NoReturn
 
 if typing.TYPE_CHECKING:
     from .debug import BlockingDetector

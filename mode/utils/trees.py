@@ -1,11 +1,11 @@
 from contextlib import suppress
 from typing import Any, Iterator, List, cast
 
-from .compat import Deque
 from .graphs import DependencyGraph
 from .objects import shortlabel
 from .types.graphs import DependencyGraphT
 from .types.trees import NodeT, _T
+from .typing import Deque
 
 __all__ = [
     'Node',

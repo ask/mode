@@ -13,8 +13,14 @@ except ImportError:  # pragma: no cover
             loop: asyncio.AbstractEventLoop) -> Set[asyncio.Task]:  # noqa
         return asyncio.Task.all_tasks(loop=loop)
 
+try:  # pragma: no cover
+    from asyncio import current_task  # type: ignore
+except ImportError:  # pragma: no cover
+    current_task = asyncio.Task.current_task
+
 __all__ = [
     'all_tasks',
+    'current_task',
     'done_future',
     'maybe_async',
     'maybe_cancel',

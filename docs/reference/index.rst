@@ -69,3 +69,4 @@ Utils
     mode.utils.trees
     mode.utils.types.graphs
     mode.utils.types.trees
+    mode.utils.typing

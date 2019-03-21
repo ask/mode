@@ -6,7 +6,7 @@
 import asyncio
 from collections import deque
 from typing import Optional
-from .compat import Deque
+from .typing import Deque
 
 
 class Event:

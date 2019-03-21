@@ -10,6 +10,7 @@ from typing import (
     Awaitable,
     Callable,
     ClassVar,
+    ContextManager,
     Dict,
     Generator,
     Iterable,
@@ -26,7 +27,6 @@ from typing import (
 )
 
 from .types import DiagT, ServiceT
-from .utils.compat import AsyncContextManager, ContextManager
 from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.locks import Event
 from .utils.logging import CompositeLogger, get_logger, level_number
@@ -34,6 +34,7 @@ from .utils.objects import iter_mro_reversed
 from .utils.text import maybecat
 from .utils.times import Seconds, want_seconds
 from .utils.trees import Node
+from .utils.typing import AsyncContextManager
 from .utils.types.trees import NodeT
 
 __all__ = [

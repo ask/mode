@@ -3,8 +3,8 @@ import typing
 from collections import deque
 from typing import Any, TypeVar
 from weakref import WeakSet
-from .compat import Deque
 from .locks import Event
+from .typing import Deque
 
 _T = TypeVar('_T')
 

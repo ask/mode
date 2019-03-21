@@ -13,10 +13,10 @@ from typing import (
     cast,
 )
 
-from .formatter import GraphFormatter
+from mode.utils.typing import Counter
+from mode.utils.types.graphs import DependencyGraphT, GraphFormatterT, _T
 
-from ..compat import Counter
-from ..types.graphs import DependencyGraphT, GraphFormatterT, _T
+from .formatter import GraphFormatter
 
 
 class CycleError(Exception):

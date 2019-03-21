@@ -1,8 +1,8 @@
 import abc
-from typing import Any
+from typing import Any, ContextManager
 from .services import ServiceBase
 from .types import ServiceT
-from .utils.compat import AsyncContextManager, ContextManager
+from .utils.typing import AsyncContextManager
 from .utils.types.trees import NodeT
 
 __all__ = ['ServiceProxy']

@@ -8,7 +8,7 @@ from types import TracebackType
 from typing import Callable, List, Mapping, NamedTuple, Optional, Type, Union
 
 from .text import pluralize
-from .compat import AsyncContextManager
+from .typing import AsyncContextManager
 
 __all__ = [
     'Bucket',
