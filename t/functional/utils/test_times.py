@@ -34,7 +34,7 @@ async def test_rate_limit():
         async with bucket:
             x += 1
     spent = TIME_MONOTONIC() - time_start
-    assert spent > 1.0
+    assert spent > 0.9
 
 
 @pytest.mark.asyncio
