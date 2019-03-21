@@ -134,6 +134,21 @@ redirect_logger = get_logger('mode.redirect')
 
 
 class LogSeverityMixin:
+    """Mixin class that delegates standard logging methods to logger.
+
+    The class that mixes in this class must define the ``log`` method.
+
+    Example:
+        >>> class Foo(LogSeverityMixin):
+        ...
+        ...    logger = get_logger('foo')
+        ...
+        ...    def log(self,
+        ...            severity: int,
+        ...            msg: str,
+        ...            *args: Any, **kwargs: Any) -> None:
+        ...        return self.logger.log(severity, msg, *args, **kwargs)
+    """
 
     def dev(self, msg: str, *args: Any, **kwargs: Any) -> None:
         if DEVLOG:
@@ -165,6 +180,41 @@ class LogSeverityMixin:
 
 
 class CompositeLogger(LogSeverityMixin):
+    """Composite logger for classes.
+
+    The class can be used as both mixin and composite,
+    and may also define a ``.formatter`` attribute
+    which will reformat any log messages sent.
+
+    Service uses this to add logging methods:
+
+    .. sourcecode:: python
+
+        class Service(ServiceT):
+
+            log: CompositeLogger
+
+            def __init__(self):
+                self.log = CompositeLogger(
+                    logger=self.logger,
+                    formatter=self._format_log,
+                )
+
+            def _format_log(self, severity: int, msg: str,
+                            *args: Any, **kwargs: Any) -> str:
+                return (f'[^{"-" * (self.beacon.depth - 1)}'
+                        f'{self.shortlabel}]: {msg}')
+
+    This means those defining a service may also use it to log:
+
+    .. sourcecode:: pycon
+
+        >>> service.log.info('Something happened')
+
+    and when logging additional information about the service is automatically
+    included.
+    """
+
     logger: Logger
 
     def __init__(self,
@@ -199,6 +249,7 @@ def _format_extra(record: logging.LogRecord) -> str:
 
 
 class DefaultFormatter(logging.Formatter):
+    """Default formatter adds support for extra data."""
 
     def format(self, record: logging.LogRecord) -> str:
         record.extra = _format_extra(record)
@@ -271,7 +322,7 @@ def setup_logging(
         logfile: Union[str, IO] = None,
         loghandlers: List[logging.StreamHandler] = None,
         logging_config: Dict = None) -> int:
-    """Setup logging to file/stream."""
+    """Configure logging subsystem."""
     stream: IO = None
     _loglevel: int = level_number(loglevel)
     if not isinstance(logfile, str):
@@ -338,6 +389,7 @@ def _setup_logging(*,
 
 class Logwrapped(object):
     """Wrap all object methods, to log on call."""
+
     obj: Any
     logger: Any
     severity: int
@@ -432,6 +484,7 @@ def cry(file: IO,
 
 
 def print_task_name(task: asyncio.Task, file: IO) -> None:
+    """Print name of :class:`asyncio.Task` in tracebacks."""
     coro = task._coro  # type: ignore
     wrapped = getattr(task, '__wrapped__', None)
     coro_name = getattr(coro, '__name__', None)
@@ -446,6 +499,8 @@ def print_task_name(task: asyncio.Task, file: IO) -> None:
 
 
 class LogMessage(NamedTuple):
+    """Archived log message."""
+
     severity: int
     message: str
     asctime: str
@@ -625,6 +680,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
 
 
 class FileLogProxy:
+    """File-like object that forwards data to logger."""
 
     mode: str = 'w'
     name: str = None
@@ -687,6 +743,7 @@ def redirect_stdouts(logger: Logger = redirect_logger, *,
                      severity: Severity = None,
                      stdout: bool = True,
                      stderr: bool = True) -> ContextManager[FileLogProxy]:
+    """Redirect :data:`sys.stdout` and :data:`sys.stdout` to logger."""
     proxy = FileLogProxy(logger, severity=severity)
     if stdout:
         sys.stdout = proxy

@@ -106,6 +106,7 @@ class _ARangeIterator(AsyncIterator[int]):
 
 
 class arange(AsyncIterable[int]):
+    """Async generator that counts like :class:`range`."""
 
     def __init__(self, *slice_args: int, **slice_kwargs: Any) -> None:
         s = slice(*slice_args, **slice_kwargs)
@@ -128,10 +129,12 @@ class arange(AsyncIterable[int]):
 
 
 async def alist(ait):
+    """Convert async generator to list."""
     return [x async for x in ait]
 
 
 async def aslice(ait, *slice_args):
+    """Extract slice from async generator."""
     s = slice(*slice_args)
     start = s.start or 0
     stop = s.stop or sys.maxsize

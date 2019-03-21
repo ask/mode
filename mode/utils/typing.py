@@ -1,3 +1,4 @@
+"""Backport of :mod:`typing` additions in Python 3.7."""
 import abc
 import collections
 import typing
@@ -30,6 +31,8 @@ else:
     except ImportError:
         @typing.no_type_check
         class AsyncContextManager(Generic[T_co]):  # noqa: F811
+            """Asynchronous context manager."""
+
             __slots__ = ()
 
             async def __aenter__(self):
@@ -57,6 +60,8 @@ else:
         class ChainMap(collections.ChainMap,  # noqa: F811
                        MutableMapping[KT, VT],
                        extra=collections.ChainMap):
+            """Chain map type."""
+
             __slots__ = ()
 
             def __new__(cls, *args, **kwds):
@@ -76,6 +81,8 @@ else:
         class Counter(collections.Counter,
                       Dict[T, int],
                       extra=collections.Counter):
+            """Counter type."""
+
             __slots__ = ()
 
             def __new__(cls, *args, **kwds):
@@ -95,6 +102,8 @@ else:
         class Deque(collections.deque,  # noqa: F811
                     MutableSequence[T],
                     extra=collections.deque):
+            """Deque type."""
+
             __slots__ = ()
 
             def __new__(cls, *args, **kwds):
@@ -112,6 +121,8 @@ else:
     except ImportError:
         @typing.no_type_check
         class _NoReturn(typing._FinalTypingBase, _root=True):
+            """Type for return type when function does not return."""
+
             __slots__ = ('__type__',)
 
             def __init__(self, tp: Any = None, **kwds: Any) -> None:

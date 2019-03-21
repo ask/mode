@@ -1,3 +1,4 @@
+"""Backport implementation of Python 3.7 contextlib."""
 import abc
 import sys
 import types
@@ -27,7 +28,6 @@ AsyncPushArg = Union[AsyncContextManager, AsyncCallable]
 
 
 class AbstractAsyncContextManager(abc.ABC):
-
     """An abstract base class for asynchronous context managers."""
 
     async def __aenter__(self) -> 'AbstractAsyncContextManager':
@@ -51,7 +51,7 @@ class AbstractAsyncContextManager(abc.ABC):
 
 
 class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
-    """Helper for @asynccontextmanager."""
+    """Helper for :func:`asynccontextmanager`."""
 
     # this __init__ is taken from contextlib._GeneratorContextManagerBase
     # in CPython3.7.
@@ -152,6 +152,7 @@ def asynccontextmanager(func):
 
 class _BaseExitStack:
     """A base class for ExitStack and AsyncExitStack."""
+
     _exit_callbacks: Deque[Callable]
 
     @staticmethod
@@ -179,7 +180,7 @@ class _BaseExitStack:
         return new_stack
 
     def push(self, exit: PushArg) -> PushArg:
-        """Registers a callback with the standard __exit__ method signature.
+        """Register a callback with the standard __exit__ method signature.
 
         Can suppress exceptions the same way __exit__ method can.
         Also accepts any object with an __exit__ method (registering a call
@@ -214,7 +215,7 @@ class _BaseExitStack:
 
     def callback(self, callback: Callable,
                  *args: Any, **kwds: Any) -> Callable:
-        """Registers an arbitrary callback and arguments.
+        """Register an arbitrary callback and arguments.
 
         Cannot suppress exceptions.
         """
@@ -227,7 +228,7 @@ class _BaseExitStack:
         return callback  # Allow use as a decorator
 
     def _push_cm_exit(self, cm: ContextManager, cm_exit: Callable) -> None:
-        """Helper to correctly register callbacks to __exit__ methods."""
+        # Helper to correctly register callbacks to __exit__ methods.
         _exit_wrapper = self._create_exit_wrapper(cm, cm_exit)
         _exit_wrapper.__self__ = cm
         self._push_exit_callback(_exit_wrapper, True)
@@ -310,11 +311,11 @@ class ExitStack(_BaseExitStack, AbstractContextManager):
 
 # Inspired by discussions on https://bugs.python.org/issue29302
 class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
-    """Async context manager for dynamic management of a stack of exit
-    callbacks.
+    """Async :class:`ExitStack`.
+
+    Context manager for dynamic management of a stack of exit callbacks.
 
     Examples:
-
         .. code-block:: python
 
             async with AsyncExitStack() as stack:
@@ -354,8 +355,7 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
         return result
 
     def push_async_exit(self, exit: AsyncPushArg) -> AsyncPushArg:
-        """Registers a coroutine function with the standard __aexit__ method
-        signature.
+        """Register coroutine with the standard __aexit__ method signature.
 
         Can suppress exceptions the same way __aexit__ method can.
         Also accepts any object with an __aexit__ method (registering a call
@@ -373,7 +373,7 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
 
     def push_async_callback(self, callback: AsyncCallable,
                             *args: Any, **kwds: Any) -> AsyncCallable:
-        """Registers an arbitrary coroutine function and arguments.
+        """Register an arbitrary coroutine function and arguments.
 
         Cannot suppress exceptions.
         """
@@ -391,8 +391,8 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
 
     def _push_async_cm_exit(
             self, cm: AsyncContextManager, cm_exit: Callable) -> None:
-        """Helper to correctly register coroutine function to __aexit__
-        method."""
+        # Helper to correctly register coroutine function to __aexit__
+        # method.
         _exit_wrapper = self._create_async_exit_wrapper(cm, cm_exit)
         _exit_wrapper.__self__ = cm
         self._push_exit_callback(_exit_wrapper, False)

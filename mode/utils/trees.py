@@ -1,3 +1,4 @@
+"""Data structure: Trees."""
 from contextlib import suppress
 from typing import Any, Iterator, List, cast
 
@@ -79,7 +80,7 @@ class Node(NodeT[_T]):
             self.children.remove(data)
 
     def traverse(self) -> Iterator[NodeT[_T]]:
-        """Iterator traversing the tree in BFS order."""
+        """Iterate over the tree in BFS order."""
         stack: Deque[NodeT[_T]] = Deque([self])
         while stack:
             node = stack.popleft()

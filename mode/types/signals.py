@@ -1,3 +1,4 @@
+"""Type classes for :mod:`mode.signals`."""
 import abc
 import asyncio
 import typing
@@ -52,6 +53,8 @@ FilterReceiverMapping = MutableMapping[Any, MutableSet[SignalHandlerRefT]]
 
 
 class BaseSignalT(Generic[T]):
+    """Base type for all signals."""
+
     name: str
     owner: Optional[Type]
 
@@ -86,6 +89,7 @@ class BaseSignalT(Generic[T]):
 
 
 class SignalT(BaseSignalT[T]):
+    """Base class for all async signals (using ``async def``)."""
 
     @abc.abstractmethod
     async def __call__(self, sender: T_contra,
@@ -108,6 +112,7 @@ class SignalT(BaseSignalT[T]):
 
 
 class SyncSignalT(BaseSignalT[T]):
+    """Base class for all synchronous signals (using regular ``def``)."""
 
     @abc.abstractmethod
     def __call__(self, sender: T_contra, *args: Any, **kwargs: Any) -> None:

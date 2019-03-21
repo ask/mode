@@ -1,3 +1,8 @@
+"""Worker - Starts services from the command-line.
+
+Workers add signal handling, logging, and other things
+required to start and manage services in a process environment.
+"""
 import asyncio
 import logging as _logging
 import os
@@ -65,6 +70,7 @@ def exiting() -> Iterator[None]:
 
 
 class Worker(Service):
+    """Start mode service from the command-line."""
 
     stdout: IO
     stderr: IO

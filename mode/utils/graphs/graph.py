@@ -1,3 +1,4 @@
+"""Data structure: Dependency graph."""
 from functools import partial
 from typing import (
     Any,
@@ -35,6 +36,7 @@ class DependencyGraph(DependencyGraphT):
     Warning:
         Does not support cycle detection.
     """
+
     adjacent: MutableMapping
 
     def __init__(self,
@@ -132,7 +134,7 @@ class DependencyGraph(DependencyGraphT):
     def _tarjan72(self) -> Sequence:
         """Perform Tarjan's algorithm to find strongly connected components.
 
-        See Also:
+        See Also
             :wikipedia:`Tarjan%27s_strongly_connected_components_algorithm`
         """
         result: List = []

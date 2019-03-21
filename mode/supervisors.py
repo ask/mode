@@ -28,6 +28,8 @@ logger = get_logger(__name__)
 
 
 class SupervisorStrategy(Service, SupervisorStrategyT):
+    """Base class for all supervisor strategies."""
+
     # set this future to wakeup supervisor
     _please_wakeup: Optional[asyncio.Future]
 
@@ -187,10 +189,11 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
 
 
 class OneForOneSupervisor(SupervisorStrategy):
-    ...
+    """Supervisor simply restarts any crashed service."""
 
 
 class OneForAllSupervisor(SupervisorStrategy):
+    """Supervisor that restarts all services when a service crashes."""
 
     async def restart_services(self, services: List[ServiceT]) -> None:
         # we ignore the list of actual crashed services,
@@ -225,6 +228,7 @@ class ForfeitOneForAllSupervisor(SupervisorStrategy):
 
 
 class CrashingSupervisor(SupervisorStrategy):
+    """Supervisor that crashes the whole program."""
 
     def _contribute_to_service(self, service: ServiceT) -> None:
         # The service.crash() method will wakeup service.supervisor if it has

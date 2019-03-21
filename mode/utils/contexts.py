@@ -1,3 +1,4 @@
+"""Context manager utilities."""
 from types import TracebackType
 from typing import Any, Optional, Type
 
@@ -24,6 +25,7 @@ __all__ = [
 
 class asyncnullcontext(AbstractAsyncContextManager):
     """Context for async-with statement doing nothing."""
+
     enter_result: Any
 
     def __init__(self, enter_result: Any = None) -> None:

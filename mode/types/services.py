@@ -1,3 +1,4 @@
+"""Type classes for :mod:`mode.services`."""
 import abc
 import asyncio
 from typing import (
@@ -23,6 +24,7 @@ __all__ = [
 
 class DiagT(abc.ABC):
     """Diag keeps track of a services diagnostic flags."""
+
     flags: Set[str]
     last_transition: MutableMapping[str, float]
 

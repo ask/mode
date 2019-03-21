@@ -1,3 +1,4 @@
+"""Mocking and testing utilities."""
 import asyncio
 import builtins
 import sys
@@ -24,6 +25,8 @@ MOCK_CALL_COUNT = count(0)
 
 
 class Mock(unittest.mock.Mock):
+    """Mock object."""
+
     global_call_count: Optional[int] = None
     call_counts: List[int] = None
 
@@ -43,6 +46,7 @@ class Mock(unittest.mock.Mock):
 
 
 class AsyncMock(unittest.mock.Mock):
+    """Mock for ``async def`` function/method or anything awaitable."""
 
     def __init__(self, *args: Any,
                  name: str = None,
@@ -54,6 +58,7 @@ class AsyncMock(unittest.mock.Mock):
 
 
 class AsyncMagicMock(unittest.mock.MagicMock):
+    """A magic mock type for ``async def`` functions/methods."""
 
     def __init__(self, *args: Any,
                  name: str = None,
@@ -65,7 +70,7 @@ class AsyncMagicMock(unittest.mock.MagicMock):
 
 
 class AsyncContextManagerMock(unittest.mock.Mock):
-    """Mock for :class:`typing.AsyncContextManager`
+    """Mock for :class:`typing.AsyncContextManager`.
 
     You can use this to mock asynchronous context managers,
     when an object with a fully defined ``__aenter__`` and ``__aexit__``
@@ -128,6 +133,8 @@ class AsyncContextManagerMock(unittest.mock.Mock):
 
 
 class FutureMock(unittest.mock.Mock):
+    """Mock a :class:`asyncio.Future`."""
+
     awaited = False
 
     def __init__(self, *args, **kwargs):

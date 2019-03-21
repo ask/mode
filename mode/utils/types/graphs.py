@@ -1,3 +1,4 @@
+"""Type classes for :mod:`mode.utils.graphs`."""
 import abc
 from typing import (
     Any, Generic, IO, Iterable, Mapping, MutableMapping, Sequence, TypeVar,
@@ -9,6 +10,7 @@ _T = TypeVar('_T')
 
 
 class GraphFormatterT(Generic[_T]):
+    """Type class for graph formatters."""
 
     scheme: Mapping[str, Any]
     edge_scheme: Mapping[str, Any]
@@ -76,6 +78,7 @@ class GraphFormatterT(Generic[_T]):
 
 
 class DependencyGraphT(Generic[_T], Mapping[_T, _T]):
+    """Type class for dependency graphs."""
 
     adjacent: MutableMapping[_T, _T]
 

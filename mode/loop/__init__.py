@@ -62,6 +62,10 @@ LOOPS: Mapping[str, Optional[str]] = {
 
 
 def use(loop: str) -> None:
+    """Specify the event loop to use as a string.
+
+    Loop must be one of: aio, eventlet, gevent, uvloop.
+    """
     mod = LOOPS.get(loop, loop)
     if mod is not None:
         importlib.import_module(mod)

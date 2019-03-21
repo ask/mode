@@ -197,6 +197,12 @@ def pluralize(n: int, text: str, suffix: str = 's') -> str:
 def maybecat(s: Optional[AnyStr], suffix: str = '',
              *,
              prefix: str = '') -> AnyStr:
+    """Concatenate string only if existing string s' is defined.
+
+    Keyword Arguments:
+        suffix: add suffix if string s' is defined.
+        prefix: add prefix is string s' is defined.
+    """
     if s is not None:
         return prefix + cast(AnyStr, s) + suffix
     return s

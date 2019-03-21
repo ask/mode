@@ -1,3 +1,5 @@
+"""Custom exceptions."""
+
 __all__ = ['MaxRestartsExceeded']
 
 

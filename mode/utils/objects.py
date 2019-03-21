@@ -474,10 +474,12 @@ def _unary_type_arg(args: List[Type]) -> Any:
 
 
 def label(s: Any) -> str:
+    """Return the name of an object as string."""
     return _label('label', s)
 
 
 def shortlabel(s: Any) -> str:
+    """Return the shortened name of an object as string."""
     return _label('shortlabel', s)
 
 

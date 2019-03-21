@@ -546,7 +546,6 @@ class AttributeDictMixin:
 
 class AttributeDict(dict, AttributeDictMixin):
     """Dict subclass with attribute access."""
-    ...
 
 
 class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):

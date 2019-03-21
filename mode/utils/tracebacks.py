@@ -1,3 +1,4 @@
+"""Traceback utilities."""
 import asyncio
 import inspect
 import io
@@ -27,6 +28,7 @@ def print_task_stack(task: asyncio.Task, *,
                      file: IO = sys.stderr,
                      limit: int = DEFAULT_MAX_FRAMES,
                      capture_locals: bool = False) -> None:
+    """Print the stack trace for an :class:`asyncio.Task`."""
     print(f'Stack for {task!r} (most recent call last):', file=file)
     tb = Traceback.from_task(task, limit=limit)
     print_list(
@@ -41,6 +43,7 @@ def print_task_stack(task: asyncio.Task, *,
 
 def format_task_stack(task: asyncio.Task, *,
                       limit: int = DEFAULT_MAX_FRAMES) -> None:
+    """Format :class:`asyncio.Task` stack trace as a string."""
     f = io.StringIO()
     print_task_stack(task, file=f, limit=limit)
     return f.getvalue()
@@ -70,14 +73,14 @@ class _CustomFrame:
         self.f_locals = {}
 
 
-class BaseTraceback:
+class _BaseTraceback:
     tb_frame: FrameType
     tb_lineno: int
     tb_lasti: int
     tb_next: Optional['Traceback']
 
 
-class _Truncated(BaseTraceback):
+class _Truncated(_BaseTraceback):
 
     def __init__(self, filename='...', name='[rest of traceback truncated]'):
         self.tb_lineno = -1
@@ -97,7 +100,8 @@ class _Truncated(BaseTraceback):
         self.tb_lasti = -1
 
 
-class Traceback(BaseTraceback):
+class Traceback(_BaseTraceback):
+    """Traceback object with truncated frames."""
 
     def __init__(self,
                  frame: FrameType,

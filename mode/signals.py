@@ -1,3 +1,4 @@
+"""Signals - implementation of the Observer pattern."""
 import asyncio
 from collections import defaultdict
 from functools import partial
@@ -33,6 +34,8 @@ __all__ = ['BaseSignal', 'Signal', 'SyncSignal']
 
 
 class BaseSignal(BaseSignalT[T]):
+    """Base class for signal/observer pattern."""
+
     _receivers: MutableSet[SignalHandlerRefT]
     _filter_receivers: FilterReceiverMapping
 
@@ -205,6 +208,7 @@ class BaseSignal(BaseSignalT[T]):
 
 
 class Signal(BaseSignal[T], SignalT[T]):
+    """Asynchronous signal (using ``async def`` functions)."""
 
     async def __call__(self, sender: T_contra = None,
                        *args: Any, **kwargs: Any) -> None:
@@ -225,6 +229,7 @@ class Signal(BaseSignal[T], SignalT[T]):
 
 
 class SyncSignal(BaseSignal[T], SyncSignalT[T]):
+    """Signal that is synchronous (using regular ``def`` functions)."""
 
     def __call__(self, sender: T_contra = None,
                  *args: Any, **kwargs: Any) -> None:

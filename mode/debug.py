@@ -1,3 +1,4 @@
+"""Debugging utilities."""
 import math
 import signal
 import traceback
@@ -28,7 +29,6 @@ else:
 
 class Blocking(RuntimeError):
     """Exception raised when event loop is blocked."""
-    ...
 
 
 class BlockingDetector(Service):
@@ -44,6 +44,7 @@ class BlockingDetector(Service):
         raises (Type[BaseException]): Exception to raise when the blocking
             timeout is exceeded.  Defaults to :exc:`Blocking`.
     """
+
     logger = logger
 
     def __init__(self,

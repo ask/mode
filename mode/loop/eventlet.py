@@ -1,3 +1,4 @@
+"""Enable :pypi:`eventlet` support for :mod:`asyncio`."""
 import os
 os.environ['GEVENT_LOOP'] = 'mode.loop._gevent_loop.Loop'
 try:

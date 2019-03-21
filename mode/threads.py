@@ -35,6 +35,8 @@ __all__ = [
 
 
 class QueuedMethod(NamedTuple):
+    """Describe a method to be called by thread."""
+
     promise: asyncio.Future
     method: Callable[..., Awaitable[Any]]
     args: Tuple[Any, ...]
@@ -42,6 +44,8 @@ class QueuedMethod(NamedTuple):
 
 
 class WorkerThread(threading.Thread):
+    """Thread class used for services running in a dedicated thread."""
+
     service: 'ServiceThread'
     _is_stopped: threading.Event
 
@@ -72,6 +76,8 @@ class WorkerThread(threading.Thread):
 
 
 class ServiceThread(Service):
+    """Service subclass running within a dedicated thread."""
+
     Worker: Type[WorkerThread] = WorkerThread
 
     abstract = True
@@ -342,6 +348,7 @@ class QueueServiceThread(ServiceThread):
     Uses a queue to run functions inside the thread,
     so you can delegate calls.
     """
+
     abstract = True
 
     _method_queue: Optional[MethodQueue] = None

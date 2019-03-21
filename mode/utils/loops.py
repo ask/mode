@@ -1,3 +1,4 @@
+"""Event loop utilities."""
 import asyncio
 from typing import Any, Callable
 
@@ -14,6 +15,7 @@ def _is_unix_loop(loop: asyncio.AbstractEventLoop) -> bool:
 
 
 def clone_loop(loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
+    """Clone loop retaining signal handlers."""
     new_loop = asyncio.new_event_loop()
     if _is_unix_loop(loop):
         for signum, handle in loop._signal_handlers.items():
@@ -38,6 +40,7 @@ def call_asap(callback: Callable,
               *args: Any,
               context: Any = None,
               loop: asyncio.AbstractEventLoop = None) -> asyncio.Handle:
+    """Call function asap by pushing at the front of the line."""
     assert loop
     if _is_unix_loop(loop):
         return _call_asap(loop, callback, *args, context=context)

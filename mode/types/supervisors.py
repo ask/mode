@@ -1,3 +1,4 @@
+"""Type classes for :mod:`mode.supervisors`."""
 import abc
 import typing
 from typing import Any, Awaitable, Callable, Optional, Type
@@ -14,6 +15,8 @@ ReplacementT = Callable[[ServiceT, int], Awaitable[ServiceT]]
 
 
 class SupervisorStrategyT(ServiceT):
+    """Base type for all supervisor strategies."""
+
     max_restarts: float
     over: float
     raises: Type[BaseException]

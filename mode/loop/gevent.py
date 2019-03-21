@@ -1,3 +1,4 @@
+"""Enable :pypi:`gevent` support for :mod:`asyncio`."""
 import os
 import warnings
 os.environ['GEVENT_LOOP'] = 'mode.loop._gevent_loop.Loop'
@@ -38,6 +39,8 @@ if asyncio._get_running_loop() is not None:
 
 
 class Policy(aiogevent.EventLoopPolicy):  # type: ignore
+    """Custom gevent event loop policy."""
+
     _loop: Optional[asyncio.AbstractEventLoop] = None
 
     def get_event_loop(self) -> asyncio.AbstractEventLoop:

@@ -1,8 +1,9 @@
-# Modern versions of asyncio.locks.
+"""Modern versions of asyncio.locks.
 
-# asyncio primitives call get_event_loop() in __init__,
-# which makes them unsuitable for use in programs that don't
-# want to pass the loop around.
+asyncio primitives call get_event_loop() in __init__,
+which makes them unsuitable for use in programs that don't
+want to pass the loop around.
+"""
 import asyncio
 from collections import deque
 from typing import Optional
@@ -17,6 +18,7 @@ class Event:
     The wait() method blocks until the flag is true. The flag is initially
     false.
     """
+
     _waiters: Deque[asyncio.Future]
     _value: bool
     _loop: Optional[asyncio.AbstractEventLoop]

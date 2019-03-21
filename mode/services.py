@@ -307,28 +307,29 @@ class ServiceCallbacks:
         | on_started         |
         +--------------------+
     """
+
     async def on_first_start(self) -> None:
-        """Called only the first time the service is started."""
+        """Service started for the first time in this process."""
         ...
 
     async def on_start(self) -> None:
-        """Called every time before the service is started/restarted."""
+        """Service is starting."""
         ...
 
     async def on_started(self) -> None:
-        """Called every time after the service is started/restarted."""
+        """Service has started."""
         ...
 
     async def on_stop(self) -> None:
-        """Called every time before the service is stopped/restarted."""
+        """Service is being stopped/restarted."""
         ...
 
     async def on_shutdown(self) -> None:
-        """Called every time after the service is stopped/restarted"""
+        """Service is being stopped/restarted."""
         ...
 
     async def on_restart(self) -> None:
-        """Called every time when the service is restarted."""
+        """Service is being restarted."""
         ...
 
 
@@ -339,6 +340,7 @@ class Service(ServiceBase, ServiceCallbacks):
         beacon (NodeT): Beacon used to track services in a graph.
         loop (asyncio.AbstractEventLoop): Event loop object.
     """
+
     abstract: ClassVar[bool] = True
     Diag: Type[DiagT] = Diag
 
@@ -398,7 +400,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     @classmethod
     def task(cls, fun: Callable[[Any], Awaitable[None]]) -> ServiceTask:
-        """Decorator used to define a service background task.
+        """Decorate function to be used as background task.
 
         Example:
             >>> class S(Service):
@@ -414,7 +416,7 @@ class Service(ServiceBase, ServiceCallbacks):
     @classmethod
     def timer(cls, interval: Seconds) -> Callable[
             [Callable[[ServiceT], Awaitable[None]]], ServiceTask]:
-        """A background timer that executes every ``n`` seconds.
+        """Background timer executing every ``n`` seconds.
 
         Example:
             >>> class S(Service):
@@ -437,7 +439,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     @classmethod
     def transitions_to(cls, flag: str) -> Callable:
-        """Decorator that adds diagnostic flag while function is running."""
+        """Decorate function to set and reset diagnostic flag."""
         def _decorate(
                 fun: Callable[..., Awaitable]) -> Callable[..., Awaitable]:
             @wraps(fun)
@@ -580,14 +582,14 @@ class Service(ServiceBase, ServiceCallbacks):
         self._futures.discard(fut)
 
     def __post_init__(self) -> None:
-        """Callback to be called on instantiation."""
+        """Additional user initialization."""
         ...
 
     def on_init(self) -> None:
         ...  # deprecated: use __post_init__
 
     def on_init_dependencies(self) -> Iterable[ServiceT]:
-        """Callback to be used to add service dependencies."""
+        """Return list of service dependencies for this service."""
         return []
 
     async def join_services(self, services: Sequence[ServiceT]) -> None:
@@ -908,7 +910,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     @property
     def started(self) -> bool:
-        """Was the service started?"""
+        """Return :const:`True` if the service was started."""
         return bool(self._started.is_set())
 
     @property
@@ -917,12 +919,12 @@ class Service(ServiceBase, ServiceCallbacks):
 
     @property
     def should_stop(self) -> bool:
-        """Should the service stop ASAP?"""
+        """Return :const:`True` if the service must stop."""
         return bool(self._stopped.is_set())
 
     @property
     def state(self) -> str:
-        """Current service state - as a human readable string."""
+        """Service state - as a human readable string."""
         if self._crashed.is_set():
             return 'crashed'
         elif not self._started.is_set():

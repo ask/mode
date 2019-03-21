@@ -1,3 +1,4 @@
+"""Queue utilities - variations of :class:`asyncio.Queue`."""
 import asyncio
 import typing
 from collections import deque
@@ -114,6 +115,7 @@ class FlowControlQueue(asyncio.Queue):
 
 
 class ThrowableQueue(FlowControlQueue):
+    """Queue that can be notified of errors."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

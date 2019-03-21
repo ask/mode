@@ -1,3 +1,4 @@
+"""Time, date and timezone related utilities."""
 import abc
 import asyncio
 import sys
@@ -53,7 +54,7 @@ RATE_MODIFIER_MAP: Mapping[str, Callable[[float], float]] = {
 
 
 class Bucket(AsyncContextManager):
-    """Bucket type.
+    """Rate limiting state.
 
     A bucket "pours" tokens at a rate of ``rate`` per second (or over').
 
@@ -95,6 +96,7 @@ class Bucket(AsyncContextManager):
             # do something
 
     """
+
     rate: float
     fill_rate: float
     capacity: float
@@ -152,6 +154,8 @@ class Bucket(AsyncContextManager):
 
 
 class TokenBucket(Bucket):
+    """Rate limiting using the token bucket algorithm."""
+
     _tokens: float
     _last_pour: float
 
@@ -211,6 +215,7 @@ def rate_limit(rate: float, over: Seconds = 1.0,
                bucket_type: Type[Bucket] = TokenBucket,
                raises: Type[BaseException] = None,
                loop: asyncio.AbstractEventLoop = None) -> Bucket:
+    """Create rate limiting manager."""
     return bucket_type(rate, over, raises=raises, loop=loop)
 
 

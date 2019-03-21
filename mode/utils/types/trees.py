@@ -1,3 +1,4 @@
+"""Type classes for :mod:`mode.utils.trees`."""
 import abc
 from typing import Any, Generic, Iterator, List, TypeVar
 from .graphs import DependencyGraphT
@@ -8,6 +9,7 @@ _T = TypeVar('_T')
 
 
 class NodeT(Generic[_T]):
+    """Node in a tree data structure."""
 
     root: 'NodeT' = None
     children: List[Any] = None

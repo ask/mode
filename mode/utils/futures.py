@@ -128,12 +128,14 @@ async def maybe_async(res: Any) -> Any:
 
 
 def maybe_cancel(fut: asyncio.Future) -> bool:
+    """Cancel future if it is cancellable."""
     if fut is not None and not fut.done():
         return fut.cancel()
     return False
 
 
 def notify(fut: Optional[asyncio.Future], result: Any = None) -> None:
+    """Set :class:`asyncio.Future` result if future exists and is not done."""
     # can be used to turn a Future into a lockless, single-consumer condition,
     # for multi-consumer use asyncio.Condition
     if fut is not None and not fut.done():
