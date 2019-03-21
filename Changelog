@@ -4,6 +4,25 @@
  Change history
 ================
 
+.. _version-3.1.0:
+
+3.1.0
+=====
+:release-date: 2010-03-21 03:26 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds :class:`~mode.utils.contexts.nullcontext`
+  and :class:`~mode.utils.contexts.asyncnullcontext`.
+
+    Backported from Python 3.7 you can import these
+    from :mod:`mode.utils.contexts`.
+
+- Mode project changes:
+
+    + Added :pypi:`bandit` to CI lint build.
+
+    + Added :pypi:`pydocstyle` to CI lint build.
+
 .. _version-3.0.13:
 
 3.0.13
