@@ -925,7 +925,7 @@ class Service(ServiceBase, ServiceCallbacks):
     @property
     def should_stop(self) -> bool:
         """Return :const:`True` if the service must stop."""
-        return bool(self._stopped.is_set())
+        return bool(self._stopped.is_set() or self._crashed.is_set())
 
     @property
     def state(self) -> str:

@@ -43,6 +43,12 @@ def test_state_stopped():
     assert s.state == 'shutdown'
 
 
+def test_should_stop_returns_true_if_crashed():
+    s = S()
+    s._crashed.set()
+    assert s.should_stop
+
+
 @pytest.mark.asyncio
 async def test_aenter():
     s = S()
