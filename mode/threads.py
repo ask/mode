@@ -244,6 +244,8 @@ class ServiceThread(Service):
             # If we don't do this, anything waiting for new
             # stuff in the method queue may never get it.
             await asyncio.sleep(sleep_time, loop=self.thread_loop)
+            if self.should_stop:
+                break
 
     def on_crash(self, msg: str, *fmt: Any, **kwargs: Any) -> None:
         print(msg.format(*fmt), file=sys.stderr)

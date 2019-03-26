@@ -438,7 +438,11 @@ class Service(ServiceBase, ServiceCallbacks):
                     if self.should_stop:
                         break
                     await fun(self)
+                    if self.should_stop:
+                        break
                     await self.sleep(sleep_time)
+                    if self.should_stop:
+                        break
             return cls.task(_repeater)
         return _decorate
 

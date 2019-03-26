@@ -347,6 +347,8 @@ class Worker(Service):
             # Keeps MainThread loop alive, by ensuring it wakes up
             # every second.
             await asyncio.sleep(sleep_time)
+            if self.should_stop:
+                break
 
     @property
     def blocking_detector(self) -> BlockingDetector:
