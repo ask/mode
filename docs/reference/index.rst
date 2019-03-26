@@ -21,6 +21,7 @@ Mode
     mode.signals
     mode.supervisors
     mode.threads
+    mode.timers
     mode.worker
 
 Typehints

@@ -26,11 +26,12 @@ from typing import (
     cast,
 )
 
+from .timers import timer_intervals
 from .types import DiagT, ServiceT
 from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.locks import Event
 from .utils.logging import CompositeLogger, get_logger, level_number
-from .utils.objects import iter_mro_reversed
+from .utils.objects import iter_mro_reversed, qualname
 from .utils.text import maybecat
 from .utils.times import Seconds, want_seconds
 from .utils.trees import Node
@@ -431,9 +432,13 @@ class Service(ServiceBase, ServiceCallbacks):
                 fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
             @wraps(fun)
             async def _repeater(self: Service) -> None:
-                while not self.should_stop:
-                    await self.sleep(_interval)
+                await self.sleep(_interval)
+                for sleep_time in timer_intervals(
+                        _interval, name=qualname(fun)):
+                    if self.should_stop:
+                        break
                     await fun(self)
+                    await self.sleep(sleep_time)
             return cls.task(_repeater)
         return _decorate
 

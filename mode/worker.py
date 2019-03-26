@@ -26,6 +26,7 @@ from typing import (
 )
 
 from .services import Service
+from .timers import timer_intervals
 from .types import ServiceT
 from .utils import logging
 from .utils.futures import all_tasks, maybe_cancel
@@ -339,10 +340,13 @@ class Worker(Service):
 
     @Service.task
     async def _keepalive(self) -> None:
-        while not self.should_stop:
+        await asyncio.sleep(1.0)
+        for sleep_time in timer_intervals(1.0, name='_main_keepalive'):
+            if self.should_stop:
+                break
             # Keeps MainThread loop alive, by ensuring it wakes up
             # every second.
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(sleep_time)
 
     @property
     def blocking_detector(self) -> BlockingDetector:
