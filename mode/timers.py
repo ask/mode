@@ -1,3 +1,4 @@
+"""AsyncIO Timers."""
 from itertools import count
 from time import perf_counter
 from typing import Callable, Iterator
@@ -18,6 +19,16 @@ def timer_intervals(interval: Seconds,
                     max_drift_correction: float = 0.1,
                     name: str = '',
                     clock: ClockArg = perf_counter) -> Iterator[float]:
+    """Generate timer sleep times.
+
+    Example:
+        >>> async def my_timer(interval=1.0):
+        ...     # wait interval before running first time.
+        ...     await asyncio.sleep(interval)
+        ...     for sleep_time in timer_intervals(1.0, name='my_timer'):
+        ...         # do something that takes a while.
+        ...         await asyncio.sleep(sleep_time)
+    """
     interval_s = want_seconds(interval)
 
     # Log when drift exceeds this number
