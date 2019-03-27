@@ -4,11 +4,25 @@
  Change history
 ================
 
+.. _version-3.1.1:
+
+3.1.1
+=====
+:release-date: 2019-03-27 10:02 A.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Service: property ``should_stop`` is now true if service crashed.
+
+- Timers: Avoid drift + introduce some drift.
+
+    Thanks to Bob Haddleton (:github_user:`bobh66`) for discovering
+    this issue.
+
 .. _version-3.1.0:
 
 3.1.0
 =====
-:release-date: 2010-03-21 03:26 P.M PST
+:release-date: 2019-03-21 03:26 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
 
 - Adds :class:`~mode.utils.contexts.nullcontext`
