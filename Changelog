@@ -13,7 +13,7 @@
 
 - Service: property ``should_stop`` is now true if service crashed.
 
-- Timers: Avoid drift + introduce some drift.
+- Timers: Avoid drift + introduce a tiny bit of drift to timers.
 
     Thanks to Bob Haddleton (:github_user:`bobh66`) for discovering
     this issue.
