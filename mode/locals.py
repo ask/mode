@@ -14,11 +14,10 @@ and other libraries to keep a thread-local stack of contexts.
         request_stack: LocalStack[Request] = LocalStack()
 """
 import threading
-import typing
 from contextlib import AbstractContextManager
 from contextvars import ContextVar
 from types import TracebackType
-from typing import Generic, List, Optional, Sequence, Type, TypeVar
+from typing import Generic, List, Optional, Sequence, Type, TypeVar, cast
 
 T = TypeVar('T')
 T_contra = TypeVar('T_contra', contravariant=True)
@@ -41,16 +40,24 @@ class PopAfterContext(AbstractContextManager):
         return None
 
 
+class _LocalStackLocal(Generic[T]):
+    # we use this class for typing only
+    stack: ContextVar[T]
+
+
+ContextContent = Optional[List[T]]
+
+
 class LocalStack(Generic[T]):
     """Thread-safe ContextVar that manages a stack."""
 
-    if typing.TYPE_CHECKING:
-        _local: threading.local[ContextVar[T]]
+    _local: _LocalStackLocal[ContextContent]
 
     def __init__(self) -> None:
-        self._local = threading.local()
+        self._local = cast(
+            _LocalStackLocal[ContextContent], threading.local())
 
-    def push(self, obj: T_contra) -> PopAfterContext:
+    def push(self, obj: T) -> PopAfterContext:
         """Push a new item to the stack."""
         context = self._get_context()
         stack = context.get(None)
@@ -60,16 +67,16 @@ class LocalStack(Generic[T]):
         stack.append(obj)
         return PopAfterContext(self)
 
-    def _get_context(self) -> ContextVar[T]:
+    def _get_context(self) -> ContextVar[ContextContent]:
         context = getattr(self._local, 'stack', None)
         if context is None:
             self._local.stack = context = ContextVar('_stack')
-        return context
+        return cast(ContextVar[ContextContent], context)
 
-    def _get_stack(self) -> Optional[List[T]]:
+    def _get_stack(self) -> ContextContent:
         return self._get_context().get(None)
 
-    def pop(self) -> T:
+    def pop(self) -> Optional[T]:
         """Remove the topmost item from the stack.
 
         Note:
@@ -77,12 +84,12 @@ class LocalStack(Generic[T]):
         """
         context = self._get_context()
         stack = context.get(None)
-        if stack is None:
+        if not stack:
             return None
 
         if len(stack) == 1:
             context.set(None)
-        return stack.pop()
+        return cast(T, stack.pop())
 
     def __len__(self) -> int:
         stack = self._get_stack()
@@ -103,6 +110,6 @@ class LocalStack(Generic[T]):
         context = getattr(self._local, 'stack', None)
         if context is not None:
             stack = context.get(None)
-            if stack is not None:
-                return stack[-1]
+            if stack:
+                return cast(T, stack[-1])
         return None

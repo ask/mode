@@ -81,12 +81,12 @@ async def test_threads(retry):
 
     def thread_enter():
         loop = asyncio.new_event_loop()
-        for i in range(2):
+        for _ in range(2):
             loop.run_until_complete(assert_stack(stack))
 
     threads = [
         threading.Thread(target=thread_enter, daemon=False)
-        for i in range(10)
+        for _ in range(10)
     ]
     for thread in threads:
         thread.start()
