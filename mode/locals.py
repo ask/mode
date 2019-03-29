@@ -102,7 +102,9 @@ class LocalStack(Generic[T]):
 
     @property
     def top(self) -> Optional[T]:
-        """The topmost item on the stack.
+        """Return the topmost item on the stack.
+
+        Does not remove it from the stack.
 
         Note:
             If the stack is empty, :const:`None` is returned.
