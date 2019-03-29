@@ -567,7 +567,6 @@ class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
         return setattr(self.obj, key, value)
 
     def get(self, key: Any, default: Any = None) -> Any:
-        # type: (Any, Any) -> Any
         try:
             return self[key]
         except KeyError:
@@ -605,13 +604,11 @@ class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
             yield key
 
     def _values(self) -> Iterator[VT]:
-        # type: () -> Iterable
         obj = self.obj
         for key in self:
             yield getattr(obj, key)
 
     def _items(self) -> Iterator[Tuple[KT, VT]]:
-        # type: () -> Iterable
         obj = self.obj
         for key in self:
             yield key, getattr(obj, key)
@@ -619,7 +616,6 @@ collections.abc.MutableMapping.register(DictAttribute)  # noqa: E305
 
 
 def force_mapping(m: Any) -> Mapping:
-    # type: (Any) -> Mapping
     """Wrap object into supporting the mapping interface if necessary."""
     if isinstance(m, (LazyObject, LazySettings)):
         m = m._wrapped
