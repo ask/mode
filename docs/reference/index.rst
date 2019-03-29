@@ -16,6 +16,7 @@ Mode
     mode
     mode.debug
     mode.exceptions
+    mode.locals
     mode.proxy
     mode.services
     mode.signals
