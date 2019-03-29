@@ -1,4 +1,5 @@
-sphinx_celery>=1.1
+sphinx>=2.0,<3.0
+sphinx_celery>=1.4.8
 sphinxcontrib-asyncio
 sphinx-autodoc-annotation
 alabaster
