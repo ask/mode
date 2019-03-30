@@ -1,11 +1,7 @@
-"""Implements thread-local stack.
+"""Implements thread-local stack using :class:`ContextVar` (:pep:`567`).
 
-This is a reimplementation of the local stack as used by Celery, Flask
-and other libraries to keep a thread-local stack of contexts.
-
-- Uses three levels to support both threads and coroutines:
-
-    ``threading.local -> ContextVar -> List``
+This is a reimplementation of the local stack as used by Flask, Werkzeug,
+Celery, and other libraries to keep a thread-local stack of objects.
 
 - Supports typing:
 
@@ -13,68 +9,59 @@ and other libraries to keep a thread-local stack of contexts.
 
         request_stack: LocalStack[Request] = LocalStack()
 """
-import threading
-from contextlib import AbstractContextManager
+from contextlib import contextmanager
 from contextvars import ContextVar
-from types import TracebackType
-from typing import Generic, List, Optional, Sequence, Type, TypeVar, cast
+from typing import (
+    Any,
+    Generator,
+    Generic,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+    cast,
+)
 
+# LocalStack is a generic type,
+# so for a stack keeping track of web requests you may define:
+#
+#   requests: LocalStack[Request]
+#
+# If the stack is a ``List[T]``, then the type variable T denotes the
+# type this stack contains.
 T = TypeVar('T')
-T_contra = TypeVar('T_contra', contravariant=True)
-
-
-class PopAfterContext(AbstractContextManager):
-    """Context manager that pops from stack when exiting."""
-
-    def __init__(self, stack: 'LocalStack'):
-        self.stack = stack
-
-    def __enter__(self) -> 'PopAfterContext':
-        return self
-
-    def __exit__(self,
-                 exc_type: Type[BaseException] = None,
-                 exc_val: BaseException = None,
-                 exc_tb: TracebackType = None) -> Optional[bool]:
-        self.stack.pop()
-        return None
-
-
-class _LocalStackLocal(Generic[T]):
-    # we use this class for typing only
-    stack: ContextVar[T]
-
-
-ContextContent = Optional[List[T]]
 
 
 class LocalStack(Generic[T]):
-    """Thread-safe ContextVar that manages a stack."""
+    """LocalStack.
 
-    _local: _LocalStackLocal[ContextContent]
+    Manage state per coroutine (also thread safe).
+
+    Most famously used probably in Flask to keep track of the current
+    request object.
+    """
+
+    _stack: ContextVar[Optional[List[T]]]
 
     def __init__(self) -> None:
-        self._local = cast(
-            _LocalStackLocal[ContextContent], threading.local())
+        self._stack = ContextVar('_stack')
 
-    def push(self, obj: T) -> PopAfterContext:
+    # XXX mypy bug; when fixed type Generator, should be ContextManager.
+    @contextmanager
+    def push(self, obj: T) -> Generator[None, None, None]:
         """Push a new item to the stack."""
-        context = self._get_context()
-        stack = context.get(None)
+        self.push_without_automatic_cleanup(obj)
+        try:
+            yield
+        finally:
+            self.pop()
+
+    def push_without_automatic_cleanup(self, obj: T) -> None:
+        stack = self._stack.get(None)
         if stack is None:
             stack = []
-            context.set(stack)
+            self._stack.set(stack)
         stack.append(obj)
-        return PopAfterContext(self)
-
-    def _get_context(self) -> ContextVar[ContextContent]:
-        context = getattr(self._local, 'stack', None)
-        if context is None:
-            self._local.stack = context = ContextVar('_stack')
-        return cast(ContextVar[ContextContent], context)
-
-    def _get_stack(self) -> ContextContent:
-        return self._get_context().get(None)
 
     def pop(self) -> Optional[T]:
         """Remove the topmost item from the stack.
@@ -82,23 +69,29 @@ class LocalStack(Generic[T]):
         Note:
             Will return the old value or `None` if the stack was already empty.
         """
-        context = self._get_context()
-        stack = context.get(None)
-        if not stack:
+        stack = self._stack.get(None)
+        if stack is None:
             return None
-
-        if len(stack) == 1:
-            context.set(None)
-        return cast(T, stack.pop())
+        else:
+            size = len(stack)
+            if not size:
+                self._stack.set(None)
+                return None
+            elif size == 1:
+                item = stack[-1]
+                self._stack.set(None)
+            else:
+                item = stack.pop()
+            return item
 
     def __len__(self) -> int:
-        stack = self._get_stack()
+        stack = self._stack.get(None)
         return len(stack) if stack else 0
 
     @property
     def stack(self) -> Sequence[T]:
         # read-only version, do not modify
-        return self._get_stack() or []
+        return self._stack.get(None) or []
 
     @property
     def top(self) -> Optional[T]:
@@ -107,9 +100,5 @@ class LocalStack(Generic[T]):
         Note:
             If the stack is empty, :const:`None` is returned.
         """
-        context = getattr(self._local, 'stack', None)
-        if context is not None:
-            stack = context.get(None)
-            if stack:
-                return cast(T, stack[-1])
-        return None
+        stack = self._stack.get(None)
+        return stack[-1] if stack else None

@@ -12,6 +12,9 @@ class Request:
     def __init__(self, id: UUID) -> None:
         self.id = id
 
+    def __repr__(self) -> str:
+        return f'<{type(self).__name__}: id={self.id!r}>'
+
 
 def test_typing():
     assert LocalStack[Request]
@@ -20,7 +23,7 @@ def test_typing():
 async def foo(stack, first_req):
     current = stack.top
     assert current is first_req
-    new_req = Request(uuid4())
+    new_req = Request(2)
     try:
         with stack.push(new_req):
             assert stack.top is new_req
@@ -34,7 +37,7 @@ async def foo(stack, first_req):
 async def bar(stack, prev_req):
     current = stack.top
     assert current is prev_req
-    new_req = Request(uuid4())
+    new_req = Request(3)
     time.sleep(0.01)
     try:
         with stack.push(new_req):
@@ -49,7 +52,7 @@ async def bar(stack, prev_req):
 async def baz(stack, prev_req):
     current = stack.top
     assert current is prev_req
-    new_req = Request(uuid4())
+    new_req = Request(4)
     try:
         with stack.push(new_req):
             assert stack.top is new_req
@@ -66,7 +69,7 @@ async def test_coroutines():
 
 
 async def assert_stack(stack):
-    first_req = Request(uuid4())
+    first_req = Request(1)
     assert stack.top is None
     with stack.push(first_req):
         assert stack.top is first_req
