@@ -3,13 +3,12 @@ import pytest
 import time
 import threading
 from mode.locals import LocalStack
-from uuid import UUID, uuid4
 
 
 class Request:
-    id: UUID
+    id: int
 
-    def __init__(self, id: UUID) -> None:
+    def __init__(self, id: int) -> None:
         self.id = id
 
     def __repr__(self) -> str:

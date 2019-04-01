@@ -11,16 +11,7 @@ Celery, and other libraries to keep a thread-local stack of objects.
 """
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import (
-    Any,
-    Generator,
-    Generic,
-    List,
-    Optional,
-    Sequence,
-    TypeVar,
-    cast,
-)
+from typing import Generator, Generic, List, Optional, Sequence, TypeVar
 
 # LocalStack is a generic type,
 # so for a stack keeping track of web requests you may define:
