@@ -63,7 +63,7 @@ def exiting() -> Iterator[None]:
         yield
     except MemoryError:
         sys.exit(EX_OSERR)
-    except Exception as exc:
+    except Exception:
         sys.exit(EX_FAILURE)
     else:
         sys.exit(EX_OK)
