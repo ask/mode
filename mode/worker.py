@@ -63,7 +63,7 @@ def exiting() -> Iterator[None]:
         yield
     except MemoryError:
         sys.exit(EX_OSERR)
-    except Exception:
+    except Exception as exc:
         sys.exit(EX_FAILURE)
     else:
         sys.exit(EX_OK)
@@ -250,9 +250,10 @@ class Worker(Service):
         maybe_cancel(self._starting_fut)
 
     def execute_from_commandline(self) -> NoReturn:
+        self._starting_fut = None
         with exiting():
-            self._starting_fut = asyncio.ensure_future(self.start())
             try:
+                self._starting_fut = asyncio.ensure_future(self.start())
                 self.loop.run_until_complete(self._starting_fut)
             except asyncio.CancelledError:
                 pass
