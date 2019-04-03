@@ -255,6 +255,7 @@ class ServiceThread(Service):
 class MethodQueueWorker(Service):
     index: int
     method_queue: 'MethodQueue'
+    mundane_level = 'debug'
 
     def __init__(self, method_queue: 'MethodQueue',
                  *,
@@ -284,6 +285,8 @@ class MethodQueue(Service):
     _queue: asyncio.Queue
     _queue_ready: Event
     _workers: List[MethodQueueWorker]
+
+    mundane_level = 'debug'
 
     def __init__(self,
                  loop: asyncio.AbstractEventLoop,
