@@ -9,6 +9,7 @@ import os
 import reprlib
 import signal
 import sys
+import traceback
 import typing
 from contextlib import contextmanager, suppress
 from logging import Logger, StreamHandler
@@ -58,15 +59,19 @@ _repr = _TupleAsListRepr().repr  # noqa: E305
 
 
 @contextmanager
-def exiting() -> Iterator[None]:
+def exiting(*,
+            print_exception: bool = False,
+            file: IO = sys.stderr) -> Iterator[None]:
     try:
         yield
     except MemoryError:
+        sys.stderr.write('Out of memory!')
         sys.exit(EX_OSERR)
-    except Exception:
+    except Exception as exc:
+        if print_exception:
+            print(f'Command raised exception: {exc!r}', file=file)
+            traceback.print_tb(exc.__traceback__, file=file)
         sys.exit(EX_FAILURE)
-    else:
-        sys.exit(EX_OK)
     sys.exit(EX_OK)
 
 
