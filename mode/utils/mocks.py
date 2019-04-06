@@ -7,7 +7,7 @@ import unittest.mock
 from asyncio import coroutine
 from contextlib import contextmanager
 from itertools import count
-from typing import Any, List, Optional
+from typing import Any, ContextManager, List, Optional, Type
 
 __all__ = [
     'ANY',
@@ -43,6 +43,36 @@ class Mock(unittest.mock.Mock):
         super().reset_mock(*args, **kwargs)
         if self.call_counts is not None:
             self.call_counts.clear()
+
+
+class _ContextMock(Mock, ContextManager):
+    """Internal context mock class.
+
+    Dummy class implementing __enter__ and __exit__
+    as the :keyword:`with` statement requires these to be implemented
+    in the class, not just the instance.
+    """
+
+    def __enter__(self) -> '_ContextMock':
+        return self
+
+    def __exit__(self,
+                 exc_type: Type[BaseException] = None,
+                 exc_val: BaseException = None,
+                 exc_tb: types.TracebackType = None) -> Optional[bool]:
+        pass
+
+
+def ContextMock(*args: Any, **kwargs: Any) -> _ContextMock:
+    """Mock that mocks :keyword:`with` statement contexts."""
+    obj = _ContextMock(*args, **kwargs)
+    obj.attach_mock(_ContextMock(), '__enter__')
+    obj.attach_mock(_ContextMock(), '__exit__')
+    obj.__enter__.return_value = obj
+    # if __exit__ return a value the exception is ignored,
+    # so it must return None here.
+    obj.__exit__.return_value = None
+    return obj
 
 
 class AsyncMock(unittest.mock.Mock):
