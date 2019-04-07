@@ -5,6 +5,7 @@ import typing
 import _collections_abc
 from typing import (
     Any,
+    AsyncIterator,
     Dict,
     Generic,
     KT,
@@ -12,11 +13,14 @@ from typing import (
     MutableSequence,
     T,
     T_co,
+    T_contra,
     VT,
+    V_co,
 )
 
 __all__ = [
     'AsyncContextManager',
+    'AsyncGenerator',
     'ChainMap',
     'Counter',
     'Deque',
@@ -48,6 +52,26 @@ else:
                     return _collections_abc._check_methods(
                         C, '__aenter__', '__aexit__')
                 return NotImplemented
+
+
+if typing.TYPE_CHECKING:
+    from typing import AsyncGenerator
+else:
+    try:
+        from typing import AsyncGenerator
+    except ImportError:  # Python 3.6.0
+        class AsyncGenerator(AsyncIterator[T_co],
+                             Generic[T_co, T_contra, V_co],
+                             extra=_collections_abc.AsyncGenerator):
+            __slots__ = ()
+
+            def __new__(cls, *args, **kwds):
+                if typing._geqv(cls, AsyncGenerator):
+                    raise TypeError(
+                        'Type AsyncGenerator cannot be instantiated; '
+                        'create a subclass instead')
+                return typing._generic_new(
+                    _collections_abc.AsyncGenerator, cls, *args, **kwds)
 
 
 if typing.TYPE_CHECKING:
