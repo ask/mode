@@ -63,6 +63,8 @@ else:
         class AsyncGenerator(AsyncIterator[T_co],
                              Generic[T_co, T_contra, V_co],
                              extra=_collections_abc.AsyncGenerator):
+            """Async Generator Type."""
+
             __slots__ = ()
 
             def __new__(cls, *args, **kwds):
