@@ -4,6 +4,20 @@
  Change history
 ================
 
+.. _version-3.2.0:
+
+3.2.0
+=====
+:release-date: 2019-04-06 11:00 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds ``Service.itertimer``: used to perform periodic
+  tasks, but with automatic drift adjustment.
+
+- Adds :func:`mode.utils.mocks.ContextMock`
+
+    To mock a regular context manager.
+
 .. _version-3.1.3:
 
 3.1.3
