@@ -23,7 +23,6 @@ from typing import (
 )
 
 from .services import Service
-from .timers import timer_intervals
 from .utils.futures import maybe_async, notify
 from .utils.locks import Event
 
@@ -234,18 +233,15 @@ class ServiceThread(Service):
 
     @Service.task
     async def _thread_keepalive(self) -> None:
-        for sleep_time in timer_intervals(1.0, name='_thread_keepalive'):
-            if self.should_stop:
-                break
+        async for sleep_time in self.itertimer(1.0, name='_thread_keepalive',
+                                               loop=self.thread_loop):
             # The consumer thread will have a separate event loop,
             # and so we use this trick to make sure our loop is
             # being scheduled to run something at all times.
             #
             # If we don't do this, anything waiting for new
             # stuff in the method queue may never get it.
-            await asyncio.sleep(sleep_time, loop=self.thread_loop)
-            if self.should_stop:
-                break
+            pass
 
     def on_crash(self, msg: str, *fmt: Any, **kwargs: Any) -> None:
         print(msg.format(*fmt), file=sys.stderr)

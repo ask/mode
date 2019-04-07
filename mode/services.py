@@ -2,11 +2,13 @@
 import asyncio
 import logging
 import sys
+
 from functools import wraps
-from time import monotonic
+from time import monotonic, perf_counter
 from types import TracebackType
 from typing import (
     Any,
+    AsyncIterator,
     Awaitable,
     Callable,
     ClassVar,
@@ -45,6 +47,8 @@ __all__ = [
     'task',
     'timer',
 ]
+
+ClockArg = Callable[[], float]
 
 #: Future type: Different types of awaitables.
 FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
@@ -433,16 +437,9 @@ class Service(ServiceBase, ServiceCallbacks):
             @wraps(fun)
             async def _repeater(self: Service) -> None:
                 await self.sleep(_interval)
-                for sleep_time in timer_intervals(
+                async for sleep_time in self.itertimer(
                         _interval, name=qualname(fun)):
-                    if self.should_stop:
-                        break
                     await fun(self)
-                    if self.should_stop:
-                        break
-                    await self.sleep(sleep_time)
-                    if self.should_stop:
-                        break
             return cls.task(_repeater)
         return _decorate
 
@@ -610,11 +607,15 @@ class Service(ServiceBase, ServiceCallbacks):
         for service in reversed(services):
             await service.stop()
 
-    async def sleep(self, n: Seconds) -> None:
+    async def sleep(self, n: Seconds, *,
+                    loop: asyncio.AbstractEventLoop = None) -> None:
         """Sleep for ``n`` seconds, or until service stopped."""
         try:
             await asyncio.wait_for(
-                self._stopped.wait(), timeout=want_seconds(n), loop=self.loop)
+                self._stopped.wait(),
+                timeout=want_seconds(n),
+                loop=loop or self.loop,
+            )
         except asyncio.TimeoutError:
             pass
 
@@ -916,6 +917,46 @@ class Service(ServiceBase, ServiceCallbacks):
             will wait for this flag to be set.
         """
         self._shutdown.set()
+
+    async def itertimer(self,
+                        interval: Seconds, *,
+                        max_drift_correction: float = 0.1,
+                        loop: asyncio.AbstractEventLoop = None,
+                        sleep: Callable[..., Awaitable] = None,
+                        clock: ClockArg = perf_counter,
+                        name: str = '') -> AsyncIterator[float]:
+        """Sleep ``interval`` seconds for every iteration.
+
+        This is an async iterator that takes advantage
+        of :func:`~mode.timers.timer_intervals` to act as a timer
+        that stop drift from occurring, and adds a tiny amount of drift
+        to timers so that they don't start at the same time.
+
+        Uses ``Service.sleep`` which will bail-out-quick if the service is
+        stopped.
+
+        Note:
+            Will sleep the full `interval` seconds before returning
+            from first iteration.
+
+        Examples:
+            >>> async for sleep_time in self.itertimer(1.0):
+            ...   print('another second passed, just woke up...')
+            ...   await perform_some_http_request()
+        """
+        for sleep_time in timer_intervals(
+                interval,
+                name=name,
+                max_drift_correction=max_drift_correction,
+                clock=clock):
+            if self.should_stop:
+                break
+            await (sleep or self.sleep)(sleep_time, loop=loop)
+            if self.should_stop:
+                break
+            yield sleep_time
+            if self.should_stop:
+                break
 
     @property
     def started(self) -> bool:
