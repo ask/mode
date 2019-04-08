@@ -4,6 +4,17 @@
  Change history
 ================
 
+.. _version-3.2.2:
+
+3.2.2
+=====
+:release-date: 2019-04-07 6:18 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- :class:`~mode.utils.typing.AsyncGenerator` takes two arguments.
+
+    Mistakenly had it take three arguments, like :class:`typing.Generator`.S
+
 .. _version-3.2.1:
 
 3.2.1
@@ -11,7 +22,7 @@
 :release-date: 2019-04-07 4:07 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
 
-- Adds ``mode.utils.typing.AsyncGenerator``
+- Adds :class:`mode.utils.typing.AsyncGenerator`
   to import :class:`typing.AsyncGenerator` missing from Python 3.6.0.
 
 .. _version-3.2.0:
