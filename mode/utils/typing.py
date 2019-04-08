@@ -15,7 +15,6 @@ from typing import (
     T_co,
     T_contra,
     VT,
-    V_co,
 )
 
 __all__ = [
@@ -61,7 +60,7 @@ else:
         from typing import AsyncGenerator
     except ImportError:  # Python 3.6.0
         class AsyncGenerator(AsyncIterator[T_co],
-                             Generic[T_co, T_contra, V_co],
+                             Generic[T_co, T_contra],
                              extra=_collections_abc.AsyncGenerator):
             """Async Generator Type."""
 
