@@ -50,15 +50,16 @@ uvloop
 
 import importlib
 from typing import Mapping, Optional
+import immutables
 
 __all__ = ['LOOPS', 'use']
 
-LOOPS: Mapping[str, Optional[str]] = {
+LOOPS: Mapping[str, Optional[str]] = immutables.Map({
     'aio': None,
     'eventlet': 'mode.loop.eventlet',
     'gevent': 'mode.loop.gevent',
     'uvloop': 'mode.loop.uvloop',
-}
+})
 
 
 def use(loop: str) -> None:

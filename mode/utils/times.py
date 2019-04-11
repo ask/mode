@@ -3,10 +3,13 @@ import abc
 import asyncio
 import sys
 import time
+
 from datetime import timedelta
 from functools import singledispatch
 from types import TracebackType
 from typing import Callable, List, Mapping, NamedTuple, Optional, Type, Union
+
+import immutables
 
 from .text import pluralize
 from .typing import AsyncContextManager
@@ -45,12 +48,12 @@ TIME_UNITS: List[Unit] = [
 
 #: What the characters in a "rate" string means.
 #: E.g. 8/s is "eight in one second"
-RATE_MODIFIER_MAP: Mapping[str, Callable[[float], float]] = {
+RATE_MODIFIER_MAP: Mapping[str, Callable[[float], float]] = immutables.Map({
     's': lambda n: n,
     'm': lambda n: n / 60.0,
     'h': lambda n: n / 60.0 / 60.0,
     'd': lambda n: n / 60.0 / 60.0 / 24,
-}
+})
 
 
 class Bucket(AsyncContextManager):
