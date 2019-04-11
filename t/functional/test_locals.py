@@ -55,6 +55,9 @@ async def baz(stack, prev_req):
     try:
         with stack.push(new_req):
             assert stack.top is new_req
+            assert stack.stack[-1] is new_req
+            assert stack.stack[-2] is prev_req
+            assert len(stack) == 4
             await asyncio.sleep(0.3)
             return 42
     finally:
@@ -73,7 +76,21 @@ async def assert_stack(stack):
     with stack.push(first_req):
         assert stack.top is first_req
         assert await foo(stack, first_req) == 42
+        assert stack.pop() is first_req
     assert stack.top is None
+    assert not stack.stack
+    assert not len(stack)
+    assert stack.pop() is None
+
+
+def test_stack_pop__when_empty_list():
+    stack = LocalStack()
+    assert stack._stack.get(None) is None
+    buf = []
+    stack._stack.set(buf)
+    assert stack._stack.get(None) is buf
+    assert stack.pop() is None
+    assert stack._stack.get(None) is None
 
 
 @pytest.mark.asyncio
