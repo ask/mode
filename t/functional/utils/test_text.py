@@ -39,6 +39,14 @@ def test_abbr(s, max, suffix, words, expected):
     assert text.abbr(s, max, suffix=suffix, words=words) == expected
 
 
+@pytest.mark.parametrize('choices,choice,expected', [
+    (['foo', 'fop', 'mop'], 'moo', 'mop'),
+    (['xab', 'mup', 'sop'], 'yyy', None),
+])
+def test_fuzzymatch_best(choices, choice, expected):
+    assert text.fuzzymatch_best(choices, choice) == expected
+
+
 @pytest.mark.parametrize('origin,name,prefix,expected', [
     ('examples.simple',
      'examples.simple.Withdrawal',
@@ -75,3 +83,14 @@ def test_pluralize(n, s, suffix, expected):
 ])
 def test_maybecat(s, prefix, suffix, expected):
     assert text.maybecat(s, prefix=prefix, suffix=suffix) == expected
+
+
+@pytest.mark.parametrize('s,expected', [
+    ('faust.utils.transformators.frobster',
+     'faust.utils.transform[.]frobster'),
+    ('foo.bar.baz', 'foo.bar.baz'),
+    ('foobarbazdeliciouslybubblyfluffychocolatebar',
+     'foobarbazdeliciouslybubblyfluffychocolatebar'),
+])
+def test_shorten_fqdn(s, expected):
+    assert text.shorten_fqdn(s) == expected

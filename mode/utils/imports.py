@@ -28,7 +28,7 @@ from .text import didyoumean
 
 try:
     from yarl import URL
-except ImportError:
+except ImportError:  # pragma: no cover
     class URL:
 
         def __init__(self, url: str) -> None:

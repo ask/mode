@@ -16,9 +16,14 @@ omit =
     # not needed
     */mode/debug.py
     */mode/types/*
-    */mode/utils/types/*
     */mode/utils/_py37_contextlib.py
     */mode/utils/compat.py
+    */mode/utils/types/*
+    */mode/utils/typing.py
+    */mode/utils/mocks.py
+
+    # been in celery since forever
+    */mode/utils/graphs/*
 exclude_lines =
     # Have to re-enable the standard pragma
     if\ typing\.TYPE_CHECKING\:

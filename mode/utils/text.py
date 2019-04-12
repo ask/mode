@@ -181,9 +181,10 @@ def abbr_fqdn(origin: str, name: str, *, prefix: str = '') -> str:
 def shorten_fqdn(s: str, max: int = 32) -> str:
     """Shorten fully-qualified Python name (like "os.path.isdir")."""
     if len(s) > max:
-        module, _, cls = s.rpartition('.')
-        module = abbr(module, max - len(cls) - 3, None, words=True)
-        return module + '[.]' + cls
+        module, sep, cls = s.rpartition('.')
+        if sep:
+            module = abbr(module, max - len(cls) - 3, None, words=True)
+            return module + '[.]' + cls
     return s
 
 

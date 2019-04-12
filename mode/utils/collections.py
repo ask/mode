@@ -148,8 +148,8 @@ class FastUserSet(MutableSet[T]):
     def __reduce__(self) -> tuple:
         return self.data.__reduce__()
 
-    def __reduce_ex__(self) -> tuple:
-        return self.data.__reduce_ex__()
+    def __reduce_ex__(self, protocol: Any) -> tuple:
+        return self.data.__reduce_ex__(protocol)
 
     def __repr__(self) -> str:
         return repr(self.data)

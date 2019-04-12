@@ -47,18 +47,18 @@ class StampedeWrapper:
         fut = self.fut
         if fut is None:
             fut = asyncio.Future(loop=self.loop)
-            if self.fut is None:
-                self.fut = fut
-                try:
-                    result = await self.fun(*self.args, **self.kwargs)
-                    fut.set_result(result)
-                except asyncio.CancelledError:
-                    fut.cancel()
-                    raise
-                finally:
-                    await asyncio.sleep(0)
-                    self.fut = None
-                return result
+            self.fut = fut
+            try:
+                result = await self.fun(*self.args, **self.kwargs)
+                fut.set_result(result)
+                await asyncio.sleep(0)
+            except asyncio.CancelledError:
+                fut.cancel()
+                raise
+            finally:
+                await asyncio.sleep(0)
+                self.fut = None
+            return result
         if fut.done():
             return fut.result()
         return await fut

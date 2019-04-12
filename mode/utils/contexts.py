@@ -2,12 +2,12 @@
 from types import TracebackType
 from typing import Any, Optional, Type
 
-try:
+try:  # pragma: no cover
     from contextlib import AbstractAsyncContextManager
     from contextlib import AsyncExitStack, ExitStack
     from contextlib import asynccontextmanager
     from contextlib import nullcontext
-except ImportError:
+except ImportError:  # pragma: no cover
     from ._py37_contextlib import AbstractAsyncContextManager
     from ._py37_contextlib import AsyncExitStack, ExitStack
     from ._py37_contextlib import asynccontextmanager

@@ -86,6 +86,39 @@ def test_sync_signals():
 
     assert on_started_mock.call_count == 2
 
+    new_sender = Mock()
+    sig2 = x2.on_started.clone(default_sender=new_sender)
+    assert sig2.default_sender == new_sender
+
+    sig3 = sig2.with_default_sender(None)
+    assert sig3.default_sender == sig2.default_sender
+
+    new_sender2 = Mock()
+    sig4 = sig3.with_default_sender(new_sender2)
+    assert sig4.default_sender == new_sender2
+
+    sig4.name = ''
+    sig4.__set_name__(sig3, 'foo')
+    assert sig4.name == 'foo'
+    assert sig4.owner == sig3
+    sig4.__set_name__(sig2, 'bar')
+    assert sig4.name == 'foo'
+    assert sig4.owner == sig2
+
+    sig4.default_sender = None
+    with pytest.raises(TypeError):
+        sig4.unpack_sender_from_args()
+    assert sig4.unpack_sender_from_args(1) == (1, ())
+    assert sig4.unpack_sender_from_args(1, 2) == (1, [2])
+
+    partial_yes = sig4.connect(None)
+    mockfun = Mock()
+    partial_yes(mockfun)
+    sig4.disconnect(mockfun)
+
+    sig2.connect(mockfun, weak=True)
+    sig2.disconnect(mockfun, weak=True)
+
 
 def test_signal_name():
     # Signal should have .name attribute set when created

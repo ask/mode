@@ -7,7 +7,7 @@ import unittest.mock
 from asyncio import coroutine
 from contextlib import contextmanager
 from itertools import count
-from typing import Any, ContextManager, List, Optional, Type
+from typing import Any, Callable, ContextManager, List, Optional, Type, Union
 
 __all__ = [
     'ANY',
@@ -147,13 +147,20 @@ class AsyncContextManagerMock(unittest.mock.Mock):
     def __init__(self, *args: Any,
                  aenter_return: Any = None,
                  aexit_return: Any = None,
+                 side_effect: Union[Callable, BaseException] = None,
                  **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.aenter_return = aenter_return
         self.aexit_return = aexit_return
+        self.side_effect = side_effect
 
     async def __aenter__(self) -> Any:
         mgr = self.aenter_return or self.return_value
+        if self.side_effect:
+            if isinstance(self.side_effect, BaseException):
+                raise self.side_effect
+            else:
+                return self.side_effect()
         if isinstance(mgr, AsyncMock):
             return mgr.coro
         return mgr

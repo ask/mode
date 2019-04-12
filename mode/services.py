@@ -766,6 +766,8 @@ class Service(ServiceBase, ServiceCallbacks):
         except RuntimeError as exc:
             if 'Event loop is closed' in str(exc):
                 self.log.info('Cancelled task %r: %s', task, exc)
+            else:
+                await self.crash(exc)
         except BaseException as exc:
             # the exception will be re-raised by the main thread.
             await self.crash(exc)
@@ -944,6 +946,7 @@ class Service(ServiceBase, ServiceCallbacks):
             ...   print('another second passed, just woke up...')
             ...   await perform_some_http_request()
         """
+        sleepfun = sleep or self.sleep
         for sleep_time in timer_intervals(
                 interval,
                 name=name,
@@ -951,7 +954,7 @@ class Service(ServiceBase, ServiceCallbacks):
                 clock=clock):
             if self.should_stop:
                 break
-            await (sleep or self.sleep)(sleep_time, loop=loop)
+            await sleepfun(sleep_time, loop=loop)
             if self.should_stop:
                 break
             yield sleep_time
@@ -1025,8 +1028,12 @@ class _AwaitableService(Service):
 
     async def on_start(self) -> None:
         # convert to future, so we can cancel on_stop
-        self._fut = asyncio.ensure_future(self.coro, loop=self.loop)
-        await self._fut
+        try:
+            self._fut = asyncio.ensure_future(self.coro, loop=self.loop)
+            await self._fut
+        except asyncio.CancelledError:
+            if not self.should_stop:
+                raise
 
     async def on_stop(self) -> None:
         fut, self._fut = self._fut, None

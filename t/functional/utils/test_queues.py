@@ -1,6 +1,7 @@
 import asyncio
 from time import monotonic
 import pytest
+from mode.utils.futures import done_future
 from mode.utils.mocks import Mock
 from mode.utils.queues import (
     FlowControlEvent,
@@ -99,6 +100,7 @@ class test_ThrowableQueue:
         await queue.throw(ValueError('bar'))
         with pytest.raises(ValueError):
             await queue.get()
+        queue.clear()
 
     @pytest.mark.asyncio
     async def test_get_nowait_throw_first_in_buffer(self):
@@ -119,8 +121,46 @@ class test_ThrowableQueue:
         await queue.throw(ValueError('bar'))
         with pytest.raises(ValueError):
             queue.get_nowait()
+        queue.clear()
 
-    def test_get_nowait_empty(self):
+    @pytest.mark.asyncio
+    async def test_clear__cancels_waiting_putter(self):
+        flow_control = FlowControlEvent(initially_suspended=False)
+        queue = ThrowableQueue(flow_control=flow_control, maxsize=1)
+
+        await queue.put(1)
+
+        async def clear_queue():
+            queue.clear()
+
+        asyncio.ensure_future(clear_queue())
+        with pytest.raises(asyncio.CancelledError):
+            await queue.put(1)
+
+    @pytest.mark.asyncio
+    async def test_throw__notify_pending_waiters(self):
+        flow_control = FlowControlEvent(initially_suspended=False)
+        queue = ThrowableQueue(flow_control=flow_control, maxsize=1)
+        raised = 0
+
+        async def waiter():
+            try:
+                await queue.get()
+            except KeyError:
+                nonlocal raised
+                raised += 1
+
+        queue._getters.append(done_future())
+
+        fut = asyncio.ensure_future(waiter())
+        await asyncio.sleep(0.01)
+        await queue.throw(KeyError())
+        await asyncio.gather(fut)
+
+        assert raised == 1
+
+    @pytest.mark.asyncio
+    async def test_get_nowait_empty(self):
         flow_control = FlowControlEvent(initially_suspended=False)
         queue = ThrowableQueue(flow_control=flow_control)
 

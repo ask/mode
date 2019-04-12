@@ -1,4 +1,5 @@
 """Backport of :mod:`typing` additions in Python 3.7."""
+# pragma: no cover
 import abc
 import collections
 import typing

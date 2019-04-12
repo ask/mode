@@ -1,11 +1,16 @@
+import pickle
 import pytest
 from mode.utils.collections import (
+    AttributeDictMixin,
+    DictAttribute,
     FastUserDict,
     FastUserSet,
+    LRUCache,
     ManagedUserDict,
     ManagedUserSet,
+    force_mapping,
 )
-from mode.utils.mocks import Mock, call
+from mode.utils.mocks import Mock, call, patch
 
 
 class test_FastUserDict:
@@ -18,6 +23,39 @@ class test_FastUserDict:
                 self.data = {}
 
         return X()
+
+    def test_fromkeys(self, d):
+        x = d.fromkeys(['a', 'b', 'c'], value=3)
+        assert x == {'a': 3, 'b': 3, 'c': 3}
+        assert type(x) is type(d)
+
+    def test__missing__(self, d):
+        i = 0
+
+        class X(type(d)):
+
+            def __missing__(self, key):
+                nonlocal i
+                i += 1
+                return 'default', i
+
+        x = X()
+        assert x['foo'] == ('default', 1)
+        assert x['foo'] == ('default', 2)
+        assert x['bar'] == ('default', 3)
+        x['foo'] = 'moo'
+        assert x['foo'] == 'moo'
+
+    def test_repr(self, d):
+        d.update({'foo': 'bar', 'baz': 300.33})
+        assert repr(d) == repr(d.data)
+
+    def test_copy(self, d):
+        d.update({'foo': [1, 2, 3], 'bar': 'baz'})
+        e = d.copy()
+        assert e == d
+        assert e is not d
+        assert e['foo'] is d['foo'], 'shallow copy'
 
     def test_setgetdel(self, d):
         with pytest.raises(KeyError):
@@ -96,6 +134,18 @@ class test_FastUserSet:
     @pytest.fixture()
     def d(self):
         return self.X()
+
+    def test_reduce(self, d):
+        assert d.__reduce__()
+
+    def test_reduce_ex(self, d):
+        assert d.__reduce_ex__(1)
+
+    def test_pickle(self, d):
+        d.update({1, 2, 3, 4, 5})
+        e = pickle.loads(pickle.dumps(d))
+        assert isinstance(e, set), 'default reduce to built-in set'
+        assert d == e
 
     def test_setgetdel(self, d):
         assert 'foo' not in d
@@ -266,8 +316,25 @@ class test_FastUserSet:
         d.update({1, 2, 4, 5, 6})
         assert d == {1, 2, 3, 4, 5, 6}
 
+    def test_remove(self, d):
+        d.update({1, 2, 3})
+        d.remove(3)
+        assert d == {1, 2}
+
 
 class test_ManagedUserDict:
+
+    def test_interface_on_key_get(self):
+        ManagedUserDict().on_key_get('k')
+
+    def test_interface_on_key_set(self):
+        ManagedUserDict().on_key_set('k', 'v')
+
+    def test_interface_on_key_del(self):
+        ManagedUserDict().on_key_del('k')
+
+    def test_interface_on_clear(self):
+        ManagedUserDict().on_clear()
 
     @pytest.fixture
     def d(self):
@@ -332,8 +399,24 @@ class test_ManagedUserDict:
         assert not d
         d.cleared.assert_called_once_with()
 
+    def test_raw_update(self, d):
+        d.raw_update(a=1, b=2)
+        assert d == {'a': 1, 'b': 2}
+
 
 class test_ManagedUserSet:
+
+    def test_interface_on_add(self):
+        ManagedUserSet().on_add('val')
+
+    def test_interface_on_discard(self):
+        ManagedUserSet().on_discard('val')
+
+    def test_interface_on_clear(self):
+        ManagedUserSet().on_clear()
+
+    def test_interface_on_change(self):
+        ManagedUserSet().on_change({1, 2}, {3, 4})
 
     class ManagedSet(ManagedUserSet):
 
@@ -449,3 +532,117 @@ class test_ManagedUserSet:
             added={4, 5, 6},
             removed=set(),
         )
+
+
+class test_LRUCache:
+
+    @pytest.fixture()
+    def d(self):
+        return LRUCache(limit=10)
+
+    def test_get_set_update_pop(self, d):
+        for i in range(100):
+            d[i] = i
+        assert len(d) == 10
+        for i in range(90, 100):
+            assert d[i] == i
+        d.update({i: i for i in range(100, 200)})
+        assert len(d) == 10
+        for i in range(190, 200):
+            assert d[i] == i
+
+        d.limit = None
+        d.update({i: i for i in range(100, 200)})
+        assert len(d) == 100
+        for i in range(100, 200):
+            assert d[i] == i
+
+        assert d.popitem() == (199, 199)
+
+    def test_iter_keys_items_values(self, d):
+        d.update({'a': 1, 'b': 2, 'c': 3})
+        assert list(iter(d)) == ['a', 'b', 'c']
+        assert list(iter(d)) == list(d.keys())
+        assert list(d.values()) == [1, 2, 3]
+        assert list(d.items()) == [('a', 1), ('b', 2), ('c', 3)]
+
+    def test_incr(self, d):
+        d['a'] = '0'
+        assert d.incr('a') == 1
+        assert d.incr('a') == 2
+
+    def test__new_lock(self, d):
+        d.thread_safety = True
+        with patch('threading.RLock') as RLock:
+            res = d._new_lock()
+            assert res is RLock.return_value
+
+    def test_pickle(self, d):
+        d.update({'a': 1, 'b': 2, 'c': 3})
+        e = pickle.loads(pickle.dumps(d))
+        assert e == d
+
+
+class test_AttributeDictMixin:
+
+    @pytest.fixture()
+    def d(self):
+        class X(dict, AttributeDictMixin):
+            ...
+        return X()
+
+    def test_set_get(self, *, d):
+        with pytest.raises(AttributeError):
+            d.foo
+        d.foo = 1
+        assert d.foo == 1
+        assert d['foo'] == 1
+
+
+class test_DictAttribute:
+
+    @pytest.fixture()
+    def d(self):
+
+        class Object:
+
+            def __init__(self, name):
+                self.name = name
+
+        return DictAttribute(Object('foo'))
+
+    def test_get_set(self, *, d):
+        assert d['name'] == 'foo'
+        assert d.name == 'foo'
+        assert len(d) == 1
+        d.name = 'bar'
+        d.setdefault('name', 'baz')
+        assert d.get('name') == 'bar'
+        assert d.get('foo') is None
+
+        d.setdefault('foo', 'moo')
+        assert d.foo == 'moo'
+        assert len(d) == 2
+
+        with pytest.raises(NotImplementedError):
+            del d['foo']
+
+        assert list(d) == dir(d.obj)
+        assert list(d._keys()) == dir(d.obj)
+        assert list(d._values()) == [getattr(d.obj, k) for k in d.keys()]
+        assert list(d._items()) == [(k, getattr(d.obj, k)) for k in d.keys()]
+
+
+def test_force_mapping():
+
+    class Object:
+
+        def __init__(self, name):
+            self.name = name
+
+    obj = Object('foo')
+    obj._wrapped = Object('bar')
+    assert force_mapping(obj)['name'] == 'foo'
+
+    with patch('mode.utils.collections.LazyObject', Object):
+        assert force_mapping(obj)['name'] == 'bar'
