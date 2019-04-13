@@ -418,14 +418,20 @@ def _remove_optional(typ: Type, *,
         # Py3.7
         if typ.__origin__ is typing.Union:
             # Optional[List[int]] -> Union[List[int], NoneType]
+            found_None = False
+            return_args = None
+            return_typ = None
             for arg in args:
-                if arg is not type(None):  # noqa
+                if arg is None or arg is type(None):  # noqa
+                    found_None = True
+                else:
                     # returns ((int,), list)
-                    final_args = getattr(arg, '__args__', ())
-                    final_typ = arg
+                    return_args = getattr(arg, '__args__', ())
+                    return_typ = arg
                     if find_origin:
-                        final_typ = getattr(arg, '__origin__', arg)
-                    return final_args, final_typ
+                        return_typ = getattr(arg, '__origin__', arg)
+            if found_None and return_typ is not None:
+                return return_args, return_typ
         else:
             typ = typ.__origin__  # for List this is list, etc.
     elif typ.__class__.__name__ == '_Union':  # pragma: no cover

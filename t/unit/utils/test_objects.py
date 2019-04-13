@@ -399,7 +399,7 @@ WeirdNoneUnion.__args__ = [type(None), type(None)]
     (Union[str, None], str),
     (str, str),
     (List[str], list),
-    (Union[str, int, float], str),  # XXX does not return unions
+    (Union[str, int, float], Union[str, int, float]),
     (WeirdNoneUnion, WeirdNoneUnion),
 ])
 def test_remove_optional(input, expected):
