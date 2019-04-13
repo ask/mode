@@ -195,7 +195,7 @@ def symbol_by_name(
 
     if attr:
         _ensure_identifier(attr, full=name)
-    if module_name:
+    if module_name:  # pragma: no cover
         _ensure_identifier(module_name, full=name)
     try:
         try:

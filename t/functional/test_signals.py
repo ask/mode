@@ -1,4 +1,6 @@
 from typing import Any
+from weakref import ref
+from mode import label
 from mode.signals import Signal, SignalT, SyncSignal, SyncSignalT
 from mode.utils.mocks import Mock
 import pytest
@@ -26,6 +28,20 @@ class SyncX:
         self.on_stopped = self.on_stopped.with_default_sender(self)
 
 
+def test_clone():
+    assert X.on_started.clone()
+
+
+def test_with_default_sender():
+    assert X.on_started.with_default_sender(42).default_sender == 42
+
+
+def test_disconnect_value_error():
+    X.on_started._create_id = Mock(side_effect=ValueError())
+    X.default_sender = Mock()
+    X.on_started.disconnect(Mock())
+
+
 @pytest.mark.asyncio
 async def test_signals():
     x, y = X(), Y()
@@ -48,7 +64,11 @@ async def test_signals():
     on_stopped_mock.assert_called_once_with(y, 2)
     assert on_started_mock.call_count == 1
     await x.on_started.send(value=3)
-    await x.on_stopped.send(value=4)
+    await x.on_stopped(value=4)
+
+    assert x.on_started.ident
+    assert label(x.on_started)
+    assert repr(x.on_started)
 
     assert on_started_mock.call_count == 1
     assert on_stopped_mock.call_count == 1
@@ -78,7 +98,17 @@ def test_sync_signals():
     on_stopped_mock.assert_called_once_with(x, 303, 'sorry not sorry')
     assert on_started_mock.call_count == 1
 
-    x.on_started.send()
+    assert x.on_started.ident
+    assert label(x.on_started)
+    assert label(X.on_started)
+    assert repr(x.on_started)
+    assert repr(X.on_started)
+
+    prev, x.on_started.owner = x.on_started.owner, None
+    assert label(x.on_started)
+    x.on_started.owner = prev
+
+    x.on_started()
     assert on_started_mock.call_count == 2
 
     x2.on_started.send()
@@ -132,3 +162,83 @@ def test_signal_name():
     assert X.sig.owner is X
     assert X.sig2.name == 'sig2'
     assert X.sig2.owner is X
+
+
+class test_BaseSignal:
+
+    @pytest.fixture()
+    def sig(self):
+        return Signal()
+
+    def test_with_default_sender(self, sig):
+        sender = Mock()
+        sig2 = super(type(sig), sig).with_default_sender(sender)
+        assert sig2.default_sender is sender
+
+        sig3 = super(type(sig2), sig2).clone()
+        assert sig3.asdict() == sig2.asdict()
+
+    def test_disconnect_lambda(self, sig):
+        sig._receivers = Mock()
+        r = Mock()
+        sig.disconnect(r, sender=None)
+        sig._receivers.discard.assert_called_once()
+        lmbda = sig._receivers.discard.call_args[0][0]
+        assert lmbda() == r
+
+    def test_disconnect_raises(self, sig):
+        sig._create_id = Mock(side_effect=ValueError())
+        sig.disconnect(Mock(), sender=Mock())
+
+    def test_iter_receivers(self, sig):
+        receivers, alive_refs, dead_refs = self.create_refs(sig)
+        sig._receivers = receivers
+        sig._live_receivers = set()
+        sig._update_receivers = Mock(return_value=alive_refs)
+        assert list(sig.iter_receivers(None)) == alive_refs
+
+    def test_iter_receivers_no_receivers(self, sig):
+        sig._receivers = set()
+        sig._filter_receivers = set()
+        assert list(sig.iter_receivers(None)) == []
+
+    def test__get_live_receivers(self, sig):
+        receivers, alive_refs, dead_refs = self.create_refs(sig)
+        alive, dead = sig._get_live_receivers(receivers)
+        sig._update_receivers(receivers)
+        assert receivers == set(alive_refs)
+
+    def create_refs(self, sig):
+        sig._is_alive = Mock()
+
+        def is_alive(x):
+            return x.alive, x
+
+        sig._is_alive.side_effect = is_alive
+
+        alive_refs = [Mock(alive=True), Mock(alive=True)]
+        dead_refs = [Mock(alive=False)]
+
+        receivers = set(alive_refs + dead_refs)
+
+        return receivers, alive_refs, dead_refs
+
+    def test__is_alive(self, sig):
+
+        class Object:
+            value = None
+
+        x = Object()
+        x.value = 10
+        assert sig._is_alive(lambda: 42) == (True, 42)
+        assert sig._is_alive(ref(x)) == (True, x)
+
+    def test_create_ref_methods(self, sig):
+
+        class X:
+
+            def foo(self, **kwargs):
+                return 42
+
+        assert sig._create_ref(X.foo)
+        assert sig._create_ref(X().foo)

@@ -15,6 +15,7 @@ from contextlib import contextmanager, suppress
 from logging import Logger, StreamHandler
 from typing import (
     Any,
+    ClassVar,
     Dict,
     IO,
     Iterable,
@@ -76,6 +77,8 @@ def exiting(*,
 
 class Worker(Service):
     """Start mode service from the command-line."""
+
+    BLOCK_DETECTOR: ClassVar[str] = BLOCK_DETECTOR
 
     stdout: IO
     stderr: IO
@@ -189,9 +192,9 @@ class Worker(Service):
             )
         except Exception as exc:
             try:
-                sys.stderr.write(f'CANNOT SETUP LOGGING: {exc!r} from ')
+                self.stderr.write(f'CANNOT SETUP LOGGING: {exc!r} from ')
                 import traceback
-                traceback.print_stack(file=sys.stderr)
+                traceback.print_stack(file=self.stderr)
             except Exception:
                 pass
             raise
@@ -234,7 +237,7 @@ class Worker(Service):
         self._schedule_shutdown(signal.SIGTERM)
 
     def _on_win_sigterm(self, signum: int, frame: Any) -> None:
-        self._scheduled_shutdown(signal.SIGTERM)
+        self._schedule_shutdown(signal.SIGTERM)
 
     def _on_sigusr1(self) -> None:
         self.add_future(self._cry())
@@ -255,7 +258,7 @@ class Worker(Service):
 
     def execute_from_commandline(self) -> NoReturn:
         self._starting_fut = None
-        with exiting():
+        with exiting(file=self.stderr):
             try:
                 self._starting_fut = asyncio.ensure_future(self.start())
                 self.loop.run_until_complete(self._starting_fut)
@@ -270,7 +273,8 @@ class Worker(Service):
                 maybe_cancel(self._starting_fut)
                 self.on_worker_shutdown()
                 self.stop_and_shutdown()
-        raise SystemExit(EX_OK)  # for mypy NoReturn
+        # for mypy NoReturn
+        raise SystemExit(EX_OK)  # pragma: no cover
 
     def on_worker_shutdown(self) -> None:
         ...
@@ -322,8 +326,7 @@ class Worker(Service):
         for task in all_tasks(loop=self.loop):
             task.cancel()
 
-    async def start(self) -> None:
-        await super().start()
+    async def on_started(self) -> None:
         if self.daemon:
             await self.wait_until_stopped()
 
@@ -345,16 +348,16 @@ class Worker(Service):
 
     @Service.task
     async def _keepalive(self) -> None:
-        async for sleep_time in self.itertimer(
+        async for sleep_time in self.itertimer(  # pragma: no cover
                 1.0, sleep=asyncio.sleep, name='_main_keepalive'):
             # Keeps MainThread loop alive, by ensuring it wakes up
             # every second.
-            pass
+            pass  # pragma: no cover
 
     @property
     def blocking_detector(self) -> BlockingDetector:
         if self._blocking_detector is None:
-            self._blocking_detector = symbol_by_name(BLOCK_DETECTOR)(
+            self._blocking_detector = symbol_by_name(self.BLOCK_DETECTOR)(
                 self.blocking_timeout,
                 beacon=self.beacon,
                 loop=self.loop,

@@ -1,11 +1,47 @@
 import abc
 import sys
-from typing import Generic
+import pickle
+
+from typing import (
+    AbstractSet,
+    ClassVar,
+    Dict,
+    FrozenSet,
+    Generic,
+    List,
+    Mapping,
+    MutableMapping,
+    MutableSet,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
+
+import pytest
 from mode import Service, ServiceT
 from mode.services import ServiceBase, ServiceCallbacks
-from mode.utils.objects import cached_property, iter_mro_reversed
-from mode.utils.mocks import ANY
-import pytest
+from mode.utils.objects import (
+    ForwardRef,
+    InvalidAnnotation,
+    KeywordReduce,
+    Unordered,
+    _ForwardRef_safe_eval,
+    _restore_from_keywords,
+    annotations,
+    cached_property,
+    canoname,
+    canonshortname,
+    guess_polymorphic_type,
+    is_optional,
+    iter_mro_reversed,
+    label,
+    qualname,
+    remove_optional,
+    shortname,
+)
+from mode.utils.mocks import ANY, Mock
 
 PY37 = sys.version_info >= (3, 7)
 
@@ -137,3 +173,283 @@ class test_cached_property:
         assert x_deleter.foo == 1
         del x_deleter.foo
         assert x_deleter._foo is None
+
+    def test_get__class_attribute(self):
+
+        class X:
+            foo = 'quick brown fox'
+
+            def _get_bar(self):
+                return 42
+            bar = cached_property(_get_bar, class_attribute='foo')
+
+        assert X.bar == 'quick brown fox'
+        assert X().bar == 42
+
+
+def test_Unordered():
+
+    assert Unordered(1) < Unordered(10)
+    x = set()
+    x.add(Unordered({'foo': 'bar'}))
+    x.add(Unordered({'foo': 'bar'}))
+    assert len(x) == 2
+    assert repr(x)
+
+
+def test__restore_from_keywords():
+    m = Mock()
+    _restore_from_keywords(m, {'foo': 1, 'bar': 20})
+    m.assert_called_once_with(foo=1, bar=20)
+
+
+class X(KeywordReduce):
+
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+    def __reduce_keywords__(self):
+        return {'name': self.name, 'age': self.age}
+
+
+def test_KeywordReduce():
+    with pytest.raises(NotImplementedError):
+        KeywordReduce().__reduce_keywords__()
+
+    x = X('foo', 10)
+    y = pickle.loads(pickle.dumps(x))
+    assert y.name == x.name
+    assert y.age == x.age
+
+
+def test_qualname_object():
+
+    class X:
+        ...
+
+    assert qualname('foo') == 'builtins.str'
+    assert qualname(str) == 'builtins.str'
+
+    assert qualname(X).endswith('test_qualname_object.<locals>.X')
+    assert qualname(X()).endswith('test_qualname_object.<locals>.X')
+
+
+def test_shortname_object():
+
+    class X:
+        ...
+
+    assert shortname('foo') == 'builtins.str'
+    assert shortname(str) == 'builtins.str'
+
+    assert shortname(X) == __name__ + '.X'
+    assert shortname(X()) == __name__ + '.X'
+
+
+def test_canoname():
+
+    class X:
+        ...
+    X.__module__ = '__main__'
+    x = X()
+
+    class Y:
+        ...
+    y = Y()
+
+    assert canoname(X, main_name='faust') == 'faust.test_canoname.<locals>.X'
+    assert canoname(x, main_name='faust') == 'faust.test_canoname.<locals>.X'
+    assert canoname(Y, main_name='faust') == '.'.join([
+        __name__,
+        'test_canoname.<locals>.Y',
+    ])
+    assert canoname(y, main_name='faust') == '.'.join([
+        __name__,
+        'test_canoname.<locals>.Y',
+    ])
+
+
+def test_canonshortname():
+
+    class X:
+        ...
+    X.__module__ = '__main__'
+    x = X()
+
+    class Y:
+        ...
+    y = Y()
+
+    assert canonshortname(X, main_name='faust') == 'faust.X'
+    assert canonshortname(x, main_name='faust') == 'faust.X'
+    assert canonshortname(Y, main_name='faust') == '.'.join([
+        __name__,
+        'Y',
+    ])
+    assert canonshortname(y, main_name='faust') == '.'.join([
+        __name__,
+        'Y',
+    ])
+
+
+def test_annotations():
+
+    class X:
+        Foo: ClassVar[int] = 3
+        foo: 'int'
+        bar: List['X']
+        baz: Union[List['X'], str]
+        mas: int = 3
+
+    fields, defaults = annotations(
+        X,
+        globalns=globals(),
+        localns=locals(),
+    )
+
+    assert fields == {
+        'Foo': ClassVar[int],
+        'foo': int,
+        'bar': List[X],
+        'baz': Union[List[X], str],
+        'mas': int,
+    }
+    assert defaults['mas'] == 3
+
+
+def test_annotations__skip_classvar():
+
+    class X:
+        Foo: ClassVar[int] = 3
+        foo: 'int'
+        bar: List['X']
+        baz: Union[List['X'], str]
+        mas: int = 3
+
+    fields, defaults = annotations(
+        X,
+        globalns=globals(),
+        localns=locals(),
+        skip_classvar=True,
+    )
+
+    assert fields == {
+        'foo': int,
+        'bar': List[X],
+        'baz': Union[List[X], str],
+        'mas': int,
+    }
+    assert defaults['mas'] == 3
+
+
+def test_annotations__invalid_type():
+
+    class X:
+        foo: List
+
+    with pytest.raises(InvalidAnnotation):
+        annotations(
+            X,
+            globalns=globals(),
+            localns=locals(),
+            invalid_types={List},
+            skip_classvar=True,
+        )
+
+
+def test_annotations__no_local_ns_raises():
+
+    class Bar:
+        ...
+
+    class X:
+        bar: 'Bar'
+
+    with pytest.raises(NameError):
+        annotations(
+            X,
+            globalns=None,
+            localns=None,
+        )
+
+
+def test__ForwardRef_safe_eval():
+    ref1 = ForwardRef('int')
+    assert _ForwardRef_safe_eval(ref1) == int
+    assert _ForwardRef_safe_eval(ref1) == int
+    assert ref1.__forward_evaluated__
+    assert ref1.__forward_value__ == int
+    assert _ForwardRef_safe_eval(
+        ForwardRef('foo'), localns={'foo': str}) == str
+    assert _ForwardRef_safe_eval(
+        ForwardRef('ClassVar[int]'), globalns=globals(), localns=locals())
+
+
+# Union[type(None)] actually returns None
+# so we have to construct this object to test condition in code.
+WeirdNoneUnion = Union[str, int]
+WeirdNoneUnion.__args__ = [type(None), type(None)]
+
+
+@pytest.mark.parametrize('input,expected', [
+    (Optional[str], str),
+    (Union[str, None], str),
+    (Union[str, type(None)], str),
+    (Union[str, None], str),
+    (str, str),
+    (List[str], list),
+    (Union[str, int, float], str),  # XXX does not return unions
+    (WeirdNoneUnion, WeirdNoneUnion),
+])
+def test_remove_optional(input, expected):
+    assert remove_optional(input) == expected
+
+
+@pytest.mark.parametrize('input,expected', [
+    (Optional[str], True),
+    (Union[str, None], True),
+    (Union[str, type(None)], True),
+    (Union[str, None], True),
+    (str, False),
+    (List[str], False),
+    (Union[str, int, float], False),
+])
+def test_is_optional(input, expected):
+    assert is_optional(input) == expected
+
+
+@pytest.mark.parametrize('input,expected', [
+    (Tuple[int, ...], (tuple, int)),
+    (List[int], (list, int)),
+    (Mapping[str, int], (dict, int)),
+    (Dict[str, int], (dict, int)),
+    (MutableMapping[str, int], (dict, int)),
+    (Set[str], (set, str)),
+    (FrozenSet[str], (set, str)),
+    (MutableSet[str], (set, str)),
+    (AbstractSet[str], (set, str)),
+    (Sequence[str], (list, str)),
+])
+def test_guess_polymorphic_type(input, expected):
+    assert guess_polymorphic_type(input) == expected
+    assert guess_polymorphic_type(Optional[input]) == expected
+    assert guess_polymorphic_type(Union[input, None]) == expected
+
+
+def test_guess_polymorphic_type__not_generic():
+
+    class X:
+        ...
+
+    with pytest.raises(TypeError):
+        guess_polymorphic_type(str)
+    with pytest.raises(TypeError):
+        guess_polymorphic_type(bytes)
+    with pytest.raises(TypeError):
+        guess_polymorphic_type(X)
+
+
+def test_label_pass():
+    s = 'foo'
+    assert label(s) is s

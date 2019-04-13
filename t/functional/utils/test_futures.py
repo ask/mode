@@ -5,6 +5,8 @@ from mode.utils.futures import (
     done_future,
     maybe_async,
     maybe_cancel,
+    maybe_set_exception,
+    maybe_set_result,
     stampede,
 )
 from mode.utils.mocks import Mock
@@ -124,3 +126,27 @@ class test_StampedeWrapper:
         x.fut = done_future('foo')
 
         assert await x() == 'foo'
+
+
+@pytest.mark.asyncio
+async def test_maybe_set_exception():
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    maybe_set_exception(future, KeyError())
+    with pytest.raises(KeyError):
+        future.result()
+    maybe_set_exception(future, ValueError())
+    maybe_set_exception(None, ValueError())
+    with pytest.raises(KeyError):
+        future.result()
+
+
+@pytest.mark.asyncio
+async def test_maybe_set_result():
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    maybe_set_result(future, 42)
+    assert future.result() == 42
+    maybe_set_result(future, 53)
+    maybe_set_result(None, 57)
+    assert future.result() == 42

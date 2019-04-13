@@ -42,10 +42,11 @@ def print_task_stack(task: asyncio.Task, *,
 
 
 def format_task_stack(task: asyncio.Task, *,
-                      limit: int = DEFAULT_MAX_FRAMES) -> None:
+                      limit: int = DEFAULT_MAX_FRAMES,
+                      capture_locals: bool = False) -> None:
     """Format :class:`asyncio.Task` stack trace as a string."""
     f = io.StringIO()
-    print_task_stack(task, file=f, limit=limit)
+    print_task_stack(task, file=f, limit=limit, capture_locals=capture_locals)
     return f.getvalue()
 
 
@@ -128,33 +129,43 @@ class Traceback(_BaseTraceback):
             if type(coro).__name__ == 'async_generator_asend':
                 return _Truncated(filename='async_generator_asend')
             raise
+        if limit is None:
+            limit = getattr(sys, 'tracebacklimit', None)
+        if limit is not None and limit < 0:
+            limit = 0
         frames = []
-        f = frame
-        while f is not None:
+        num_frames = 0
+        current_frame = frame
+        while current_frame is not None:
             if limit is not None:
-                if limit <= 0:
+                if num_frames > limit:
                     break
-                limit -= 1
-                frames.append(f)
-                f = f.f_back
+            frames.append(current_frame)
+            num_frames += 1
+            current_frame = current_frame.f_back
         frames.reverse()
         prev = None
+        root: Traceback = None
         for f in frames:
             tb = cls(f)
+            if root is None:
+                root = tb
             if prev is not None:
                 prev.tb_next = tb
             prev = tb
         cr_await = cls._get_coroutine_next(coro)
-        if limit is None:
-            limit = getattr(sys, 'tracebacklimit', None)
-            if limit is not None and limit < 0:
-                limit = 0
         if cr_await is not None and asyncio.iscoroutine(cr_await):
-            if depth <= limit:
-                tb.tb_next = cls.from_coroutine(cr_await, depth=depth + 1)
+            next_node: Traceback
+            if limit is not None and depth > limit:
+                next_node = _Truncated()
             else:
-                tb.tb_next = _Truncated()
-        return tb
+                next_node = cls.from_coroutine(
+                    cr_await, limit=limit, depth=depth + 1)
+            if root is not None:
+                root.tb_next = next_node
+            else:
+                return next_node
+        return root
 
     @staticmethod
     def _get_coroutine_frame(coro: Union[Coroutine, Generator]) -> FrameType:

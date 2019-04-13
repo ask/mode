@@ -13,12 +13,15 @@ __all__ = [
     'ANY',
     'AsyncMagicMock',
     'AsyncMock',
-    'AsyncContextManagerMock',
+    'AsyncContextMock',
+    'ContextMock',
     'FutureMock',
     'MagicMock',
     'Mock',
     'call',
+    'mask_module',
     'patch',
+    'patch_module',
 ]
 
 MOCK_CALL_COUNT = count(0)
@@ -99,7 +102,7 @@ class AsyncMagicMock(unittest.mock.MagicMock):
         self.side_effect = coroutine(coro)
 
 
-class AsyncContextManagerMock(unittest.mock.Mock):
+class AsyncContextMock(unittest.mock.Mock):
     """Mock for :class:`typing.AsyncContextManager`.
 
     You can use this to mock asynchronous context managers,
@@ -167,6 +170,9 @@ class AsyncContextManagerMock(unittest.mock.Mock):
 
     async def __aexit__(self, *args: Any) -> Any:
         return self.aexit_return
+
+
+AsyncContextManagerMock = AsyncContextMock  # XXX compat alias
 
 
 class FutureMock(unittest.mock.Mock):

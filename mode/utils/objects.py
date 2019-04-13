@@ -2,6 +2,7 @@
 import sys
 import typing
 from contextlib import suppress
+from decimal import Decimal
 from functools import total_ordering
 from pathlib import Path
 from typing import (
@@ -29,13 +30,13 @@ from typing import _eval_type, _type_check  # type: ignore
 
 try:
     from typing import _ClassVar  # type: ignore
-except ImportError:
+except ImportError:  # pragma: no cover
     # CPython 3.7
     from typing import _GenericAlias  # type: ignore
 
     def _is_class_var(x: Any) -> bool:  # noqa
         return isinstance(x, _GenericAlias) and x.__origin__ is ClassVar
-else:
+else:  # pragma: no cover
     # CPython 3.6
     def _is_class_var(x: Any) -> bool:
         return type(x) is _ClassVar
@@ -43,7 +44,7 @@ else:
 try:
     # CPython 3.7
     from typing import ForwardRef  # type: ignore
-except ImportError:
+except ImportError:  # pragma: no cover
     # CPython 3.6
     from typing import _ForwardRef as ForwardRef  # type: ignore
 
@@ -103,6 +104,9 @@ class Unordered(Generic[_T]):
 
     def __le__(self, other: Any) -> bool:
         return True
+
+    def __repr__(self) -> str:
+        return f'<{type(self).__name__}: {self.value!r}>'
 
 
 def _restore_from_keywords(typ: Type, kwargs: Dict) -> Any:
@@ -186,7 +190,7 @@ def canonshortname(obj: Any, *, main_name: str = None) -> str:
     return name
 
 
-def _detect_main_name() -> str:
+def _detect_main_name() -> str:  # pragma: no cover
     try:
         filename = sys.modules['__main__'].__file__
     except (AttributeError, KeyError):  # ipython/REPL
@@ -342,6 +346,7 @@ def _ForwardRef_safe_eval(ref: ForwardRef,
             val = _type_check(val,
                               'Forward references must evaluate to types.')
         ref.__forward_value__ = val
+        ref.__forward_evaluated__ = True
     return ref.__forward_value__
 
 
@@ -392,21 +397,25 @@ def remove_optional(typ: Type) -> Type:
 
 def is_optional(typ: Type) -> bool:
     args = getattr(typ, '__args__', ())
-    if typ.__class__.__name__ == '_GenericAlias':  # Py3.7
+    if typ.__class__.__name__ == '_GenericAlias':
+        # Py3.7
         if typ.__origin__ is typing.Union:
             for arg in args:
                 if arg is type(None):  # noqa
                     return True
-    elif (typ.__class__.__name__ == '_Union' and args and  # Py3.6
-          args[1] is type(None)):  # noqa
+    elif typ.__class__.__name__ == '_Union':  # pragma: no cover
+        # Py3.6
         # Optional[x] actually returns Union[x, type(None)]
-        return True
+        if args and args[1] is type(None):  # noqa
+            return True
+    return False
 
 
 def _remove_optional(typ: Type, *,
                      find_origin: bool = False) -> Tuple[List[Any], Type]:
     args = getattr(typ, '__args__', ())
-    if typ.__class__.__name__ == '_GenericAlias':  # Py3.7
+    if typ.__class__.__name__ == '_GenericAlias':
+        # Py3.7
         if typ.__origin__ is typing.Union:
             # Optional[List[int]] -> Union[List[int], NoneType]
             for arg in args:
@@ -419,12 +428,13 @@ def _remove_optional(typ: Type, *,
                     return final_args, final_typ
         else:
             typ = typ.__origin__  # for List this is list, etc.
-    elif (typ.__class__.__name__ == '_Union' and args and  # Py3.6
-          args[1] is type(None)):  # noqa
+    elif typ.__class__.__name__ == '_Union':  # pragma: no cover
+        # Py3.6
         # Optional[List[int]] gives Union[List[int], type(None)]
         # returns: ((int,), list)
-        return (getattr(args[0], '__args__', ()),
-                getattr(args[0], '__origin__', args[0]))
+        if args and args[1] is type(None):  # noqa
+            return (getattr(args[0], '__args__', ()),
+                    getattr(args[0], '__origin__', args[0]))
     return args, typ
 
 
@@ -483,9 +493,13 @@ def shortlabel(s: Any) -> str:
     return _label('shortlabel', s)
 
 
-def _label(label_attr: str, s: Any) -> str:
-    if isinstance(s, str):
+def _label(label_attr: str, s: Any,
+           pass_types: Tuple[Type] = (str,),
+           str_types: Tuple[Type] = (str, int, float, Decimal)) -> str:
+    if isinstance(s, pass_types):
         return s
+    elif isinstance(s, str_types):
+        return str(s)
     return str(
         getattr(s, label_attr, None) or
         getattr(s, 'name', None) or

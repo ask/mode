@@ -210,9 +210,8 @@ class BaseSignal(BaseSignalT[T]):
 class Signal(BaseSignal[T], SignalT[T]):
     """Asynchronous signal (using ``async def`` functions)."""
 
-    async def __call__(self, sender: T_contra = None,
-                       *args: Any, **kwargs: Any) -> None:
-        await self.send(sender, *args, **kwargs)
+    async def __call__(self, *args: Any, **kwargs: Any) -> None:
+        await self.send(*args, **kwargs)
 
     async def send(self, *args: Any, **kwargs: Any) -> None:
         sender, args = self.unpack_sender_from_args(*args)
@@ -231,9 +230,8 @@ class Signal(BaseSignal[T], SignalT[T]):
 class SyncSignal(BaseSignal[T], SyncSignalT[T]):
     """Signal that is synchronous (using regular ``def`` functions)."""
 
-    def __call__(self, sender: T_contra = None,
-                 *args: Any, **kwargs: Any) -> None:
-        self.send(sender, *args, **kwargs)
+    def __call__(self, *args: Any, **kwargs: Any) -> None:
+        self.send(*args, **kwargs)
 
     def send(self, *args: Any, **kwargs: Any) -> None:
         sender, args = self.unpack_sender_from_args(*args)

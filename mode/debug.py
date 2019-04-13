@@ -13,10 +13,10 @@ __all__ = ['Blocking', 'BlockingDetector']
 
 logger = get_logger(__name__)
 
-if hasattr(signal, 'setitimer'):
+if hasattr(signal, 'setitimer'):  # pragma: no cover
     def arm_alarm(seconds: float) -> None:
         signal.setitimer(signal.ITIMER_REAL, seconds)
-else:
+else:  # pragma: no cover
     try:
         import itimer
     except ImportError:
@@ -58,7 +58,7 @@ class BlockingDetector(Service):
     @Service.task
     async def _deadman_switch(self) -> None:
         try:
-            while 1:
+            while not self.should_stop:
                 self._reset_signal()
                 await self.sleep(self.timeout * 0.96)
         finally:

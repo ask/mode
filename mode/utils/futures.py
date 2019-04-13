@@ -24,6 +24,8 @@ __all__ = [
     'done_future',
     'maybe_async',
     'maybe_cancel',
+    'maybe_set_exception',
+    'maybe_set_result',
     'stampede',
     'notify',
 ]
@@ -131,6 +133,22 @@ def maybe_cancel(fut: asyncio.Future) -> bool:
     """Cancel future if it is cancellable."""
     if fut is not None and not fut.done():
         return fut.cancel()
+    return False
+
+
+def maybe_set_exception(fut: asyncio.Future, exc: BaseException) -> bool:
+    """Set future exception if not already done."""
+    if fut is not None and not fut.done():
+        fut.set_exception(exc)
+        return True
+    return False
+
+
+def maybe_set_result(fut: asyncio.Future, result: Any) -> bool:
+    """Set future result if not already done."""
+    if fut is not None and not fut.done():
+        fut.set_result(result)
+        return True
     return False
 
 

@@ -56,16 +56,25 @@ def timer_intervals(interval: Seconds,
         since_epoch = now - epoch
         time_spent = now - last_run_at
         drift = interval_s - time_spent
+        abs_drift = abs(drift)
         drift_time = interval_s + drift
 
-        if drift_time >= interval_s:
+        if drift_time > interval_s:
             sleep_time = min(drift_time, max_interval_s)
-        else:
+        elif drift_time < interval_s:
             sleep_time = max(drift_time, min_interval_s)
+        else:
+            sleep_time = interval_s
 
-        if drift >= max_drift:
-            logger.info(
-                'Timer %s woke up too late, with a drift of %r', name, drift)
+        if abs_drift >= max_drift:
+            if drift < 0:
+                logger.info(
+                    'Timer %s woke up too late, with a drift of +%r',
+                    name, abs_drift)
+            else:
+                logger.info(
+                    'Timer %s woke up too early, with a drift of -%r',
+                    name, abs_drift)
         else:
             logger.debug(
                 'Timer %s woke up - iteration=%r '
@@ -74,3 +83,5 @@ def timer_intervals(interval: Seconds,
 
         last_run_at = clock()
         yield sleep_time
+    else:  # pragma: no cover
+        pass  # never exits

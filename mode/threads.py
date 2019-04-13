@@ -23,7 +23,12 @@ from typing import (
 )
 
 from .services import Service
-from .utils.futures import maybe_async, notify
+from .utils.futures import (
+    maybe_async,
+    maybe_set_exception,
+    maybe_set_result,
+    notify,
+)
 from .utils.locks import Event
 
 __all__ = [
@@ -233,8 +238,10 @@ class ServiceThread(Service):
 
     @Service.task
     async def _thread_keepalive(self) -> None:
-        async for sleep_time in self.itertimer(1.0, name='_thread_keepalive',
-                                               loop=self.thread_loop):
+        async for sleep_time in self.itertimer(
+                1.0,
+                name='_thread_keepalive',
+                loop=self.thread_loop):  # pragma: no cover
             # The consumer thread will have a separate event loop,
             # and so we use this trick to make sure our loop is
             # being scheduled to run something at all times.
@@ -338,11 +345,9 @@ class MethodQueue(Service):
             try:
                 result = await maybe_async(method(*args, **kwargs))
             except BaseException as exc:
-                if not promise.cancelled():
-                    promise.set_exception(exc)
+                maybe_set_exception(promise, exc)
             else:
-                if not promise.cancelled():
-                    promise.set_result(result)
+                maybe_set_result(promise, result)
         return promise
 
 

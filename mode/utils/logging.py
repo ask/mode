@@ -256,7 +256,7 @@ class DefaultFormatter(logging.Formatter):
         return super().format(record)
 
 
-class ExtensionFormatter(colorlog.TTYColoredFormatter):
+class ExtensionFormatter(colorlog.TTYColoredFormatter):  # pragma: no cover
     """Formatter that can register callbacks to format args.
 
     Extends :pypi:`colorlog`.
@@ -353,24 +353,25 @@ def _setup_logging(*,
                    stream: IO = None,
                    loghandlers: List[logging.StreamHandler] = None,
                    logging_config: Dict = None) -> None:
+    handlers = {}
     if filename:
         assert stream is None
-        handlers = {
+        handlers.update({
             'default': {
                 'level': level,
                 'class': 'logging.FileHandler',
                 'formatter': 'default',
                 'filename': filename,
             },
-        }
+        })
     elif stream:
-        handlers = {
+        handlers.update({
             'default': {
                 'level': level,
                 'class': 'colorlog.StreamHandler',
                 'formatter': 'colored',
             },
-        }
+        })
     config = create_logconfig(handlers=handlers, root={
         'level': level,
         'handlers': ['default'],
@@ -410,7 +411,9 @@ class Logwrapped(object):
     def __getattr__(self, key: str) -> Any:
         meth = getattr(self.obj, key)
 
-        if not callable(meth) or key in self.__ignore:
+        ignore = object.__getattribute__(self, '_ignore')
+
+        if not callable(meth) or key in ignore:
             return meth
 
         @wraps(meth)
@@ -444,7 +447,7 @@ def cry(file: IO,
         sep1: str = '=',
         sep2: str = '-',
         sep3: str = '~',
-        seplen: int = 49) -> None:
+        seplen: int = 49) -> None:  # pragma: no cover
     """Return stack-trace of all active threads.
 
     See Also:
@@ -578,6 +581,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
     timeout: float
     loop: asyncio.AbstractEventLoop
     started_at_date: str
+    enabled_by: Optional[asyncio.Task]
 
     _fut: asyncio.Future
     _logs: List[Tuple[int, str, Tuple[Any], Dict[str, Any]]]
@@ -590,6 +594,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         self.timeout = want_seconds(timeout)
         self.loop = loop or asyncio.get_event_loop()
         self.started_at_date = None
+        self.enabled_by = None
         self._fut = None
         self._logs = []
 

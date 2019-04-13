@@ -14,10 +14,8 @@ omit =
     */mode/loop/*
 
     # not needed
-    */mode/debug.py
     */mode/types/*
     */mode/utils/_py37_contextlib.py
-    */mode/utils/compat.py
     */mode/utils/types/*
     */mode/utils/typing.py
     */mode/utils/mocks.py
@@ -33,3 +31,5 @@ exclude_lines =
     if sys.platform == 'win32':
 
     \@abc\.abstractmethod
+
+    \# Py3\.6
