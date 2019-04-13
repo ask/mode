@@ -6,10 +6,7 @@
 import re
 import sys
 import typing
-
 from typing import Any, Mapping, NamedTuple, Sequence
-
-import immutables
 
 __version__ = '3.2.2'
 __author__ = 'Robinhood Markets'
@@ -31,7 +28,7 @@ class version_info_t(NamedTuple):
 # bumpversion can only search for {current_version}
 # so we have to parse the version here.
 _match = re.match(r'(\d+)\.(\d+).(\d+)(.+)?', __version__)
-if _match is None:  # pragma: no cover
+if _match is None:
     raise RuntimeError('MODE VERSION HAS ILLEGAL FORMAT')
 _temp = _match.groups()
 VERSION = version_info = version_info_t(
@@ -40,7 +37,7 @@ del(_match)
 del(_temp)
 del(re)
 
-if sys.version_info <= (3, 7):  # pragma: no cover
+if sys.version_info <= (3, 7):
     import aiocontextvars  # noqa
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -95,7 +92,7 @@ __all__ = [
 # - See werkzeug/__init__.py for the rationale behind this.
 from types import ModuleType  # noqa
 
-all_by_module: Mapping[str, Sequence[str]] = immutables.Map({
+all_by_module: Mapping[str, Sequence[str]] = {
     'mode.services': ['Service', 'task', 'timer'],
     'mode.signals': ['BaseSignal', 'Signal', 'SyncSignal'],
     'mode.supervisors': [
@@ -113,7 +110,7 @@ all_by_module: Mapping[str, Sequence[str]] = immutables.Map({
     'mode.utils.logging': ['flight_recorder', 'get_logger', 'setup_logging'],
     'mode.utils.objects': ['label', 'shortlabel'],
     'mode.worker': ['Worker'],
-})
+}
 
 object_origins = {}
 for module, items in all_by_module.items():
