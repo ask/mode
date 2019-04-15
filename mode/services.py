@@ -108,7 +108,7 @@ class ServiceBase(ServiceT):
                     get_logger(cls.__module__),
                     logging.getLogger(cls.__module__),
                 ))
-                print(f'CLS DICT: {X.__dict__}')
+                print(f'CLS DICT: {Service.__dict__}')
             logger.__modex__ = True  # type: ignore
 
     def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
