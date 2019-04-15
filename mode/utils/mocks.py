@@ -11,6 +11,7 @@ from typing import Any, Callable, ContextManager, List, Optional, Type, Union
 
 __all__ = [
     'ANY',
+    'IN',
     'AsyncMagicMock',
     'AsyncMock',
     'AsyncContextMock',
@@ -25,6 +26,18 @@ __all__ = [
 ]
 
 MOCK_CALL_COUNT = count(0)
+
+
+class IN:
+
+    def __init__(self, *alternatives):
+        self.alternatives = alternatives
+
+    def __eq__(self, other: Any) -> bool:
+        return other in self.alternatives
+
+    def __ne__(self, other: Any) -> bool:
+        return other not in self.alternatives
 
 
 class Mock(unittest.mock.Mock):

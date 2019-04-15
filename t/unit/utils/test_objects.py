@@ -1,6 +1,7 @@
 import abc
 import sys
 import pickle
+import collections.abc
 
 from typing import (
     AbstractSet,
@@ -28,6 +29,7 @@ from mode.utils.objects import (
     KeywordReduce,
     Unordered,
     _ForwardRef_safe_eval,
+    _remove_optional,
     _restore_from_keywords,
     annotations,
     cached_property,
@@ -41,7 +43,7 @@ from mode.utils.objects import (
     remove_optional,
     shortname,
 )
-from mode.utils.mocks import ANY, Mock
+from mode.utils.mocks import ANY, IN, Mock
 
 PY37 = sys.version_info >= (3, 7)
 
@@ -389,7 +391,7 @@ def test__ForwardRef_safe_eval():
 # Union[type(None)] actually returns None
 # so we have to construct this object to test condition in code.
 WeirdNoneUnion = Union[str, int]
-WeirdNoneUnion.__args__ = [type(None), type(None)]
+WeirdNoneUnion.__args__ = (type(None), type(None))
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -397,6 +399,13 @@ WeirdNoneUnion.__args__ = [type(None), type(None)]
     (Union[str, None], str),
     (Union[str, type(None)], str),
     (Union[str, None], str),
+    (Optional[List[str]], List[str]),
+    (Optional[Mapping[int, str]], Mapping[int, str]),
+    (Optional[AbstractSet[int]], AbstractSet[int]),
+    (Optional[Set[int]], Set[int]),
+    (Optional[Tuple[int, ...]], Tuple[int, ...]),
+    (Optional[Dict[int, str]], Dict[int, str]),
+    (Optional[List[int]], List[int]),
     (str, str),
     (List[str], List[str]),
     (Union[str, int, float], Union[str, int, float]),
@@ -404,6 +413,28 @@ WeirdNoneUnion.__args__ = [type(None), type(None)]
 ])
 def test_remove_optional(input, expected):
     assert remove_optional(input) == expected
+
+
+@pytest.mark.parametrize('input,expected', [
+    (Optional[str], ((), str)),
+    (Union[str, None], ((), str)),
+    (Union[str, type(None)], ((), str)),
+    (Union[str, None], ((), str)),
+    (Optional[List[str]], ((str,), list)),
+    (Optional[Mapping[int, str]],
+     ((int, str), IN(dict, collections.abc.Mapping))),
+    (Optional[AbstractSet[int]], ((int,), IN(set, collections.abc.Set))),
+    (Optional[Set[int]], ((int,), IN(set, collections.abc.Set))),
+    (Optional[Tuple[int, ...]], ((int, ...), tuple)),
+    (Optional[Dict[int, str]], ((int, str), dict)),
+    (Optional[List[int]], ((int,), list)),
+    (str, ((), str)),
+    (List[str], ((str,), list)),
+    (Union[str, int, float], ((str, int, float), Union[str, int, float])),
+    (WeirdNoneUnion, ((type(None), type(None)), WeirdNoneUnion)),
+])
+def test__remove_optional__find_origin(input, expected):
+    assert _remove_optional(input, find_origin=True) == expected
 
 
 @pytest.mark.parametrize('input,expected', [
