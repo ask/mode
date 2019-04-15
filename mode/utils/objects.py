@@ -445,7 +445,7 @@ def _remove_optional(typ: Type, *,
             if args[1] is type(None):  # noqa
                 # This is a Union[x]
                 typ = args[0]
-                args = geattr(args[0], '__args__', ())
+                args = getattr(args[0], '__args__', ())
             else:
                 return (), typ
 
