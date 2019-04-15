@@ -212,7 +212,7 @@
 
     For example using :func:`asyncio.gather`:
 
-    .. codeblock:: python
+    .. sourcecode:: python
 
         from mode.utils.futures import stampede
 

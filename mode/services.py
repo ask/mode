@@ -100,7 +100,7 @@ class ServiceBase(ServiceT):
     def _init_subclass_logger(cls) -> None:
         # make sure class has a logger.
         if cls.logger is None or getattr(cls.logger, '__modex__', False):
-            logger = cls.__dict__['logger'] = get_logger(cls.__module__)
+            logger = cls.logger = get_logger(cls.__module__)
             if cls.logger is None:
                 print('LOGGER {0!r} IS NONE: {1!r} -> {2!r} -> {3!r}'.format(
                     cls.__module__,
