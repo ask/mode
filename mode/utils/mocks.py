@@ -29,6 +29,13 @@ MOCK_CALL_COUNT = count(0)
 
 
 class IN:
+    """Class used to check for multiple alternatives.
+
+    .. sourcecode:: python
+
+        assert foo.value IN(a, b)
+
+    """
 
     def __init__(self, *alternatives):
         self.alternatives = alternatives

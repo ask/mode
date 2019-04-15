@@ -415,10 +415,8 @@ def _remove_optional(typ: Type, *,
                      find_origin: bool = False) -> Tuple[List[Any], Type]:
     args = getattr(typ, '__args__', ())
     if typ.__class__.__name__ == '_GenericAlias':
-        print('IS GENERIC ALIAS %r ARGS: %r' % (typ, args))
         # Py3.7
         if typ.__origin__ is typing.Union:
-            print('IS FUCKING UNION')
             # Optional[List[int]] -> Union[List[int], NoneType]
             found_None = False
             union_type_args = None
@@ -432,19 +430,14 @@ def _remove_optional(typ: Type, *,
                     union_type = arg
                     if find_origin:
                         union_type = getattr(arg, '__origin__', arg)
-            print('FOUND NONE: %r UNION_TYPE: %r' %(
-                found_None, union_type))
-            if union_type is not None:
-                if found_None:
-                    return union_type_args, union_type
+            if union_type is not None and found_None:
+                return union_type_args, union_type
         else:
             if find_origin:
-                print('RETURNING ARGS: %r TYP: %r' % (args, typ.__origin__))
                 # List[int] -> ((int,), list)
                 typ = typ.__origin__  # for List this is list, etc.
             return args, typ
     elif typ.__class__.__name__ == '_Union':  # pragma: no cover
-        print('WOHA')
         # Py3.6
         # Optional[List[int]] gives Union[List[int], type(None)]
         # returns: ((int,), list)
@@ -455,13 +448,10 @@ def _remove_optional(typ: Type, *,
                 args = geatttr(args[0], '__args__', ())
             else:
                 return (), typ
-    else:
-        print('TYPE IS: %r' % (typ,))
 
     if find_origin and typ.__class__.__name__ == 'GenericMeta':  # Py3.6
         typ = typ.__orig_bases__
 
-    print('RETURNING ARGS %r TYP %r'%  (args, typ))
     return args, typ
 
 
