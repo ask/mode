@@ -100,7 +100,7 @@ class ServiceBase(ServiceT):
     def _init_subclass_logger(cls) -> None:
         # make sure class has a logger.
         if cls.logger is None or getattr(cls.logger, '__modex__', False):
-            logger = cls.logger = get_logger(cls.__module__)
+            logger = cls.__dict__['logger'] = get_logger(cls.__module__)
             if cls.logger is None:
                 print('LOGGER {0!r} IS NONE: {1!r} -> {2!r} -> {3!r}'.format(
                     cls.__module__,
@@ -108,7 +108,8 @@ class ServiceBase(ServiceT):
                     get_logger(cls.__module__),
                     logging.getLogger(cls.__module__),
                 ))
-            cls.logger.__modex__ = True  # type: ignore
+                print(f'CLS DICT: {X.__dict__}')
+            logger.__modex__ = True  # type: ignore
 
     def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
         self.log = CompositeLogger(self.logger, formatter=self._format_log)
