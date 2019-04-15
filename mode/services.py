@@ -109,7 +109,7 @@ class ServiceBase(ServiceT):
                     logging.getLogger(cls.__module__),
                 ))
                 print(f'CLS DICT: {Service.__dict__}')
-            logger.__modex__ = True  # type: ignore
+            logger.__modex__ = True
 
     def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
         self.log = CompositeLogger(self.logger, formatter=self._format_log)
