@@ -398,7 +398,7 @@ WeirdNoneUnion.__args__ = [type(None), type(None)]
     (Union[str, type(None)], str),
     (Union[str, None], str),
     (str, str),
-    (List[str], list),
+    (List[str], List[str]),
     (Union[str, int, float], Union[str, int, float]),
     (WeirdNoneUnion, WeirdNoneUnion),
 ])
