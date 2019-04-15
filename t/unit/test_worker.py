@@ -45,8 +45,8 @@ class test_Worker:
         stderr = Mock()
         assert Worker(stdout=stdout).stdout is stdout
         assert Worker(stderr=stderr).stderr is stderr
-        assert Worker(stdout=None).stdout is sys.stdout
-        assert Worker(stderr=None).stderr is sys.stderr
+        assert Worker(stdout=None).stdout is not sys.stdout
+        assert Worker(stderr=None).stderr is not sys.stderr
 
     def test_constructor_aligns_beacons(self):
         x = Service()
