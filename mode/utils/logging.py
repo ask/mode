@@ -649,7 +649,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
                 ident = self._ident()
                 logger.warning('Warning: Task timed out!')
                 logger.warning(
-                    'Please make sure it\'s hanging before restart.')
+                    "Please make sure it's hanging before restart.")
                 logger.info('[%s] (started at %s) Replaying logs...',
                             ident, self.started_at_date)
                 if self._logs:

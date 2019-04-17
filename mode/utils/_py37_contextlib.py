@@ -80,7 +80,7 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
         try:
             return await self.gen.__anext__()
         except StopAsyncIteration:
-            raise RuntimeError('generator didn\'t yield') from None
+            raise RuntimeError("generator didn't yield") from None
 
     async def __aexit__(self,
                         typ: Type[BaseException],
@@ -92,7 +92,7 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
             except StopAsyncIteration:
                 return
             else:
-                raise RuntimeError('generator didn\'t stop')
+                raise RuntimeError("generator didn't stop")
         else:
             if value is None:
                 value = typ()
@@ -100,7 +100,7 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
             # in this implementation
             try:
                 await self.gen.athrow(typ, value, traceback)
-                raise RuntimeError('generator didn\'t stop after throw()')
+                raise RuntimeError("generator didn't stop after throw()")
             except StopAsyncIteration as exc:
                 return exc is not value
             except RuntimeError as exc:
