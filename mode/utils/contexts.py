@@ -23,6 +23,24 @@ __all__ = [
 ]
 
 
+# Sphinx complains that stdlib is badly formatted :P
+
+AsyncExitStack.__doc__ = '''
+Async context manager for dynamic management of a stack of exit
+callbacks.
+
+Example:
+    >>> async with AsyncExitStack() as stack:
+    ...    connections = [await stack.enter_async_context(get_connection())
+    ...                   for i in range(5)]
+    ...    # All opened connections will automatically be released at the
+    ...    # end of the async with statement, even if attempts to open a
+    ...    # connection later in the list raise an exception.
+'''
+asynccontextmanager.__doc__ = 'asynccontextmanager decorator.'
+nullcontext.__doc__ = 'Context that does nothing.'
+
+
 class asyncnullcontext(AbstractAsyncContextManager):
     """Context for async-with statement doing nothing."""
 
