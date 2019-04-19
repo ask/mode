@@ -110,16 +110,16 @@ class App(Service):
 
     def on_init_dependencies(self) -> None:
         return [
-            self.app.websockets,
-            self.app.webserver,
-            self.app.user_cache,
+            self.websockets,
+            self.webserver,
+            self.user_cache,
         ]
 
     async def on_start(self) -> None:
         import pydot
         import io
         o = io.StringIO()
-        beacon = self.app.beacon.root or self.app.beacon
+        beacon = self.beacon.root or self.beacon
         beacon.as_graph().to_dot(o)
         graph, = pydot.graph_from_dot_data(o.getvalue())
         print('WRITING GRAPH TO image.png')
