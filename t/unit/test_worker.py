@@ -220,15 +220,15 @@ class test_Worker:
     def test__schedule_shutdown(self, worker):
         with patch('asyncio.ensure_future') as ensure_future:
             worker._stop_on_signal = Mock()
-            worker._schedule_shutdown(Signals.SIGQUIT)
+            worker._schedule_shutdown(Signals.SIGTERM)
             assert worker._signal_stop_time
             ensure_future.assert_called_once_with(
                 worker._stop_on_signal.return_value,
                 loop=worker.loop,
             )
-            worker._stop_on_signal.assert_called_once_with(Signals.SIGQUIT)
+            worker._stop_on_signal.assert_called_once_with(Signals.SIGTERM)
 
-            worker._schedule_shutdown(Signals.SIGQUIT)
+            worker._schedule_shutdown(Signals.SIGTERM)
 
     @pytest.mark.asyncio
     async def test__stop_on_signal(self, worker):
