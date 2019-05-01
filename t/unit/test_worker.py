@@ -181,6 +181,7 @@ class test_Worker:
             sig.assert_called_once_with(
                 signal.SIGTERM, worker._on_win_sigterm)
 
+    @pytest.mark.skipif(sys.platform == 'win32', reason='win32: no SIGUSR1')
     def test__install_signal_handlers_unix(self, worker):
         worker.loop = Mock()
         worker._install_signal_handlers_unix()
