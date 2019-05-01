@@ -1,4 +1,5 @@
 """Object utilities."""
+import collections.abc
 import sys
 import typing
 from contextlib import suppress
@@ -76,13 +77,25 @@ FieldMapping = Mapping[str, Type]
 #: Mapping of attribute name to attributes default value.
 DefaultsMapping = Mapping[str, Any]
 
-SET_TYPES: Tuple[Type, ...] = (AbstractSet, FrozenSet, MutableSet, Set)
+SET_TYPES: Tuple[Type, ...] = (
+    AbstractSet,
+    FrozenSet,
+    MutableSet,
+    Set,
+    collections.abc.Set,
+)
 LIST_TYPES: Tuple[Type, ...] = (
     List,
     Sequence,
     MutableSequence,
+    collections.abc.Sequence,
 )
-DICT_TYPES: Tuple[Type, ...] = (Dict, Mapping, MutableMapping)
+DICT_TYPES: Tuple[Type, ...] = (
+    Dict,
+    Mapping,
+    MutableMapping,
+    collections.abc.Mapping,
+)
 # XXX cast required for mypy bug
 # "expression has type Tuple[_SpecialForm]"
 TUPLE_TYPES: Tuple[Type, ...] = cast(Tuple[Type, ...], (Tuple,))
@@ -415,7 +428,7 @@ def _remove_optional(typ: Type, *,
                      find_origin: bool = False) -> Tuple[List[Any], Type]:
     args = getattr(typ, '__args__', ())
     if typ.__class__.__name__ == '_GenericAlias':
-        # Py3.7
+        # 3.7
         if typ.__origin__ is typing.Union:
             # Optional[List[int]] -> Union[List[int], NoneType]
             found_None = False
@@ -441,18 +454,31 @@ def _remove_optional(typ: Type, *,
         # Py3.6
         # Optional[List[int]] gives Union[List[int], type(None)]
         # returns: ((int,), list)
-        if args:
-            if args[1] is type(None):  # noqa
-                # This is a Union[x]
-                typ = args[0]
-                args = getattr(args[0], '__args__', ())
+        found_None = False
+        union_type_args = None
+        union_type = None
+        for arg in args:
+            if arg is None or arg is type(None):  # noqa
+                found_None = True
             else:
-                return (), typ
-
-    if find_origin and typ.__class__.__name__ == 'GenericMeta':  # Py3.6
-        typ = typ.__orig_bases__
+                union_type_args = getattr(arg, '__args__', ())
+                union_type = arg
+                if find_origin:
+                    union_type = _py36_maybe_unwrap_GenericMeta(union_type)
+        if union_type is not None and found_None:
+            return union_type_args, union_type
+    if find_origin:
+        typ = _py36_maybe_unwrap_GenericMeta(typ)
 
     return args, typ
+
+
+def _py36_maybe_unwrap_GenericMeta(typ: Type) -> Type:
+    if typ.__class__.__name__ == 'GenericMeta':  # Py3.6
+        orig_bases = typ.__orig_bases__
+        if orig_bases and orig_bases[0] in (list, tuple, dict, set):
+            return orig_bases[0]
+    return getattr(typ, '__origin__', typ)
 
 
 def guess_polymorphic_type(

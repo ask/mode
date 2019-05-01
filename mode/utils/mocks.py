@@ -46,6 +46,10 @@ class IN:
     def __ne__(self, other: Any) -> bool:
         return other not in self.alternatives
 
+    def __repr__(self) -> str:
+        sep = ' | '
+        return f'<IN: {sep.join(map(str, self.alternatives))}>'
+
 
 class Mock(unittest.mock.Mock):
     """Mock object."""

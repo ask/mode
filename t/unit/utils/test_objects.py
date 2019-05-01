@@ -1,6 +1,7 @@
 import abc
 import sys
 import pickle
+import typing
 import collections.abc
 
 from typing import (
@@ -422,19 +423,29 @@ def test_remove_optional(input, expected):
     (Union[str, None], ((), str)),
     (Optional[List[str]], ((str,), list)),
     (Optional[Mapping[int, str]],
-     ((int, str), IN(dict, collections.abc.Mapping))),
-    (Optional[AbstractSet[int]], ((int,), IN(set, collections.abc.Set))),
-    (Optional[Set[int]], ((int,), IN(set, collections.abc.Set))),
-    (Optional[Tuple[int, ...]], ((int, ...), tuple)),
+     ((int, str), IN(dict, collections.abc.Mapping, typing.Mapping))),
+    (Optional[AbstractSet[int]], ((int,),
+     IN(set, collections.abc.Set, typing.AbstractSet))),
+    (Optional[Set[int]], ((int,),
+     IN(set, collections.abc.Set, typing.AbstractSet))),
+    (Optional[Tuple[int, ...]], ((int, ...), IN(tuple, typing.Tuple))),
     (Optional[Dict[int, str]], ((int, str), dict)),
     (Optional[List[int]], ((int,), list)),
     (str, ((), str)),
     (List[str], ((str,), list)),
-    (Union[str, int, float], ((str, int, float), Union[str, int, float])),
-    (WeirdNoneUnion, ((type(None), type(None)), WeirdNoneUnion)),
+    (WeirdNoneUnion, ((type(None), type(None)), Union)),
 ])
 def test__remove_optional__find_origin(input, expected):
     assert _remove_optional(input, find_origin=True) == expected
+
+
+def test__remove_optional_edgecase():
+    input = Union[str, int, float]
+    expected = (str, int, float)
+    res = _remove_optional(input, find_origin=True)
+    assert res[0] == expected
+    # must use `is` here on Python 3.6
+    assert res[1] is typing.Union
 
 
 @pytest.mark.parametrize('input,expected', [
