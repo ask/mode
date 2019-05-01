@@ -1,9 +1,11 @@
 import signal
+import sys
 import pytest
 from mode.debug import Blocking, BlockingDetector
 from mode.utils.mocks import AsyncMock, Mock, patch
 
 
+@pytest.mark.skipif(sys.platform == 'win32', reason='win32: no SIGALRM')
 class test_BlockingDetector:
 
     @pytest.fixture()
