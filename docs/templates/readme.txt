@@ -2,7 +2,7 @@
  Mode: AsyncIO Services
 =====================================================================
 
-|build-status| |license| |wheel| |pyversion| |pyimp|
+|build-status| |coverage| |license| |wheel| |pyversion| |pyimp|
 
 .. include:: ../includes/introduction.txt
 
@@ -15,6 +15,9 @@
 .. |build-status| image:: https://secure.travis-ci.org/ask/mode.png?branch=master
     :alt: Build status
     :target: https://travis-ci.org/ask/mode
+
+.. |coverage| image:: https://codecov.io/github/ask/mode/coverage.svg?branch=master
+    :target: https://codecov.io/github/ask/mode?branch=master
 
 .. |license| image:: https://img.shields.io/pypi/l/mode.svg
     :alt: BSD License
