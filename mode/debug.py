@@ -77,7 +77,7 @@ class BlockingDetector(Service):
     def _on_alarm(self, signum: int, frame: FrameType) -> None:
         msg = f'Blocking detected (timeout={self.timeout})'
         stack = ''.join(traceback.format_stack(frame))
-        self.log.warning('Blocking detected (timeout=%r) %r',
+        self.log.warning('Blocking detected (timeout=%r) %s',
                          self.timeout, stack)
         self._reset_signal()
         raise self.raises(msg)
