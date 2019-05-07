@@ -32,3 +32,4 @@ cover/
 htmlcov/
 *-cache*
 .pyre/
+.python-version
