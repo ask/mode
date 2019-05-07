@@ -101,14 +101,6 @@ class ServiceBase(ServiceT):
         # make sure class has a logger.
         if cls.logger is None or getattr(cls.logger, '__modex__', False):
             logger = cls.logger = get_logger(cls.__module__)
-            if cls.logger is None:
-                print('LOGGER {0!r} IS NONE: {1!r} -> {2!r} -> {3!r}'.format(
-                    cls.__module__,
-                    logger,
-                    get_logger(cls.__module__),
-                    logging.getLogger(cls.__module__),
-                ))
-                print(f'CLS DICT: {Service.__dict__}')
             logger.__modex__ = True
 
     def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:

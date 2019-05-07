@@ -28,7 +28,7 @@ class version_info_t(NamedTuple):
 # bumpversion can only search for {current_version}
 # so we have to parse the version here.
 _match = re.match(r'(\d+)\.(\d+).(\d+)(.+)?', __version__)
-if _match is None:
+if _match is None:  # pragma: no cover
     raise RuntimeError('MODE VERSION HAS ILLEGAL FORMAT')
 _temp = _match.groups()
 VERSION = version_info = version_info_t(
@@ -37,7 +37,7 @@ del(_match)
 del(_temp)
 del(re)
 
-if sys.version_info <= (3, 7):
+if sys.version_info <= (3, 7):  # pragma: no cover
     import aiocontextvars  # noqa
 
 if typing.TYPE_CHECKING:  # pragma: no cover
