@@ -110,6 +110,12 @@ matrix:
 before_install:
 install:
 - python -m pip install --upgrade tox
+after_success:
+- |
+  if [[ ! -z "$IDENT" ]]; then
+      .tox/$TOXENV/bin/coverage xml
+      .tox/$TOXENV/bin/codecov -e IDENT
+  fi;
 script: tox -v -- -v
 notifications:
   slack:
