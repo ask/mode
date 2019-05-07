@@ -4,6 +4,17 @@
  Change history
 ================
 
+.. _version-4.0.0:
+
+4.0.0
+=====
+:release-date: 2019-05-07 2:21 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- 100% Test Coverage
+
+- Fixed several edge case bugs that were never reported.
+
 .. _version-3.2.2:
 
 3.2.2
