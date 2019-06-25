@@ -155,10 +155,6 @@ class ServiceThread(Service):
             await self.start()
 
     async def start(self) -> None:
-        # cannot await the future returned by run_in_executor,
-        # as that would make us wait until the webserver exits.
-        # Instead we add as Future dependency to this service, so that
-        # it is stopped with `await service.stop()`
         assert not self._thread_started.is_set()
         self._thread_started.set()
         self._thread_running = asyncio.Future(loop=self.parent_loop)
