@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import pytest
 from mode.utils.futures import (
     StampedeWrapper,
@@ -39,6 +40,12 @@ async def test_stampede():
     assert x.commit_count == 3
 
     assert X.commit.__get__(None) is X.commit
+
+    with pytest.raises(NotImplementedError):
+        X.commit()
+
+    assert X.commit.__wrapped__
+    assert 'self' in inspect.signature(X.commit).parameters
 
 
 @pytest.mark.asyncio
