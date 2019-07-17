@@ -4,6 +4,18 @@
  Change history
 ================
 
+.. _version-4.0.1:
+
+4.0.1
+=====
+:release-date: 2019-07-17 3:42 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Utils: :class:`~mode.utils.future.stampede` objects can now be
+  read by :pypi:`Sphinx` and :func:`inspect.signature`.
+
+- CI: Adds CPython 3.7.3 to build matrix, and set as default for lint stages
+
 .. _version-4.0.0:
 
 4.0.0
