@@ -33,3 +33,5 @@ exclude_lines =
     \@abc\.abstractmethod
 
     \# Py3\.6
+
+    \@overload
