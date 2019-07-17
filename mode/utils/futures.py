@@ -98,6 +98,11 @@ class stampede:
         self.__doc__ = doc or fget.__doc__
         self.__name__ = fget.__name__
         self.__module__ = fget.__module__
+        self.__wrapped__ = fget
+
+    def __call__(self, *args, **kwargs):
+        # here to support inspect.signature
+        raise NotImplementedError()
 
     def __get__(self, obj: Any, type: Type = None) -> Any:
         if obj is None:
