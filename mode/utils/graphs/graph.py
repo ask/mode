@@ -134,7 +134,7 @@ class DependencyGraph(DependencyGraphT):
     def _tarjan72(self) -> Sequence:
         """Perform Tarjan's algorithm to find strongly connected components.
 
-        See Also
+        See Also:
             :wikipedia:`Tarjan%27s_strongly_connected_components_algorithm`
         """
         result: List = []

@@ -238,6 +238,8 @@ def annotations(cls: Type,
         invalid_types: Set of types that if encountered should raise
           :exc:`InvalidAnnotation` (does not test for subclasses).
         alias_types: Mapping of original type to replacement type.
+        skip_classvar: Skip attributes annotated with
+            :class:`typing.ClassVar`.
         globalns: Global namespace to use when evaluating forward
             references (see :class:`typing.ForwardRef`).
         localns: Local namespace to use when evaluating forward

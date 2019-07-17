@@ -16,7 +16,6 @@ class ServiceProxy(ServiceBase):
     """A service proxy delegates ServiceT methods to a composite service.
 
     Example:
-
         >>> class MyServiceProxy(ServiceProxy):
         ...
         ...     @cached_property

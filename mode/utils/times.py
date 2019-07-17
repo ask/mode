@@ -245,8 +245,10 @@ def humanize_seconds(secs: float, *,
     For example, 60 becomes "1 minute", and 7200 becomes "2 hours".
 
     Arguments:
+        secs: Seconds to format (as :class:`float` or :class:`int`).
         prefix (str): can be used to add a preposition to the output
             (e.g., 'in' will give 'in 1 second', but add nothing to 'now').
+        sep (str): separator between prefix and number.
         now (str): Literal 'now'.
         microseconds (bool): Include microseconds.
     """

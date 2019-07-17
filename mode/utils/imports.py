@@ -61,7 +61,6 @@ class FactoryMapping(FastUserDict, Generic[_T]):
     of these in URLs.
 
     Example:
-
         >>> # Specifying the type enables mypy to know that
         >>> # this factory returns Driver subclasses.
         >>> drivers: FactoryMapping[Type[Driver]]

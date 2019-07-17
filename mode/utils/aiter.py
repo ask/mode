@@ -77,7 +77,7 @@ def _aiter_iter(it: Iterable) -> AsyncIterator:
 async def anext(it: AsyncIterator, *default: Any) -> Any:
     """Get next value from async iterator, or `default` if empty.
 
-    Raises
+    Raises:
         :exc:`StopAsyncIteration`: if default is not defined and
             the async iterator is fully consumed.
     """
