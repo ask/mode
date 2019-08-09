@@ -557,6 +557,14 @@ class Service(ServiceBase, ServiceCallbacks):
             await service.maybe_start()
         return service
 
+    async def remove_dependency(self, service: ServiceT) -> ServiceT:
+        """Stop and remove dependency of this service."""
+        await service.stop()
+        self._children.remove(service)
+        if service.beacon is not None:
+            service.beacon.detach(self.beacon)
+        return service
+
     async def add_async_context(self, context: AsyncContextManager) -> Any:
         if isinstance(context, AsyncContextManager):
             return await self.async_exit_stack.enter_async_context(context)

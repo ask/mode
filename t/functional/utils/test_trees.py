@@ -44,6 +44,11 @@ def test_Node():
     assert node5.root is node
     assert node5 in node4.children
 
+    node5.detach(node4)
+    assert node5.parent is None
+    assert node5.root is None
+    assert node5 not in node4.children
+
     node.children.append(11)
     assert str(node.as_graph()) == '''\
 303(3)
