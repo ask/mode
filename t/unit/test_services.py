@@ -272,6 +272,13 @@ class test_Service:
         s2.stop.coro.assert_called_once_with()
 
     @pytest.mark.asyncio
+    async def test_remove_dependency__no_beacon(self, *, service):
+        s2 = Mock(stop=AsyncMock())
+        s2.beacon = None
+        service.add_dependency(s2)
+        await service.remove_dependency(s2)
+
+    @pytest.mark.asyncio
     async def test_add_async_context__non_async(self, *, service):
 
         class Cx(ContextManager):
