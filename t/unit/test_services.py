@@ -264,6 +264,14 @@ class test_Service:
         s2.maybe_start.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_remove_dependency(self, *, service):
+        s2 = Mock(stop=AsyncMock())
+        service.add_dependency(s2)
+        service._started.set()
+        await service.remove_dependency(s2)
+        s2.stop.coro.assert_called_once_with()
+
+    @pytest.mark.asyncio
     async def test_add_async_context__non_async(self, *, service):
 
         class Cx(ContextManager):
