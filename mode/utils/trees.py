@@ -69,6 +69,13 @@ class Node(NodeT[_T]):
         parent.add(self)
         return self
 
+    def detach(self, parent: NodeT[_T]) -> NodeT[_T]:
+        """Detach this node from `parent` node."""
+        self.parent.discard(self)
+        self.parent = None
+        self.root = None
+        return self
+
     def add(self, data: _T) -> None:
         """Add node as a child node."""
         self.children.append(data)
