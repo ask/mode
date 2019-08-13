@@ -7,8 +7,8 @@ from .utils.times import Seconds, want_seconds
 
 __all__ = ['timer_intervals']
 
-MAX_DRIFT_PERCENT: float = 0.30
-MAX_DRIFT_CEILING: float = 0.8
+MAX_DRIFT_PERCENT: float = 0.90
+MAX_DRIFT_CEILING: float = 1.2
 
 ClockArg = Callable[[], float]
 
