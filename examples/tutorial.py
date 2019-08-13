@@ -1,5 +1,5 @@
 # This is code for the tutorial in README.rst
-from typing import Any, MutableMapping
+from typing import Any, MutableMapping, List
 
 from aiohttp.web import Application
 from mode import Service
@@ -108,18 +108,18 @@ class App(Service):
         self.websocket_port = websocket_port
         super().__init__(**kwargs)
 
-    def on_init_dependencies(self) -> None:
+    def on_init_dependencies(self) -> List:
         return [
-            self.app.websockets,
-            self.app.webserver,
-            self.app.user_cache,
+            self.websockets,
+            self.webserver,
+            self.user_cache,
         ]
 
     async def on_start(self) -> None:
         import pydot
         import io
         o = io.StringIO()
-        beacon = self.app.beacon.root or self.app.beacon
+        beacon = self.beacon.root or self.beacon
         beacon.as_graph().to_dot(o)
         graph, = pydot.graph_from_dot_data(o.getvalue())
         print('WRITING GRAPH TO image.png')

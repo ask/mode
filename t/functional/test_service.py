@@ -126,6 +126,16 @@ async def test_start_stop_restart_complex():
         assert service.y.z.x._started.is_set()
 
 
+@pytest.mark.asyncio
+async def test_remove_dependency():
+    async with Complex() as service:
+        x = service.x
+        await service.remove_dependency(x)
+        assert x._stopped.is_set()
+        assert x not in service._children
+        assert x.beacon not in list(service.beacon.traverse())
+
+
 async def crash(service, exc):
     try:
         raise exc
