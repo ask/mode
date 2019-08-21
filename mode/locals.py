@@ -446,7 +446,7 @@ class CoroutineRole(Coroutine[T_co, T_contra, V_co]):
         obj = self._get_current_object()  # type: ignore
         return cast(Coroutine[T_co, T_contra, V_co], obj)
 
-    def __await__(self) -> Generator[Any, None, T]:
+    def __await__(self) -> Generator[Any, None, V_co]:
         return self._get_coroutine().__await__()
 
     def send(self, value: T_contra) -> T_co:
@@ -541,7 +541,7 @@ class SequenceRole(Sequence[T_co]):
         ...
 
     @overload  # noqa: F811
-    def __getitem__(self, s: slice) -> Sequence[T_co]:
+    def __getitem__(self, s: slice) -> MutableSequence[T_co]:
         ...
 
     def __getitem__(self, s: Any) -> Any:  # noqa: F811
