@@ -66,7 +66,7 @@ class test_Worker:
             worker._say('msg', file=file, foo=1)
             print.assert_called_once_with('msg', file=file, foo=1, end='\n')
 
-    def tesT__say__default_file(self, worker):
+    def test__say__default_file(self, worker):
         worker.quiet = False
         with patch('builtins.print') as print:
             worker._say('msg', file=None, end='.')
@@ -77,13 +77,16 @@ class test_Worker:
         worker.services = workers
         assert worker.on_init_dependencies() == workers
 
-    @pytest.mark.asyncio
-    async def test_on_first_start(self, worker):
-        worker.debug = False
+    def _setup_for_on_first_start(self, worker):
         worker._setup_logging = Mock()
         worker.on_execute = AsyncMock()
         worker._add_monitor = AsyncMock()
         worker.install_signal_handlers = Mock()
+
+    @pytest.mark.asyncio
+    async def test_on_first_start(self, worker):
+        self._setup_for_on_first_start(worker)
+        worker.debug = False
 
         await worker.on_first_start()
         worker._setup_logging.assert_called_once_with()
@@ -94,6 +97,14 @@ class test_Worker:
         worker.debug = True
         await worker.on_first_start()
         worker._add_monitor.coro.assert_called_once_with()
+
+    @pytest.mark.asyncio
+    async def test_on_first_start__override_logging(self):
+        worker = Worker(override_logging=False)
+        self._setup_for_on_first_start(worker)
+        await worker.on_first_start()
+
+        worker._setup_logging.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_on_execute(self, worker):

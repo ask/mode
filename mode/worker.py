@@ -119,6 +119,7 @@ class Worker(Service):
             loghandlers: List[StreamHandler] = None,
             blocking_timeout: Seconds = 10.0,
             loop: asyncio.AbstractEventLoop = None,
+            override_logging: bool = True,
             daemon: bool = True,
             **kwargs: Any) -> None:
         self.services = services
@@ -131,6 +132,7 @@ class Worker(Service):
         self.redirect_stdouts = redirect_stdouts
         self.redirect_stdouts_level = logging.level_number(
             redirect_stdouts_level or 'WARN')
+        self.override_logging = override_logging
         if stdout is None:
             stdout = sys.stdout
         self.stdout = stdout
@@ -172,7 +174,8 @@ class Worker(Service):
         await self.default_on_first_start()
 
     async def default_on_first_start(self) -> None:
-        self._setup_logging()
+        if self.override_logging:
+            self._setup_logging()
         await self.on_execute()
         if self.debug:
             await self._add_monitor()
