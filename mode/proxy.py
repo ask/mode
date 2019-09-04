@@ -3,7 +3,7 @@
 Works like a service, but delegates to underlying service object.
 """
 import abc
-from typing import Any, ContextManager
+from typing import Any, ContextManager, Optional
 from .services import ServiceBase
 from .types import ServiceT
 from .utils.typing import AsyncContextManager
@@ -108,7 +108,3 @@ class ServiceProxy(ServiceBase):
     @property
     def crash_reason(self) -> Optional[BaseException]:
         return self._service.crash_reason
-
-    @crash_reason.setter
-    def crash_reason(self, reason: Optional[BaseException]) -> None:
-        self._service.crash_reason = reason

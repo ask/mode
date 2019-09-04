@@ -376,7 +376,7 @@ class Service(ServiceBase, ServiceCallbacks):
     #: Event set when service crashed.
     _crashed: Event
 
-    #: The reason for last crash (an xception instance).
+    #: The reason for last crash (an exception instance).
     _crash_reason: Optional[BaseException]
 
     #: The beacon is used to maintain a graph of services.
