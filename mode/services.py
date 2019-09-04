@@ -376,7 +376,7 @@ class Service(ServiceBase, ServiceCallbacks):
     #: Event set when service crashed.
     _crashed: Event
 
-    #: The reason for last crash (an exception instance).
+    #: The reason for last crash (an xception instance).
     _crash_reason: Optional[BaseException]
 
     #: The beacon is used to maintain a graph of services.
@@ -816,7 +816,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     def _crash(self, reason: BaseException) -> None:
         self._crashed.set()
-        self._crash_reason = reason
+        self.crash_reason = reason
         for node in self._children:
             node._crash(reason)
 
@@ -910,7 +910,7 @@ class Service(ServiceBase, ServiceCallbacks):
                    self._shutdown,
                    self._crashed):
             ev.clear()
-        self._crash_reason = None
+        self.crash_reason = None
         for child in self._children:
             if child is not None:
                 child.service_reset()
@@ -1015,6 +1015,14 @@ class Service(ServiceBase, ServiceCallbacks):
     @beacon.setter
     def beacon(self, beacon: NodeT) -> None:
         self._beacon = beacon
+
+    @property
+    def crash_reason(self) -> Optional[BaseException]:
+        return self._crash_reason
+
+    @crash_reason.setter
+    def crash_reason(self, reason: Optional[BaseException]) -> None:
+        self._crash_reason = reason
 
 
 task = Service.task

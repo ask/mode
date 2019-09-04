@@ -167,3 +167,12 @@ class ServiceT(AsyncContextManager):  # type: ignore
     @loop.setter
     def loop(self, loop: Optional[asyncio.AbstractEventLoop]) -> None:
         ...
+
+    @property
+    @abc.abstractmethod
+    def crash_reason(self) -> Optional[BaseException]:
+        ...
+
+    @crash_reason.setter
+    def crash_reason(self, reason: Optional[BaseException]) -> None:
+        ...

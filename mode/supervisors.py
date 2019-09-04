@@ -7,7 +7,7 @@ http://learnyousomeerlang.com/supervisors
 
 """
 import asyncio
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, cast
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Type
 
 from .exceptions import MaxRestartsExceeded
 from .services import Service
@@ -173,7 +173,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
 
     async def restart_service(self, service: ServiceT) -> None:
         self.log.info('Restarting dead %r! Last crash reason: %r',
-                      service, cast(Service, service)._crash_reason,
+                      service, service.crash_reason,
                       exc_info=1)
         try:
             async with self._bucket:

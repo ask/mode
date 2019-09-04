@@ -151,33 +151,33 @@ async def test_crash_leaf():
         error = await crash(service.y.z, KeyError('foo'))
 
         # crash propagates up chain
-        assert service.y.z.x._crash_reason is error
-        assert service.y.z._crash_reason is error
-        assert service.y._crash_reason is error
-        assert service.x._crash_reason is error
-        assert service._crash_reason is error
+        assert service.y.z.x.crash_reason is error
+        assert service.y.z.crash_reason is error
+        assert service.y.crash_reason is error
+        assert service.x.crash_reason is error
+        assert service.crash_reason is error
 
 
 @pytest.mark.asyncio
 async def test_crash_middle():
     async with Complex() as service:
         error = await crash(service.y, KeyError('foo'))
-        assert service.y.z.x._crash_reason is error
-        assert service.y.z._crash_reason is error
-        assert service.y._crash_reason is error
-        assert service.x._crash_reason is error
-        assert service._crash_reason is error
+        assert service.y.z.x.crash_reason is error
+        assert service.y.z.crash_reason is error
+        assert service.y.crash_reason is error
+        assert service.x.crash_reason is error
+        assert service.crash_reason is error
 
 
 @pytest.mark.asyncio
 async def test_crash_head():
     async with Complex() as service:
         error = await crash(service, KeyError('foo'))
-        assert service.y.z.x._crash_reason is error
-        assert service.y.z._crash_reason is error
-        assert service.y._crash_reason is error
-        assert service.x._crash_reason is error
-        assert service._crash_reason is error
+        assert service.y.z.x.crash_reason is error
+        assert service.y.z.crash_reason is error
+        assert service.y.crash_reason is error
+        assert service.x.crash_reason is error
+        assert service.crash_reason is error
 
 
 @pytest.mark.asyncio

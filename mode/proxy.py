@@ -104,3 +104,11 @@ class ServiceProxy(ServiceBase):
     @beacon.setter
     def beacon(self, beacon: NodeT) -> None:
         self._service.beacon = beacon
+
+    @property
+    def crash_reason(self) -> Optional[BaseException]:
+        return self._service.crash_reason
+
+    @crash_reason.setter
+    def crash_reason(self, reason: Optional[BaseException]) -> None:
+        self._service.crash_reason = reason

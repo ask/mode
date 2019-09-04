@@ -336,7 +336,7 @@ class test_Worker:
             worker.log.exception.assert_called_once()
 
     def test__shutdown_loop__service_crashed(self, worker):
-        worker._crash_reason = KeyError('foo')
+        worker.crash_reason = KeyError('foo')
         with self.patch_shutdown_loop(worker, is_running=False):
             with pytest.raises(KeyError):
                 worker._shutdown_loop()

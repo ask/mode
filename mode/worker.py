@@ -312,10 +312,10 @@ class Worker(Service):
             self.loop.stop()
             self.log.info('Closing event loop')
             self.loop.close()
-            if self._crash_reason:
+            if self.crash_reason:
                 self.log.critical(
                     'We experienced a crash! Reraising original exception...')
-                raise self._crash_reason from self._crash_reason
+                raise self.crash_reason from self.crash_reason
 
     async def _sentinel_task(self) -> None:
         await asyncio.sleep(1.0, loop=self.loop)
