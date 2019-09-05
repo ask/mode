@@ -1,5 +1,5 @@
 # This is code for the tutorial in README.rst
-from typing import Any, MutableMapping, List
+from typing import Any, List, MutableMapping
 
 from aiohttp.web import Application
 from mode import Service
