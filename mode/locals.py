@@ -81,10 +81,13 @@ when first needed), you can pass the `cache=True` argument to :class:`Proxy`:
     ...    x['foo']
     'value'
 """
+import abc
 import typing
 
+from collections import deque
 from contextlib import contextmanager
 from contextvars import ContextVar
+from functools import wraps
 from types import GetSetDescriptorType, TracebackType
 from typing import (
     AbstractSet,
@@ -277,7 +280,40 @@ class Proxy(Generic[T]):
     """Proxy to another object."""
 
     # Code stolen from werkzeug.local.Proxy.
-    __slots__ = ('__local', '__args', '__kwargs', '__dict__')
+    __slots__ = (
+        '__local',
+        '__args',
+        '__kwargs',
+        '__finalizers',
+        '__dict__',
+    )
+
+    def __init_subclass__(self, source: Type[T] = None) -> None:
+        super().__init_subclass__()
+        if source is not None:
+            self._init_from_source(source)
+
+    @classmethod
+    def _init_from_source(cls, source: Type[T]) -> None:
+        # source must have metaclass ABCMeta
+        abstractmethods = getattr(source, '__abstractmethods__', None)
+        if abstractmethods is None:
+            raise TypeError('class is not using metaclass ABCMeta')
+        for method_name in abstractmethods:
+            setattr(cls, method_name,
+                    cls._generate_proxy_method(source, method_name))
+
+    @classmethod
+    def _generate_proxy_method(
+            cls, source: Type[T], method_name: str) -> Callable:
+
+        @wraps(getattr(source, method_name))
+        def _classmethod(self: Proxy[T], *args: Any, **kwargs: Any) -> Any:
+            obj = self._get_current_object()
+            return getattr(obj, method_name)(*args, **kwargs)
+        _classmethod.__isabstractmethod__ = False
+
+        return _classmethod
 
     def __init__(self,
                  local: Callable[..., T],
@@ -290,10 +326,21 @@ class Proxy(Generic[T]):
         object.__setattr__(self, '_Proxy__args', args or ())
         object.__setattr__(self, '_Proxy__kwargs', kwargs or {})
         object.__setattr__(self, '_Proxy__cached', cache)
+        object.__setattr__(self, '_Proxy__finalizers', deque())
         if name is not None:
             object.__setattr__(self, '__custom_name__', name)
         if __doc__ is not None:
             object.__setattr__(self, '__doc__', __doc__)
+
+    def _add_proxy_finalizer(self, fun: 'Proxy') -> None:
+        finalizers = object.__getattribute__(self, '_Proxy__finalizers')
+        finalizers.append(fun)
+
+    def _call_proxy_finalizers(self) -> None:
+        finalizers = object.__getattribute__(self, '_Proxy__finalizers')
+        while finalizers:
+            finalizer = finalizers.popleft()
+            finalizer._get_current_object()  # evaluate
 
     @_default_cls_attr('name', str, __name__)
     @no_type_check
@@ -353,6 +400,7 @@ class Proxy(Generic[T]):
         return thing
 
     def _evaluate_proxy(self) -> T:
+        self._call_proxy_finalizers()
         loc = object.__getattribute__(self, '_Proxy__local')
         if not hasattr(loc, '__release_local__'):
             return cast(T, loc(*self.__args, **self.__kwargs))
