@@ -4,6 +4,35 @@
  Change history
 ================
 
+.. _version-4.0.2:
+
+4.0.2
+=====
+:release-date: 2019-09-26 4:00 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Worker: Adds ``override_logging`` option to use your own logging
+  setup (Issue #46).
+
+- Service: Adds ``Service.crash_reason`` (Issue #50).
+
+- Service: Adds ``remove_dependency`` to disable dependencies at runtime
+  (Issue #49).
+
+    Contributed by Martin Maillard.
+
+- Timers: Increase max drift to silence noisy logs.
+
+- Proxy: Adds support for lazy proxying of objects.
+
+    See :mod:`mode.locals`.
+
+- Documentation improvements by:
+
+    + :github_user:`tojkamaster`.
+
+    + :github_user:`casio`
+
 .. _version-4.0.1:
 
 4.0.1
