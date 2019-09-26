@@ -91,7 +91,6 @@ from types import GetSetDescriptorType, TracebackType
 from typing import (
     AbstractSet,
     Any,
-    AsyncGenerator,
     AsyncIterable,
     AsyncIterator,
     Awaitable,
@@ -119,6 +118,7 @@ from typing import (
     no_type_check,
     overload,
 )
+from .utils.typing import AsyncGenerator
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from typing import AsyncContextManager
