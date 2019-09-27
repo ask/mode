@@ -81,6 +81,7 @@ when first needed), you can pass the `cache=True` argument to :class:`Proxy`:
     ...    x['foo']
     'value'
 """
+import sys
 import typing
 
 from collections import deque
@@ -157,6 +158,9 @@ __all__ = [
     'CallableProxy',
     'maybe_evaluate',
 ]
+
+PYPY = hasattr(sys, 'pypy_version_info')
+SLOTS_ISSUE_PRESENT = sys.version_info < (3, 7)
 
 # LocalStack is a generic type,
 # so for a stack keeping track of web requests you may define:
@@ -277,14 +281,15 @@ def _default_cls_attr(
 class Proxy(Generic[T]):
     """Proxy to another object."""
 
-    # Code stolen from werkzeug.local.Proxy.
-    __slots__ = (
-        '__local',
-        '__args',
-        '__kwargs',
-        '__finalizers',
-        '__dict__',
-    )
+    # Code initially stolen from werkzeug.local.Proxy.
+    if not SLOTS_ISSUE_PRESENT and not PYPY:
+        __slots__ = (
+            '__local',
+            '__args',
+            '__kwargs',
+            '__finalizers',
+            '__dict__',
+        )
 
     def __init_subclass__(self, source: Type[T] = None) -> None:
         super().__init_subclass__()
