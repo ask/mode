@@ -118,12 +118,11 @@ from typing import (
     no_type_check,
     overload,
 )
-from .utils.typing import AsyncGenerator
 
 if typing.TYPE_CHECKING:  # pragma: no cover
-    from typing import AsyncContextManager
+    from typing import AsyncContextManager, AsyncGenerator
 else:
-    from .utils.typing import AsyncContextManager  # noqa
+    from .utils.typing import AsyncContextManager, AsyncGenerator  # noqa
 
 __all__ = [
     'LocalStack',
