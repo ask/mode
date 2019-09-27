@@ -41,19 +41,19 @@ Methods
 .. class:: Service
     :noindex:
 
-    .. autocomethod:: start
+    .. automethod:: start
         :noindex:
 
-    .. autocomethod:: maybe_start
+    .. automethod:: maybe_start
         :noindex:
 
-    .. autocomethod:: stop
+    .. automethod:: stop
         :noindex:
 
-    .. autocomethod:: restart
+    .. automethod:: restart
         :noindex:
 
-    .. autocomethod:: wait_until_stopped
+    .. automethod:: wait_until_stopped
         :noindex:
 
     .. automethod:: set_shutdown
@@ -164,22 +164,22 @@ Callbacks
 .. class:: Service
     :noindex:
 
-    .. autocomethod:: on_start
+    .. automethod:: on_start
         :noindex:
 
-    .. autocomethod:: on_first_start
+    .. automethod:: on_first_start
         :noindex:
 
-    .. autocomethod:: on_started
+    .. automethod:: on_started
         :noindex:
 
-    .. autocomethod:: on_stop
+    .. automethod:: on_stop
         :noindex:
 
-    .. autocomethod:: on_shutdown
+    .. automethod:: on_shutdown
         :noindex:
 
-    .. autocomethod:: on_restart
+    .. automethod:: on_restart
         :noindex:
 
 Handling Errors
@@ -188,7 +188,7 @@ Handling Errors
 .. class:: Service
     :noindex:
 
-    .. autocomethod:: crash
+    .. automethod:: crash
         :noindex:
 
 Utilities
@@ -197,10 +197,10 @@ Utilities
 .. class:: Service
     :noindex:
 
-    .. autocomethod:: sleep
+    .. automethod:: sleep
         :noindex:
 
-    .. autocomethod:: wait
+    .. automethod:: wait
         :noindex:
 
 Logging

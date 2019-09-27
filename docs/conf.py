@@ -21,7 +21,6 @@ globals().update(conf.build_config(
     extra_extensions=[
         'sphinx.ext.napoleon',
         'sphinx_autodoc_annotation',
-        'sphinxcontrib.asyncio',
         'alabaster',
     ],
     extra_intersphinx_mapping={

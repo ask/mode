@@ -758,12 +758,6 @@
 :release-date: 2018-09-11 1:37 P.M PDT
 :release-by: Ask Solem
 
-- **Requirements**
-
-    + Now depends on :ref:`Mode 1.15.1 <mode:version-1.15.1>`.
-
-        Contributed by Michael Seifert
-
 - **Distribution**: Installing mode no longer installs the ``t`` directory
                     containing tests as a Python package.
 
