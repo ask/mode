@@ -4,11 +4,11 @@
  Change history
 ================
 
-.. _version-4.0.2:
+.. _version-4.1.0:
 
-4.0.2
+4.1.0
 =====
-:release-date: 2019-09-26 4:00 P.M PST
+:release-date: 2019-09-27 2:00 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
 
 - Worker: Adds ``override_logging`` option to use your own logging
