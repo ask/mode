@@ -410,6 +410,14 @@ def remove_optional(typ: Type) -> Type:
     return typ
 
 
+def is_union(typ: Type) -> bool:
+    name = typ.__class__.__name__
+    return (
+        (name == '_GenericAlias' and typ.__origin__ is typing.Union) or  # 3.7
+        name == '_Union'                                                 # 3.6
+    )
+
+
 def is_optional(typ: Type) -> bool:
     args = getattr(typ, '__args__', ())
     if typ.__class__.__name__ == '_GenericAlias':
@@ -421,8 +429,8 @@ def is_optional(typ: Type) -> bool:
     elif typ.__class__.__name__ == '_Union':  # pragma: no cover
         # Py3.6
         # Optional[x] actually returns Union[x, type(None)]
-        if args and args[1] is type(None):  # noqa
-            return True
+        if args and type(None) in args:  # noqa
+            return Tru
     return False
 
 
