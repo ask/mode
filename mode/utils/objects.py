@@ -430,7 +430,7 @@ def is_optional(typ: Type) -> bool:
         # Py3.6
         # Optional[x] actually returns Union[x, type(None)]
         if args and type(None) in args:  # noqa
-            return Tru
+            return True
     return False
 
 

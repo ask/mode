@@ -11,7 +11,7 @@
 :release-date: 2019-09-30 4:00 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
 
-- ``is_optional``: Now works with union with multiple args on Python 3.6.
+- ``is_optional``: Now works with union having multiple args on Python 3.6.
 
 .. _version-4.1.0:
 
