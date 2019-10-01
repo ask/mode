@@ -114,6 +114,14 @@ class test_Proxy:
     def test_crashed(self, *, proxy, service):
         assert proxy.crashed is service.crashed
 
+    def test_crash_reason(self, *, proxy, service):
+        service.crash_reason = KeyError()
+        assert proxy.crash_reason is service.crash_reason
+
+        exc = proxy.crash_reason = ValueError()
+        assert service.crash_reason is exc
+        assert proxy.crash_reason is exc
+
     def test_should_stop(self, *, proxy, service):
         assert proxy.should_stop is service.should_stop
 

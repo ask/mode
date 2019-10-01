@@ -71,10 +71,12 @@ async def test_maybe_async(input, expected):
     assert await maybe_async(input()) == expected
 
 
-async def test_maybe_cancel(loop):
+@pytest.mark.asyncio
+async def test_maybe_cancel(*, loop):
     assert not maybe_cancel(None)
     future = loop.create_future()
     assert maybe_cancel(future)
+    assert not maybe_cancel(future)
 
 
 class test_StampedeWrapper:

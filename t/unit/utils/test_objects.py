@@ -38,6 +38,7 @@ from mode.utils.objects import (
     canonshortname,
     guess_polymorphic_type,
     is_optional,
+    is_union,
     iter_mro_reversed,
     label,
     qualname,
@@ -495,3 +496,13 @@ def test_guess_polymorphic_type__not_generic():
 def test_label_pass():
     s = 'foo'
     assert label(s) is s
+
+
+@pytest.mark.parametrize('input,expected', [
+    (str, False),
+    (int, False),
+    (Union[int, bytes], True),
+    (Optional[str], True),
+])
+def test_is_union(input, expected):
+    assert is_union(input) == expected

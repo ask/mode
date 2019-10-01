@@ -1,3 +1,4 @@
+import abc
 import pytest
 
 from typing import (
@@ -728,3 +729,63 @@ class test_CoroutineProxy:
         s = CoroutineProxy(lambda: x)
 
         assert s.__await__() is x.__await__.return_value
+
+
+def test_Proxy_from_source():
+
+    class AbstractSource(abc.ABC):
+
+        @abc.abstractmethod
+        def add(self, arg):
+            ...
+
+        @abc.abstractmethod
+        def mul(self, arg):
+            ...
+
+    class ConcreteSource(AbstractSource):
+
+        def __init__(self, value):
+            self.value = value
+
+        def add(self, arg):
+            return self.value + arg
+
+        def mul(self, arg):
+            return self.value * arg
+
+    class ProxySource(Proxy[AbstractSource], source=AbstractSource):
+        ...
+
+    on_final_mock = Mock()
+    on_final = Proxy(on_final_mock)
+
+    p = ProxySource(lambda: ConcreteSource(2))
+    p._add_proxy_finalizer(on_final)
+    assert p.add(4) == 6
+    assert p.mul(4) == 8
+
+    on_final_mock.assert_called_once_with()
+
+
+def test_Proxy_from_source__no_ABCMeta():
+
+    class Source:
+        ...
+
+    with pytest.raises(TypeError):
+        class ProxySource(Proxy[Source], source=Source):
+            ...
+
+
+def test_Proxy_from_source__no_abstractmethods():
+
+    class Source(abc.ABC):
+        ...
+
+    class ProxySource(Proxy[Source], source=Source):
+        ...
+
+    s = Source()
+    p = ProxySource(lambda: s)
+    assert p._get_current_object() is s
