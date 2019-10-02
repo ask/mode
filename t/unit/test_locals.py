@@ -754,8 +754,8 @@ def test_Proxy_from_source():
         def mul(self, arg):
             return self.value * arg
 
-    class ProxySource(Proxy[AbstractSource], source=AbstractSource):
-        ...
+    class ProxySource(Proxy[AbstractSource]):
+        __proxy_source__ = AbstractSource
 
     on_final_mock = Mock()
     on_final = Proxy(on_final_mock)
@@ -774,8 +774,8 @@ def test_Proxy_from_source__no_ABCMeta():
         ...
 
     with pytest.raises(TypeError):
-        class ProxySource(Proxy[Source], source=Source):
-            ...
+        class ProxySource(Proxy[Source]):
+            __proxy_source__ = Source
 
 
 def test_Proxy_from_source__no_abstractmethods():
@@ -783,8 +783,8 @@ def test_Proxy_from_source__no_abstractmethods():
     class Source(abc.ABC):
         ...
 
-    class ProxySource(Proxy[Source], source=Source):
-        ...
+    class ProxySource(Proxy[Source]):
+        __proxy_source__ = Source
 
     s = Source()
     p = ProxySource(lambda: s)

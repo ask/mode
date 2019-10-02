@@ -8,10 +8,30 @@
 
 4.1.1
 =====
-:release-date: 2019-09-30 4:00 P.M PST
+:release-date: 2019-09-30 4:00 P.M PS
 :release-by: Ask Solem (:github_user:`ask`)
 
 - ``is_optional``: Now works with union having multiple args on Python 3.6.
+
+- ``Proxy``: Due to `Python issue #29581`_ the ``source`` class option
+  to :class:`~mode.locals.Proxy` cannot be used on Python 3.6.
+
+    To work around this when support for 3.6 is a requirement
+    you can now use a ``__proxy_source__`` class attribute instead:
+
+    .. sourcecode:: python
+
+        class MappingProxy(Proxy[Mapping]):
+            proxy_source__ = Mapping
+
+     you want to support 3.7 and up you can continue to use the class syntax:
+
+     .. sourcecode:: python
+
+        class MappingProxy(Proxy[Mapping], source=Mapping):
+        ...
+
+.. _`Python issue #29581`: https://bugs.python.org/issue29581
 
 .. _version-4.1.0:
 

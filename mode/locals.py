@@ -96,6 +96,7 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
+    ClassVar,
     ContextManager,
     Coroutine,
     Dict,
@@ -281,6 +282,8 @@ def _default_cls_attr(
 class Proxy(Generic[T]):
     """Proxy to another object."""
 
+    __proxy_source__: ClassVar[Optional[Type[T]]] = None
+
     # Code initially stolen from werkzeug.local.Proxy.
     if not SLOTS_ISSUE_PRESENT and not PYPY:
         __slots__ = (
@@ -295,6 +298,10 @@ class Proxy(Generic[T]):
         super().__init_subclass__()
         if source is not None:
             self._init_from_source(source)
+        elif self.__proxy_source__ is not None:
+            # __proxy_source__ must be used on Python < 3.7
+            # to work around https://bugs.python.org/issue29581
+            self._init_from_source(self.__proxy_source__)
 
     @classmethod
     def _init_from_source(cls, source: Type[T]) -> None:
