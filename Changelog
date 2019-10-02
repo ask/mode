@@ -8,7 +8,7 @@
 
 4.1.1
 =====
-:release-date: 2019-09-30 4:00 P.M PS
+:release-date: 2019-10-02 3:41 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
 
 - ``is_optional``: Now works with union having multiple args on Python 3.6.
