@@ -3,20 +3,24 @@ import io
 import logging
 import sys
 import pytest
+
 from mode.utils.logging import (
     CompositeLogger,
     DefaultFormatter,
     FileLogProxy,
     LogMessage,
     Logwrapped,
+    _FlightRecorderProxy,
     _formatter_registry,
     _logger_config,
     _setup_logging,
+    current_flight_recorder,
     flight_recorder,
     formatter,
     get_logger,
     level_name,
     level_number,
+    on_timeout,
     print_task_name,
     redirect_stdouts,
     setup_logging,
@@ -557,3 +561,62 @@ def test_redirect_stdouts():
     with redirect_stdouts(stdout=True, stderr=True):
         assert isinstance(sys.stdout, FileLogProxy)
         assert isinstance(sys.stderr, FileLogProxy)
+
+
+@pytest.mark.asyncio
+async def test_on_timeout():
+    logger = Mock()
+    assert isinstance(on_timeout, _FlightRecorderProxy)
+
+    # Test no errors when there's no active flight recorder
+    _assert_log_severities(on_timeout)
+
+    with patch('mode.utils.logging.asctime') as asctime:
+        asctime.return_value = 'TIME'
+        # Test logging to active flight recorder (with nesting)
+        with flight_recorder(logger, timeout=300) as fl1:
+            assert current_flight_recorder() is fl1
+            _assert_recorder_exercised(on_timeout, fl1)
+
+            with flight_recorder(logger, timeout=30) as fl2:
+                assert current_flight_recorder() is fl2
+                _assert_recorder_exercised(on_timeout, fl2)
+                _assert_recorder_flush_logs(logger, fl2)
+
+            assert current_flight_recorder() is fl1
+            _assert_recorder_flush_logs(logger, fl1)
+            _assert_recorder_exercised(on_timeout, fl1)
+            _assert_recorder_flush_logs(logger, fl1)
+
+
+def _assert_log_severities(logger):
+    logger.debug('DEBUG %d %(a)s', 1, a='A')
+    logger.info('INFO %d %(b)s', 2, b='B')
+    logger.warning('WARNING %d %(c)s', 3, c='C')
+    logger.error('ERROR %d %(d)s', 4, d='D')
+    logger.critical('CRITICAL %d %(e)s', 5, e='E')
+
+
+EXPECTED_LOG_MESSAGES = [
+    LogMessage(logging.DEBUG, 'DEBUG %d %(a)s', 'TIME', (1,), {'a': 'A'}),
+    LogMessage(logging.INFO, 'INFO %d %(b)s', 'TIME', (2,), {'b': 'B'}),
+    LogMessage(
+        logging.WARNING, 'WARNING %d %(c)s', 'TIME', (3,), {'c': 'C'}),
+    LogMessage(logging.ERROR, 'ERROR %d %(d)s', 'TIME', (4,), {'d': 'D'}),
+    LogMessage(
+        logging.CRITICAL, 'CRITICAL %d %(e)s', 'TIME', (5,), {'e': 'E'}),
+]
+
+
+def _assert_recorder_exercised(logger, fl):
+    _assert_log_severities(logger)
+    assert fl._logs == EXPECTED_LOG_MESSAGES
+
+
+def _assert_recorder_flush_logs(logger, fl):
+    fl.flush_logs(ident='IDENT')
+
+    logger.log.assert_has_calls(
+        call(sev, f'[%s] (%s) {msg}', 'IDENT', datestr, *args, **kwargs)
+        for sev, msg, datestr, args, kwargs in EXPECTED_LOG_MESSAGES
+    )

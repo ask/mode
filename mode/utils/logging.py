@@ -31,7 +31,9 @@ from typing import (
     Type,
     Union,
 )
+from .contexts import ExitStack
 from .futures import all_tasks, current_task
+from .locals import LocalStack
 from .text import title
 from .times import Seconds, want_seconds
 from .tracebacks import format_task_stack, print_task_stack
@@ -85,6 +87,14 @@ DEFAULT_FORMATTERS = {
         'stream': sys.stdout,
     },
 }
+
+
+current_flight_recorder_stack: LocalStack['flight_recorder']
+current_flight_recorder_stack = LocalStack()
+
+
+def current_flight_recorder() -> Optional['flight_recorder']:
+    return current_flight_recorder_stack.top
 
 
 def _logger_config(handlers: List[str],
@@ -594,6 +604,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         self.loop = loop or asyncio.get_event_loop()
         self.started_at_date = None
         self.enabled_by = None
+        self.exit_stack = ExitStack()
         self._fut = None
         self._logs = []
 
@@ -643,28 +654,40 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         except asyncio.CancelledError:
             pass
         else:
+            self.blush()
+
+    def blush(self) -> None:
+        try:
+            logger = self.logger
+            ident = self._ident()
+            logger.warning('Warning: Task timed out!')
+            logger.warning(
+                "Please make sure it's hanging before restart.")
+            logger.info('[%s] (started at %s) Replaying logs...',
+                        ident, self.started_at_date)
+            self.flush_logs(ident=ident)
+            logger.info('[%s] -End of log-', ident)
+            logger.info('[%s] Task traceback', ident)
+            if self.enabled_by is not None:
+                logger.info(format_task_stack(self.enabled_by))
+            else:
+                logger.info('[%s] -missing-: not enabled by task')
+        except Exception as exc:
+            logger.exception('Flight recorder internal error: %r', exc)
+            raise
+
+    def flush_logs(self, ident: str = None) -> None:
+        logs = self._logs
+        logger = self.logger
+        ident = ident or self._ident()
+        if logs:
             try:
-                logger = self.logger
-                ident = self._ident()
-                logger.warning('Warning: Task timed out!')
-                logger.warning(
-                    "Please make sure it's hanging before restart.")
-                logger.info('[%s] (started at %s) Replaying logs...',
-                            ident, self.started_at_date)
-                if self._logs:
-                    for sev, msg, datestr, args, kwargs in self._logs:
-                        logger.log(
-                            sev, f'[%s] (%s) {msg}', ident, datestr,
-                            *args, **kwargs)
-                logger.info('[%s] -End of log-', ident)
-                logger.info('[%s] Task traceback', ident)
-                if self.enabled_by is not None:
-                    logger.info(format_task_stack(self.enabled_by))
-                else:
-                    logger.info('[%s] -missing-: not enabled by task')
-            except Exception as exc:
-                logger.exception('Flight recorder internal error: %r', exc)
-                raise
+                for sev, msg, datestr, args, kwargs in logs:
+                    logger.log(
+                        sev, f'[%s] (%s) {msg}', ident, datestr,
+                        *args, **kwargs)
+            finally:
+                logs.clear()
 
     def _ident(self) -> str:
         return f'{title(type(self).__name__)}-{self.id}'
@@ -674,13 +697,31 @@ class flight_recorder(ContextManager, LogSeverityMixin):
 
     def __enter__(self) -> 'flight_recorder':
         self.activate()
+        self.exit_stack.enter_context(
+            current_flight_recorder_stack.push(self))
+        self.exit_stack.__enter__()
         return self
 
     def __exit__(self,
                  exc_type: Type[BaseException] = None,
                  exc_val: BaseException = None,
                  exc_tb: TracebackType = None) -> Optional[bool]:
+        self.exit_stack.__exit__(exc_type, exc_val, exc_tb)
         self.cancel()
+
+
+class _FlightRecorderProxy(LogSeverityMixin):
+
+    def log(self,
+            severity: int,
+            msg: str,
+            *args: Any, **kwargs: Any) -> None:
+        fl = self.current_flight_recorder()
+        if fl is not None:
+            return fl.log(severity, msg, *args, **kwargs)
+
+    def current_flight_recorder(self) -> Optional[flight_recorder]:
+        return current_flight_recorder()
 
 
 class FileLogProxy:
@@ -760,3 +801,6 @@ def redirect_stdouts(logger: Logger = redirect_logger, *,
             sys.stdout = sys.__stdout__
         if stderr:
             sys.stderr = sys.__stderr__
+
+
+on_timeout = _FlightRecorderProxy()
