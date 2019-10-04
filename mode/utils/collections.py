@@ -67,6 +67,7 @@ _Setlike = Union[AbstractSet[T], Iterable[T]]
 
 
 class Heap(MutableSequence[T]):
+    """Generic interface to :mod:`heapq`."""
 
     def __init__(self, data: Sequence[T] = None) -> None:
         self.data = list(data or [])

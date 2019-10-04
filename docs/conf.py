@@ -5,6 +5,8 @@ from sphinx_celery import conf
 
 sys.path.append('.')
 
+extensions = []
+
 globals().update(conf.build_config(
     'mode', __file__,
     project='Mode',
@@ -49,3 +51,5 @@ pygments_style = 'sphinx'
 # This option is deprecated and raises an error.
 with suppress(NameError):
     del(html_use_smartypants)  # noqa
+
+extensions.remove('sphinx.ext.viewcode')
