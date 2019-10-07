@@ -4,6 +4,46 @@
  Change history
 ================
 
+.. _version-4.1.2:
+
+4.1.2
+=====
+:release-date: 2019-10-02 3:41 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Adds easy flight recorder interface.
+
+    Instead of passing flight recorders around, we now have the concept
+    of a ``current_flight_recorder``.
+
+    There is also a new ``on_timeout`` wrapper object that always
+    logs to the current flight recorder:
+
+    .. sourcecode:: python
+
+        from mode.utils.logging import flight_recorder, on_timeout
+
+        async def main():
+            with flight_recorder(logger, timeout=300):
+                some_function()
+
+        def some_function():
+            on_timeout.error('Fetching data')
+            fetch_data()
+
+            on_timeout.error('Processing data')
+            process_data()
+
+    This uses a :class:`~mode.utils.locals.LocalStack`,
+    so flight recorders can be arbitrarily nested.
+    Once a flight recorder context exits, the previously active flight
+    recorder will be set active again.
+
+- Logging: Default logging format now includes process PID.
+
+- Adds :class:`~mode.utils.collections.Heap` as generic interface
+  to the heapq module
+
 .. _version-4.1.1:
 
 4.1.1
