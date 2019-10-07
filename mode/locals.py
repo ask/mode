@@ -194,7 +194,7 @@ class Proxy(Generic[T]):
     __proxy_source__: ClassVar[Optional[Type[T]]] = None
 
     # Code initially stolen from werkzeug.local.Proxy.
-    if not SLOTS_ISSUE_PRESENT and not PYPY:
+    if not SLOTS_ISSUE_PRESENT and not PYPY:  # pragma: no cover
         __slots__ = (
             '__local',
             '__args',

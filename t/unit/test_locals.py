@@ -1,4 +1,5 @@
 import abc
+import sys
 import pytest
 
 from typing import (
@@ -756,6 +757,44 @@ def test_Proxy_from_source():
 
     class ProxySource(Proxy[AbstractSource]):
         __proxy_source__ = AbstractSource
+
+    on_final_mock = Mock()
+    on_final = Proxy(on_final_mock)
+
+    p = ProxySource(lambda: ConcreteSource(2))
+    p._add_proxy_finalizer(on_final)
+    assert p.add(4) == 6
+    assert p.mul(4) == 8
+
+    on_final_mock.assert_called_once_with()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 7), reason='Requires Python 3.7')
+def test_Proxy_from_source__py37_class_argument():
+
+    class AbstractSource(abc.ABC):
+
+        @abc.abstractmethod
+        def add(self, arg):
+            ...
+
+        @abc.abstractmethod
+        def mul(self, arg):
+            ...
+
+    class ConcreteSource(AbstractSource):
+
+        def __init__(self, value):
+            self.value = value
+
+        def add(self, arg):
+            return self.value + arg
+
+        def mul(self, arg):
+            return self.value * arg
+
+    class ProxySource(Proxy[AbstractSource], source=AbstractSource):
+        ...
 
     on_final_mock = Mock()
     on_final = Proxy(on_final_mock)
