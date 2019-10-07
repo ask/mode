@@ -109,11 +109,11 @@ class Heap(MutableSequence[T]):
 
     def nlargest(self, n: int, key: Callable = None) -> List[T]:
         """Find the n largest elements in the dataset."""
-        return nlargest(self.data, n, key=key)
+        return nlargest(n, self.data, key=key)
 
     def nsmallest(self, n: int, key: Callable = None) -> List[T]:
         """Find the n smallest elements in the dataset."""
-        return nsmallest(self.data, n, key=key)
+        return nsmallest(n, self.data, key=key)
 
     def insert(self, index: int, object: T) -> None:
         self.data.insert(index, object)
@@ -155,7 +155,7 @@ class Heap(MutableSequence[T]):
         ...
 
     def __delitem__(self, i: Any) -> None:  # noqa: F811
-        self.daata.__delitem__(i)
+        self.data.__delitem__(i)
 
     def __len__(self) -> int:
         return len(self.data)
