@@ -4,6 +4,8 @@ import logging
 import sys
 import pytest
 
+from copy import deepcopy
+
 from mode.utils.logging import (
     CompositeLogger,
     DefaultFormatter,
@@ -564,7 +566,11 @@ def test_redirect_stdouts():
 
 
 @pytest.mark.asyncio
-async def test_on_timeout():
+@pytest.mark.parametrize('extra_context', [
+    {},
+    {'foo': 'bar'},
+])
+async def test_on_timeout(extra_context):
     logger = Mock()
     assert isinstance(on_timeout, _FlightRecorderProxy)
 
@@ -575,10 +581,13 @@ async def test_on_timeout():
         asctime.return_value = 'TIME'
         # Test logging to active flight recorder (with nesting)
         with flight_recorder(logger, timeout=300) as fl1:
+            fl1.extra_context.update(extra_context)
             assert current_flight_recorder() is fl1
             _assert_recorder_exercised(on_timeout, fl1)
 
-            with flight_recorder(logger, timeout=30) as fl2:
+            with flight_recorder(logger, timeout=30)as fl2:
+                for k, v in fl1.extra_context.items():
+                    assert fl2.extra_context[k] == v
                 assert current_flight_recorder() is fl2
                 _assert_recorder_exercised(on_timeout, fl2)
                 _assert_recorder_flush_logs(logger, fl2)
@@ -616,7 +625,15 @@ def _assert_recorder_exercised(logger, fl):
 def _assert_recorder_flush_logs(logger, fl):
     fl.flush_logs(ident='IDENT')
 
+    def _get_call(sev, msg, datestr, args, kwargs):
+        kw = deepcopy(kwargs)
+        if fl.extra_context:
+            extra = kw.setdefault('extra', {})
+            data = extra.setdefault('data', {})
+            data.update(fl.extra_context)
+        return call(sev, f'[%s] (%s) {msg}', 'IDENT', datestr, *args, **kw)
+
     logger.log.assert_has_calls(
-        call(sev, f'[%s] (%s) {msg}', 'IDENT', datestr, *args, **kwargs)
+        _get_call(sev, msg, datestr, args, kwargs)
         for sev, msg, datestr, args, kwargs in EXPECTED_LOG_MESSAGES
     )

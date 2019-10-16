@@ -594,6 +594,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
 
     _fut: asyncio.Future
     _logs: List[Tuple[int, str, Tuple[Any], Dict[str, Any]]]
+    _default_context: Dict[str, Any]
 
     def __init__(self, logger: Any, *,
                  timeout: Seconds,
@@ -607,6 +608,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         self.exit_stack = ExitStack()
         self._fut = None
         self._logs = []
+        self.extra_context = {}
 
     def wrap_debug(self, obj: Any) -> Logwrapped:
         return self.wrap(logging.DEBUG, obj)
@@ -628,6 +630,10 @@ class flight_recorder(ContextManager, LogSeverityMixin):
             raise RuntimeError('{type(self).__name__} already activated')
         self.enabled_by = current_task()
         self.started_at_date = asctime()
+        current_flight_recorder = current_flight_recorder_stack.top
+        if current_flight_recorder is not None:
+            for k, v in current_flight_recorder.extra_context.items():
+                self.extra_context.setdefault(k, v)
         self._fut = asyncio.ensure_future(self._waiting(), loop=self.loop)
 
     def cancel(self) -> None:
@@ -683,11 +689,20 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         if logs:
             try:
                 for sev, msg, datestr, args, kwargs in logs:
+                    self._fill_extra_context(kwargs)
                     logger.log(
                         sev, f'[%s] (%s) {msg}', ident, datestr,
                         *args, **kwargs)
             finally:
                 logs.clear()
+
+    def _fill_extra_context(self, kwargs: Dict) -> None:
+        if self.extra_context:
+            extra = kwargs['extra'] = kwargs.get('extra') or {}
+            extra['data'] = {
+                **self.extra_context,
+                **(extra.get('data') or {}),
+            }
 
     def _ident(self) -> str:
         return f'{title(type(self).__name__)}-{self.id}'
