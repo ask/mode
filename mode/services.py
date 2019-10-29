@@ -847,6 +847,8 @@ class Service(ServiceBase, ServiceCallbacks):
             if child is not None:
                 try:
                     await asyncio.shield(child.stop())
+                except asyncio.CancelledError:
+                    pass
                 except Exception as exc:
                     self.log.exception(
                         'Error while stopping child %r: %r', child, exc)
