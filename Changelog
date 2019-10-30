@@ -6,9 +6,18 @@
 
 .. _version-4.1.3:
 
+4.1.4
+=====
+:release-date: 2019-10-30 3:23 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Timers: Do not log drift for subsecond interval timers.
+
+.. _version-4.1.3:
+
 4.1.3
 =====
-:release-date: 2019-10-30 2:14 P.M PST
+:release-date: 2019-10-29 2:14 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
 
 - Service: Ignore :exc:`asyncio.CancelledError` when a child service
