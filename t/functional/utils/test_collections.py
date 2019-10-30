@@ -5,6 +5,7 @@ from mode.utils.collections import (
     DictAttribute,
     FastUserDict,
     FastUserSet,
+    Heap,
     LRUCache,
     ManagedUserDict,
     ManagedUserSet,
@@ -646,3 +647,62 @@ def test_force_mapping():
 
     with patch('mode.utils.collections.LazyObject', Object):
         assert force_mapping(obj)['name'] == 'bar'
+
+
+class test_Heap:
+
+    def test_type_generic(self):
+        class H(Heap[int]):
+            pass
+
+        h = H([999, 3, 9, 100])
+        assert h.pushpop(888) == 3
+        assert h.pop() == 9
+
+    def test_heap(self):
+        h = Heap()
+        h.push((300, 'foo'))
+        assert len(h) == 1
+        assert h[0] == (300, 'foo')
+        h.push((800, 'bar'))
+        assert len(h) == 2
+        assert h[0] == (300, 'foo')
+        assert h.pop() == (300, 'foo')
+        assert len(h) == 1
+        assert h[0] == (800, 'bar')
+        assert h.pushpop((100, 'baz')) == (100, 'baz')
+        assert len(h) == 1
+        assert h[0] == (800, 'bar')
+        h.push((300, 'foo'))
+        assert len(h) == 2
+        assert h.replace((400, 'xuzzy')) == (300, 'foo')
+        assert len(h) == 2
+        assert h[0] == (400, 'xuzzy')
+        h.push((300, 'foo'))
+        assert len(h) == 3
+        assert h[0] == (300, 'foo')
+
+        assert h.nsmallest(2) == [(300, 'foo'), (400, 'xuzzy')]
+        assert h.nlargest(2) == [(800, 'bar'), (400, 'xuzzy')]
+
+        assert str(h)
+        assert repr(h)
+        h.insert(0, (999, 'misplaced'))
+        assert h[0] == (999, 'misplaced')
+
+        h[0] = (888, 'misplaced')
+        assert h[0] == (888, 'misplaced')
+        del(h[0])
+        assert h[0] == (300, 'foo')
+
+        assert h.pop() == (300, 'foo')
+        assert len(h) == 2
+        assert h
+        assert h.pop() == (400, 'xuzzy')
+        assert len(h) == 1
+        assert h.pop() == (800, 'bar')
+        assert not len(h)
+        assert not h
+
+        with pytest.raises(IndexError):
+            h.pop()

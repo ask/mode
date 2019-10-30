@@ -1,4 +1,5 @@
 """Object utilities."""
+import abc
 import collections.abc
 import sys
 import typing
@@ -55,6 +56,7 @@ __all__ = [
     'Unordered',
     'KeywordReduce',
     'InvalidAnnotation',
+    'abc_compatible_with_init_subclass',
     'qualname',
     'shortname',
     'canoname',
@@ -67,6 +69,27 @@ __all__ = [
     'label',
     'shortlabel',
 ]
+
+# Workaround for https://bugs.python.org/issue29581
+try:
+    @typing.no_type_check  # type: ignore
+    class _InitSubclassCheck(metaclass=abc.ABCMeta):
+        ident: int
+
+        def __init_subclass__(self,
+                              *args: Any,
+                              ident: int = 808,
+                              **kwargs: Any) -> None:
+            self.ident = ident
+            super().__init__(*args, **kwargs)
+
+    @typing.no_type_check  # type: ignore
+    class _UsingKwargsInNew(_InitSubclassCheck, ident=909):
+        ...
+except TypeError:
+    abc_compatible_with_init_subclass = False
+else:
+    abc_compatible_with_init_subclass = True
 
 _T = TypeVar('_T')
 RT = TypeVar('RT')
@@ -410,6 +433,14 @@ def remove_optional(typ: Type) -> Type:
     return typ
 
 
+def is_union(typ: Type) -> bool:
+    name = typ.__class__.__name__
+    return (
+        (name == '_GenericAlias' and typ.__origin__ is typing.Union) or  # 3.7
+        name == '_Union'                                                 # 3.6
+    )
+
+
 def is_optional(typ: Type) -> bool:
     args = getattr(typ, '__args__', ())
     if typ.__class__.__name__ == '_GenericAlias':
@@ -421,7 +452,7 @@ def is_optional(typ: Type) -> bool:
     elif typ.__class__.__name__ == '_Union':  # pragma: no cover
         # Py3.6
         # Optional[x] actually returns Union[x, type(None)]
-        if args and args[1] is type(None):  # noqa
+        if args and type(None) in args:  # noqa
             return True
     return False
 

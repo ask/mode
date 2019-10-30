@@ -3,24 +3,38 @@ import abc
 import collections.abc
 import threading
 from collections import OrderedDict, UserList
+from heapq import (
+    heapify,
+    heappop,
+    heappush,
+    heappushpop,
+    heapreplace,
+    nlargest,
+    nsmallest,
+)
 from typing import (
     AbstractSet,
     Any,
+    Callable,
     ContextManager,
     Dict,
     ItemsView,
     Iterable,
     Iterator,
     KeysView,
+    List,
     Mapping,
     MutableMapping,
+    MutableSequence,
     MutableSet,
+    Sequence,
     Set,
     Tuple,
     TypeVar,
     Union,
     ValuesView,
     cast,
+    overload,
 )
 
 from .contexts import nullcontext
@@ -32,6 +46,7 @@ except ImportError:
     class LazySettings: ...  # noqa
 
 __all__ = [
+    'Heap',
     'FastUserDict',
     'FastUserSet',
     'FastUserList',
@@ -49,6 +64,101 @@ KT = TypeVar('KT')
 VT = TypeVar('VT')
 
 _Setlike = Union[AbstractSet[T], Iterable[T]]
+
+
+class Heap(MutableSequence[T]):
+    """Generic interface to :mod:`heapq`."""
+
+    def __init__(self, data: Sequence[T] = None) -> None:
+        self.data = list(data or [])
+        heapify(self.data)
+
+    def pop(self) -> T:
+        """Pop the smallest item off the heap.
+
+        Maintains the heap invariant.
+        """
+        return heappop(self.data)
+
+    def push(self, item: T) -> None:
+        """Push item onto heap, maintaining the heap invariant."""
+        heappush(self.data, item)
+
+    def pushpop(self, item: T) -> T:
+        """Push item on the heap, then pop and return from the heap.
+
+        The combined action runs more efficiently than
+        :meth:`push` followed by a separate call to :meth:`pop`.
+        """
+        return heappushpop(self.data, item)
+
+    def replace(self, item: T) -> T:
+        """Pop and return the current smallest value, and add the new item.
+
+        This is more efficient than :meth`pop` followed by :meth:`push`,
+        and can be more appropriate when using a fixed-size heap.
+
+        Note that the value returned may be larger than item!
+        That constrains reasonable uses of this routine unless written as
+        part of a conditional replacement::
+
+            if item > heap[0]:
+                item = heap.replace(item)
+        """
+        return heapreplace(self.data, item)
+
+    def nlargest(self, n: int, key: Callable = None) -> List[T]:
+        """Find the n largest elements in the dataset."""
+        return nlargest(n, self.data, key=key)
+
+    def nsmallest(self, n: int, key: Callable = None) -> List[T]:
+        """Find the n smallest elements in the dataset."""
+        return nsmallest(n, self.data, key=key)
+
+    def insert(self, index: int, object: T) -> None:
+        self.data.insert(index, object)
+
+    def __str__(self) -> str:
+        return str(self.data)
+
+    def __repr__(self) -> str:
+        return repr(self.data)
+
+    @overload
+    def __getitem__(self, i: int) -> T:
+        ...
+
+    @overload  # noqa: F811
+    def __getitem__(self, s: slice) -> MutableSequence[T]:
+        ...
+
+    def __getitem__(self, s: Any) -> Any:  # noqa: F811
+        return self.data.__getitem__(s)
+
+    @overload
+    def __setitem__(self, i: int, o: T) -> None:
+        ...
+
+    @overload  # noqa: F811
+    def __setitem__(self, s: slice, o: Iterable[T]) -> None:
+        ...
+
+    def __setitem__(self, index_or_slice: Any, o: Any) -> None:  # noqa: F811
+        self.data.__setitem__(index_or_slice, o)
+
+    @overload
+    def __delitem__(self, i: int) -> None:
+        ...
+
+    @overload  # noqa: F811
+    def __delitem__(self, i: slice) -> None:
+        ...
+
+    def __delitem__(self, i: Any) -> None:  # noqa: F811
+        self.data.__delitem__(i)
+
+    def __len__(self) -> int:
+        return len(self.data)
 
 
 class FastUserDict(MutableMapping[KT, VT]):

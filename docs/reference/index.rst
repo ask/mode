@@ -60,6 +60,7 @@ Utils
     mode.utils.futures
     mode.utils.graphs
     mode.utils.imports
+    mode.utils.locals
     mode.utils.logging
     mode.utils.loops
     mode.utils.mocks

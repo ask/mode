@@ -66,7 +66,7 @@ def timer_intervals(interval: Seconds,
         else:
             sleep_time = interval_s
 
-        if abs_drift >= max_drift:
+        if interval >= 1.0 and abs_drift >= max_drift:
             if drift < 0:
                 logger.info(
                     'Timer %s woke up too late, with a drift of +%r',
