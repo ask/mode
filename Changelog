@@ -4,7 +4,18 @@
  Change history
 ================
 
-.. _version-4.1.3:
+.. _version-4.1.5:
+
+4.1.4
+=====
+:release-date: 2019-12-10 3:55 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Fixed typing related issues.
+
+- Added :file:`__init__.py` to `mode.utils` package.
+
+.. _version-4.1.4:
 
 4.1.4
 =====
