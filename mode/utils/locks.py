@@ -39,7 +39,7 @@ class Event:
         """Return True if and only if the internal flag is true."""
         return self._value
 
-    def set(self):
+    def set(self) -> None:
         """Set the internal flag to true.
 
         All coroutines waiting for it to become true are awakened.
@@ -52,7 +52,7 @@ class Event:
                 if not fut.done():
                     fut.set_result(True)
 
-    def clear(self):
+    def clear(self) -> None:
         """Reset the internal flag to false.
 
         Subsequently, coroutines calling wait() will block until set()
@@ -60,7 +60,7 @@ class Event:
         """
         self._value = False
 
-    async def wait(self):
+    async def wait(self) -> bool:
         """Block until the internal flag is true.
 
         If the internal flag is true on entry, return True

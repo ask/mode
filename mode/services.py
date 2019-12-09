@@ -419,8 +419,7 @@ class Service(ServiceBase, ServiceCallbacks):
         return ServiceTask(fun)
 
     @classmethod
-    def timer(cls, interval: Seconds) -> Callable[
-            [Callable[[ServiceT], Awaitable[None]]], ServiceTask]:
+    def timer(cls, interval: Seconds) -> Callable[[Callable], ServiceTask]:
         """Background timer executing every ``n`` seconds.
 
         Example:

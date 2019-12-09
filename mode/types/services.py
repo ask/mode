@@ -3,11 +3,15 @@ import abc
 import asyncio
 from typing import (
     Any,
+    Awaitable,
     ContextManager,
+    Coroutine,
     MutableMapping,
     Optional,
     Set,
     Type,
+    TypeVar,
+    Union,
 )
 
 from mode.utils.contexts import AsyncExitStack, ExitStack
@@ -20,6 +24,10 @@ __all__ = [
     'DiagT',
     'ServiceT',
 ]
+
+T = TypeVar('T')
+
+AsyncFun = Union[Awaitable[T], Coroutine[Any, Any, T]]
 
 
 class DiagT(abc.ABC):

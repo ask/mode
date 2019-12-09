@@ -12,7 +12,7 @@ import sys
 import traceback
 import typing
 from contextlib import contextmanager, suppress
-from logging import Logger, StreamHandler
+from logging import Handler, Logger
 from typing import (
     Any,
     ClassVar,
@@ -89,7 +89,7 @@ class Worker(Service):
     loglevel: Optional[Union[str, int]]
     logfile: Optional[Union[str, IO]]
     console_port: int
-    loghandlers: List[StreamHandler]
+    loghandlers: List[Handler]
     redirect_stdouts: bool
     redirect_stdouts_level: int
 
@@ -116,7 +116,7 @@ class Worker(Service):
             stdout: IO = sys.stdout,
             stderr: IO = sys.stderr,
             console_port: int = 50101,
-            loghandlers: List[StreamHandler] = None,
+            loghandlers: List[Handler] = None,
             blocking_timeout: Seconds = 10.0,
             loop: asyncio.AbstractEventLoop = None,
             override_logging: bool = True,
