@@ -1,7 +1,7 @@
 """Context manager utilities."""
 import typing
 from types import TracebackType
-from typing import Any, ContextManager, Optional, Type, cast
+from typing import Any, Type
 
 if typing.TYPE_CHECKING:
     from ._py37_contextlib import AbstractAsyncContextManager

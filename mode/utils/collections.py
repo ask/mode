@@ -274,7 +274,7 @@ class FastUserSet(MutableSet[T]):
         return self.__and__(other)
 
     def __reduce__(self) -> tuple:
-        return self.data.__reduce__()  #type: ignore
+        return self.data.__reduce__()  # type: ignore
 
     def __reduce_ex__(self, protocol: Any) -> tuple:
         return self.data.__reduce_ex__(protocol)  # type: ignore
@@ -322,7 +322,8 @@ class FastUserSet(MutableSet[T]):
         return self.data.issuperset(other)  # type: ignore
 
     def symmetric_difference(self, other: _Setlike[T]) -> MutableSet[T]:
-        return cast(MutableSet,
+        return cast(
+            MutableSet,
             self.data.symmetric_difference(other))  # type: ignore
 
     def union(self, other: _Setlike[T]) -> MutableSet[T]:
@@ -582,7 +583,7 @@ class ManagedUserSet(FastUserSet[T]):
     def __isub__(self, other: AbstractSet[Any]) -> 'FastUserSet':
         self.on_change(
             added=set(),
-            removed=cast(Set, self.data).intersection(other)
+            removed=cast(Set, self.data).intersection(other),
         )
         self.data.__isub__(other)
         return self

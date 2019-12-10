@@ -505,7 +505,7 @@ class test_SetProxy:
         assert len(s) == 7
 
     def test_iter(self, *, s, orig):
-        assert sorted(list(iter(s))) == sorted(list(orig))
+        assert sorted(iter(s)) == sorted(orig)
 
     def test_isdisjoint(self, *, s):
         assert s.isdisjoint({10, 11, 12})

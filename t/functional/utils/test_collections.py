@@ -194,7 +194,7 @@ class test_FastUserSet:
 
     def test_iter(self, d):
         d.update({1, 2, 3})
-        assert list(sorted(iter(d))) == list(sorted([1, 2, 3]))
+        assert sorted(iter(d)) == sorted([1, 2, 3])
         assert set(d) == d
 
     def test_or(self, d):
