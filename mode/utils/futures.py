@@ -5,9 +5,10 @@ from typing import Any, Callable, Optional, Set, Type
 
 # These used to be here, now moved to .queues
 from .queues import FlowControlEvent, FlowControlQueue  # noqa: F401
+from .typing import NoReturn
 
 try:  # pragma: no cover
-    from asyncio import all_tasks
+    from asyncio import all_tasks  # type: ignore
 except ImportError:  # pragma: no cover
     def all_tasks(
             loop: asyncio.AbstractEventLoop) -> Set[asyncio.Task]:  # noqa
@@ -32,7 +33,7 @@ __all__ = [
 
 
 class StampedeWrapper:
-    fut: asyncio.Future = None
+    fut: Optional[asyncio.Future] = None
 
     def __init__(self,
                  fun: Callable,
@@ -100,7 +101,7 @@ class stampede:
         self.__module__ = fget.__module__
         self.__wrapped__ = fget
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> NoReturn:
         # here to support inspect.signature
         raise NotImplementedError()
 
@@ -134,7 +135,7 @@ async def maybe_async(res: Any) -> Any:
     return res
 
 
-def maybe_cancel(fut: asyncio.Future) -> bool:
+def maybe_cancel(fut: Optional[asyncio.Future]) -> bool:
     """Cancel future if it is cancellable."""
     if fut is not None and not fut.done():
         return fut.cancel()

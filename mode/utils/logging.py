@@ -1,4 +1,5 @@
 """Logging utilities."""
+import abc
 import asyncio
 import logging
 import logging.config
@@ -15,21 +16,25 @@ from time import asctime
 from types import TracebackType
 from typing import (
     Any,
+    AnyStr,
+    BinaryIO,
     Callable,
     ClassVar,
     ContextManager,
     Dict,
     IO,
     Iterable,
+    Iterator,
     List,
     Mapping,
     NamedTuple,
     Optional,
-    Sequence,
     Set,
+    TextIO,
     Tuple,
     Type,
     Union,
+    cast,
 )
 from .contexts import ExitStack
 from .futures import all_tasks, current_task
@@ -39,6 +44,7 @@ from .times import Seconds, want_seconds
 from .tracebacks import format_task_stack, print_task_stack
 
 import colorlog
+from typing_extensions import Protocol
 
 __all__ = [
     'CompositeLogger',
@@ -142,6 +148,16 @@ def get_logger(name: str) -> Logger:
 redirect_logger = get_logger('mode.redirect')
 
 
+class HasLog(Protocol):
+
+    @abc.abstractmethod
+    def log(self,
+            severity: int,
+            msg: str,
+            *args: Any, **kwargs: Any) -> None:
+        ...
+
+
 class LogSeverityMixin:
     """Mixin class that delegates standard logging methods to logger.
 
@@ -159,32 +175,32 @@ class LogSeverityMixin:
         ...        return self.logger.log(severity, msg, *args, **kwargs)
     """
 
-    def dev(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def dev(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         if DEVLOG:
-            self.info(msg, *args, **kwargs)
+            self.log(logging.INFO, msg, *args, **kwargs)
 
-    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def debug(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.DEBUG, msg, *args, **kwargs)
 
-    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def info(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.INFO, msg, *args, **kwargs)
 
-    def warn(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def warn(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.WARN, msg, *args, **kwargs)
 
-    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def warning(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.WARN, msg, *args, **kwargs)
 
-    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def error(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.ERROR, msg, *args, **kwargs)
 
-    def crit(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def crit(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.CRITICAL, msg, *args, **kwargs)
 
-    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def critical(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.CRITICAL, msg, *args, **kwargs)
 
-    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def exception(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log(logging.ERROR, msg, *args, exc_info=1, **kwargs)
 
 
@@ -230,7 +246,7 @@ class CompositeLogger(LogSeverityMixin):
                  logger: Logger,
                  formatter: Callable[..., str] = None) -> None:
         self.logger = logger
-        self.formatter: Callable[..., str] = formatter
+        self.formatter: Optional[Callable[..., str]] = formatter
 
     def log(self, severity: int, msg: str,
             *args: Any, **kwargs: Any) -> None:
@@ -261,11 +277,11 @@ class DefaultFormatter(logging.Formatter):
     """Default formatter adds support for extra data."""
 
     def format(self, record: logging.LogRecord) -> str:
-        record.extra = _format_extra(record)
+        record.extra = _format_extra(record)  # type: ignore
         return super().format(record)
 
 
-class ExtensionFormatter(colorlog.TTYColoredFormatter):  # pragma: no cover
+class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
     """Formatter that can register callbacks to format args.
 
     Extends :pypi:`colorlog`.
@@ -276,8 +292,8 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # pragma: no cover
 
     def format(self, record: logging.LogRecord) -> str:
         self._format_args(record)
-        record.extra = _format_extra(record)
-        return super().format(record)
+        record.extra = _format_extra(record)  # type: ignore
+        return cast(str, super().format(record))
 
     def _format_args(self, record: logging.LogRecord) -> None:
         if isinstance(record.args, Mapping):
@@ -306,7 +322,7 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # pragma: no cover
 @singledispatch
 def level_name(loglevel: int) -> str:
     """Convert log level to number."""
-    return logging.getLevelName(loglevel)
+    return cast(str, logging.getLevelName(loglevel))
 
 
 @level_name.register(str)
@@ -329,10 +345,10 @@ def setup_logging(
         *,
         loglevel: Union[str, int] = None,
         logfile: Union[str, IO] = None,
-        loghandlers: List[logging.StreamHandler] = None,
+        loghandlers: List[logging.Handler] = None,
         logging_config: Dict = None) -> int:
     """Configure logging subsystem."""
-    stream: IO = None
+    stream: Optional[IO] = None
     _loglevel: int = level_number(loglevel)
     if not isinstance(logfile, str):
         stream, logfile = logfile, None
@@ -360,7 +376,7 @@ def _setup_logging(*,
                    level: Union[int, str] = None,
                    filename: str = None,
                    stream: IO = None,
-                   loghandlers: List[logging.StreamHandler] = None,
+                   loghandlers: List[logging.Handler] = None,
                    logging_config: Dict = None) -> None:
     handlers = {}
     if filename:
@@ -414,7 +430,7 @@ class Logwrapped(object):
                  ident: str = '') -> None:
         self.obj = obj
         self.logger = logger
-        self.severity = level_number(severity) if severity else severity
+        self.severity = level_number(severity) if severity else logging.WARN
         self.ident = ident
 
     def __getattr__(self, key: str) -> Any:
@@ -444,10 +460,10 @@ class Logwrapped(object):
 
         return __wrapped
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self.obj)
 
-    def __dir__(self):
+    def __dir__(self) -> List[str]:
         return dir(self.obj)
 
 
@@ -512,7 +528,6 @@ def print_task_name(task: asyncio.Task, file: IO) -> None:
 
 class LogMessage(NamedTuple):
     """Archived log message."""
-
     severity: int
     message: str
     asctime: str
@@ -584,16 +599,17 @@ class flight_recorder(ContextManager, LogSeverityMixin):
     and should consider adding a timeout to it.
     """
 
-    _id_source: ClassVar[Iterable[int]] = count(1)
+    _id_source: ClassVar[Iterator[int]] = count(1)
 
     logger: Any
     timeout: float
     loop: asyncio.AbstractEventLoop
-    started_at_date: str
+    started_at_date: Optional[str]
     enabled_by: Optional[asyncio.Task]
+    extra_context: Dict[str, Any]
 
-    _fut: asyncio.Future
-    _logs: List[Tuple[int, str, Tuple[Any], Dict[str, Any]]]
+    _fut: Optional[asyncio.Future]
+    _logs: List[LogMessage]
     _default_context: Dict[str, Any]
 
     def __init__(self, logger: Any, *,
@@ -723,6 +739,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
                  exc_tb: TracebackType = None) -> Optional[bool]:
         self.exit_stack.__exit__(exc_type, exc_val, exc_tb)
         self.cancel()
+        return None
 
 
 class _FlightRecorderProxy(LogSeverityMixin):
@@ -739,14 +756,12 @@ class _FlightRecorderProxy(LogSeverityMixin):
         return current_flight_recorder()
 
 
-class FileLogProxy:
+class FileLogProxy(TextIO):
     """File-like object that forwards data to logger."""
 
-    mode: str = 'w'
-    name: str = None
-    closed: bool = False
     severity: int = logging.WARN
     _threadlocal: threading.local = threading.local()
+    _closed: bool = False
 
     def __init__(self, logger: Logger, *, severity: Severity = None) -> None:
         self.logger = logger
@@ -756,7 +771,7 @@ class FileLogProxy:
             self.severity = self.logger.level
         self._safewrap_handlers()
 
-    def _safewrap_handlers(self):
+    def _safewrap_handlers(self) -> None:
         for handler in self.logger.handlers:
             self._safewrap_handler(handler)
 
@@ -772,37 +787,114 @@ class FileLogProxy:
                 except IOError:
                     pass    # see python issue 5971
 
-        handler.handleError = WithSafeHandleError().handleError
+        handler.handleError = WithSafeHandleError().handleError  # type: ignore
 
-    def write(self, data: Any) -> None:
+    def write(self, s: AnyStr) -> int:
         if not getattr(self._threadlocal, 'recurse_protection', False):
-            data = data.strip()
+            data = s.strip()
             if data and not self.closed:
                 self._threadlocal.recurse_protection = True
                 try:
                     self.logger.log(self.severity, data)
                 finally:
                     self._threadlocal.recurse_protection = False
+        return len(s)
 
-    def writelines(self, lines: Sequence[str]) -> None:
+    def writelines(self, lines: Iterable[str]) -> None:
         for line in lines:
             self.write(line)
+
+    @property
+    def buffer(self) -> BinaryIO:
+        raise NotImplementedError()
+
+    @property
+    def encoding(self) -> str:
+        return sys.getdefaultencoding()
+
+    @property
+    def errors(self) -> Optional[str]:
+        return None
+
+    def line_buffering(self) -> bool:
+        return False
+
+    @property
+    def newlines(self) -> bool:
+        return False
 
     def flush(self) -> None:
         ...
 
+    @property
+    def mode(self) -> str:
+        return 'w'
+
+    @property
+    def name(self) -> str:
+        return ''
+
     def close(self) -> None:
-        self.closed = True
+        self._closed = True
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
+
+    def fileno(self) -> int:
+        raise NotImplementedError()
 
     def isatty(self) -> bool:
         return False
+
+    def read(self, n: int = -1) -> AnyStr:
+        raise NotImplementedError()
+
+    def readable(self) -> bool:
+        return False
+
+    def readline(self, limit: int = -1) -> AnyStr:
+        raise NotImplementedError()
+
+    def readlines(self, hint: int = -1) -> List[AnyStr]:
+        raise NotImplementedError()
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        raise NotImplementedError()
+
+    def seekable(self) -> bool:
+        return False
+
+    def tell(self) -> int:
+        raise NotImplementedError()
+
+    def truncate(self, size: int = None) -> int:
+        raise NotImplementedError()
+
+    def writable(self) -> bool:
+        return True
+
+    def __iter__(self) -> Iterator[str]:
+        raise NotImplementedError()
+
+    def __next__(self) -> str:
+        raise NotImplementedError()
+
+    def __enter__(self) -> 'FileLogProxy':
+        return self
+
+    def __exit__(self,
+                 exc_type: Type[BaseException] = None,
+                 exc_val: BaseException = None,
+                 exc_tb: TracebackType = None) -> Optional[bool]:
+        ...
 
 
 @contextmanager
 def redirect_stdouts(logger: Logger = redirect_logger, *,
                      severity: Severity = None,
                      stdout: bool = True,
-                     stderr: bool = True) -> ContextManager[FileLogProxy]:
+                     stderr: bool = True) -> Iterator[FileLogProxy]:
     """Redirect :data:`sys.stdout` and :data:`sys.stdout` to logger."""
     proxy = FileLogProxy(logger, severity=severity)
     if stdout:

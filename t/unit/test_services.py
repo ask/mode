@@ -651,29 +651,29 @@ class test_Service:
     @pytest.mark.asyncio
     async def test__gather_futures__raises_cancel(self, *, service):
         service._futures = [Mock()]
-        service._wait_for_futures = AsyncMock()
+        service._maybe_wait_for_futures = AsyncMock()
 
         def on_wait_for_futures(**kwargs):
-            if service._wait_for_futures.call_count >= 3:
+            if service._maybe_wait_for_futures.call_count >= 3:
                 service._futures.clear()
             raise asyncio.CancelledError()
-        service._wait_for_futures.coro.side_effect = on_wait_for_futures
+        service._maybe_wait_for_futures.coro.side_effect = on_wait_for_futures
 
         await service._gather_futures()
 
-        assert service._wait_for_futures.call_count == 3
+        assert service._maybe_wait_for_futures.call_count == 3
 
     @pytest.mark.asyncio
-    async def test__wait_for_futures__ValueError_left(self, *, service):
+    async def test__maybe_wait_for_futures__ValueError_left(self, *, service):
         service._futures = [Mock()]
         with patch('asyncio.shield', AsyncMock()) as shield:
             with patch('asyncio.wait', AsyncMock()):
                 shield.coro.side_effect = ValueError()
                 with pytest.raises(ValueError):
-                    await service._wait_for_futures()
+                    await service._maybe_wait_for_futures()
 
     @pytest.mark.asyncio
-    async def test__wait_for_futures__ValueError_empty(self, *, service):
+    async def test__maybe_wait_for_futures__ValueError_empty(self, *, service):
         service._futures = [Mock()]
         with patch('asyncio.shield', AsyncMock()) as shield:
             with patch('asyncio.wait', AsyncMock()):
@@ -683,15 +683,15 @@ class test_Service:
                     raise ValueError()
 
                 shield.side_effect = on_shield
-                await service._wait_for_futures()
+                await service._maybe_wait_for_futures()
 
     @pytest.mark.asyncio
-    async def test__wait_for_futures__CancelledError(self, *, service):
+    async def test__maybe_wait_for_futures__CancelledError(self, *, service):
         service._futures = [Mock()]
         with patch('asyncio.shield', AsyncMock()) as shield:
             with patch('asyncio.wait', AsyncMock()):
                 shield.coro.side_effect = asyncio.CancelledError()
-                await service._wait_for_futures()
+                await service._maybe_wait_for_futures()
 
     @pytest.mark.asyncio
     async def test_itertimer(self, *, service):

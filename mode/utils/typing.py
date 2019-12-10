@@ -9,13 +9,9 @@ from typing import (
     AsyncIterator,
     Dict,
     Generic,
-    KT,
     MutableMapping,
     MutableSequence,
-    T,
-    T_co,
-    T_contra,
-    VT,
+    TypeVar,
 )
 
 __all__ = [
@@ -26,6 +22,13 @@ __all__ = [
     'Deque',
     'NoReturn',
 ]
+
+T = TypeVar('T')
+T_co = TypeVar('T_co', covariant=True)
+T_contra = TypeVar('T_contra', contravariant=True)
+KT = TypeVar('KT')
+VT = TypeVar('VT')
+
 
 if typing.TYPE_CHECKING:
     from typing import AsyncContextManager

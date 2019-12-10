@@ -98,7 +98,6 @@ class Bucket(AsyncContextManager):
     """
 
     rate: float
-    fill_rate: float
     capacity: float
 
     _tokens: float
@@ -195,18 +194,18 @@ def rate(r: float) -> float:
 
 
 @rate.register(str)
-def _(r: str) -> float:  # noqa: F811
+def _rate_str(r: str) -> float:  # noqa: F811
     ops, _, modifier = r.partition('/')
     return RATE_MODIFIER_MAP[modifier or 's'](float(ops)) or 0
 
 
 @rate.register(int)  # noqa: F811
-def _(r: int) -> float:
+def _rate_int(r: int) -> float:
     return float(r)
 
 
 @rate.register(type(None))  # noqa: F811
-def _(r: type(None)) -> float:
+def _rate_None(r: None) -> float:
     return 0.0
 
 
@@ -226,12 +225,12 @@ def want_seconds(s: float) -> float:
 
 
 @want_seconds.register(str)  # noqa: F811
-def _(s: str) -> float:
+def _want_seconds_str(s: str) -> float:
     return rate(s)
 
 
 @want_seconds.register(timedelta)  # noqa: F811
-def _(s: timedelta) -> float:
+def _want_seconds_timedelta(s: timedelta) -> float:
     return s.total_seconds()
 
 
@@ -257,7 +256,7 @@ def humanize_seconds(secs: float, *,
         if secs >= divider:
             w = secs / float(divider)
             return '{0}{1}{2} {3}'.format(prefix, sep, formatter(w),
-                                          pluralize(w, unit))
+                                          pluralize(int(w), unit))
     if microseconds and secs > 0.0:
         return '{prefix}{sep}{0:.2f} seconds'.format(
             secs, sep=sep, prefix=prefix)

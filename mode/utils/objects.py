@@ -21,6 +21,7 @@ from typing import (
     MutableMapping,
     MutableSequence,
     MutableSet,
+    Optional,
     Sequence,
     Set,
     Tuple,
@@ -43,12 +44,22 @@ else:  # pragma: no cover
     def _is_class_var(x: Any) -> bool:
         return type(x) is _ClassVar
 
-try:
-    # CPython 3.7
-    from typing import ForwardRef  # type: ignore
-except ImportError:  # pragma: no cover
-    # CPython 3.6
-    from typing import _ForwardRef as ForwardRef  # type: ignore
+if typing.TYPE_CHECKING:
+    class ForwardRef:  # noqa
+        __forward_arg__: str
+        __forward_evaluated__: bool
+        __forward_value__: Type
+        __forward_code__: Any
+
+        def __init__(self, arg: str, is_argument: bool = True) -> None:
+            ...
+else:
+    try:
+        # CPython 3.7
+        from typing import ForwardRef
+    except ImportError:  # pragma: no cover
+        # CPython 3.6
+        from typing import _ForwardRef as ForwardRef
 
 __all__ = [
     'FieldMapping',
@@ -465,8 +476,8 @@ def _remove_optional(typ: Type, *,
         if typ.__origin__ is typing.Union:
             # Optional[List[int]] -> Union[List[int], NoneType]
             found_None = False
-            union_type_args = None
-            union_type = None
+            union_type_args: Optional[List] = None
+            union_type: Optional[Type] = None
             for arg in args:
                 if arg is None or arg is type(None):  # noqa
                     found_None = True
@@ -477,7 +488,7 @@ def _remove_optional(typ: Type, *,
                     if find_origin:
                         union_type = getattr(arg, '__origin__', arg)
             if union_type is not None and found_None:
-                return union_type_args, union_type
+                return cast(List, union_type_args), union_type
         else:
             if find_origin:
                 # List[int] -> ((int,), list)
@@ -497,9 +508,10 @@ def _remove_optional(typ: Type, *,
                 union_type_args = getattr(arg, '__args__', ())
                 union_type = arg
                 if find_origin:
-                    union_type = _py36_maybe_unwrap_GenericMeta(union_type)
+                    if union_type is not None:
+                        union_type = _py36_maybe_unwrap_GenericMeta(union_type)
         if union_type is not None and found_None:
-            return union_type_args, union_type
+            return cast(List, union_type_args), union_type
     if find_origin:
         typ = _py36_maybe_unwrap_GenericMeta(typ)
 
@@ -510,8 +522,8 @@ def _py36_maybe_unwrap_GenericMeta(typ: Type) -> Type:
     if typ.__class__.__name__ == 'GenericMeta':  # Py3.6
         orig_bases = typ.__orig_bases__
         if orig_bases and orig_bases[0] in (list, tuple, dict, set):
-            return orig_bases[0]
-    return getattr(typ, '__origin__', typ)
+            return cast(Type, orig_bases[0])
+    return cast(Type, getattr(typ, '__origin__', typ))
 
 
 def guess_polymorphic_type(
@@ -570,10 +582,10 @@ def shortlabel(s: Any) -> str:
 
 
 def _label(label_attr: str, s: Any,
-           pass_types: Tuple[Type] = (str,),
-           str_types: Tuple[Type] = (str, int, float, Decimal)) -> str:
+           pass_types: Tuple[Type, ...] = (str,),
+           str_types: Tuple[Type, ...] = (str, int, float, Decimal)) -> str:
     if isinstance(s, pass_types):
-        return s
+        return cast(str, s)
     elif isinstance(s, str_types):
         return str(s)
     return str(
@@ -613,17 +625,17 @@ class cached_property(Generic[RT]):
 
     def __init__(self,
                  fget: Callable[[Any], RT],
-                 fset: Callable[[Any, RT], None] = None,
+                 fset: Callable[[Any, RT], RT] = None,
                  fdel: Callable[[Any, RT], None] = None,
                  doc: str = None,
                  class_attribute: str = None) -> None:
         self.__get: Callable[[Any], RT] = fget
-        self.__set: Callable[[Any, RT], RT] = fset
-        self.__del: Callable[[Any, RT], None] = fdel
+        self.__set: Optional[Callable[[Any, RT], RT]] = fset
+        self.__del: Optional[Callable[[Any, RT], None]] = fdel
         self.__doc__ = doc or fget.__doc__
         self.__name__ = fget.__name__
         self.__module__ = fget.__module__
-        self.class_attribute: str = class_attribute
+        self.class_attribute: Optional[str] = class_attribute
 
     def is_set(self, obj: Any) -> bool:
         return self.__name__ in obj.__dict__
@@ -633,10 +645,10 @@ class cached_property(Generic[RT]):
                 type: Type = None) -> RT:
         if obj is None:
             if type is not None and self.class_attribute:
-                return getattr(type, self.class_attribute)
+                return cast(RT, getattr(type, self.class_attribute))
             return cast(RT, self)  # just have to cast this :-(
         try:
-            return obj.__dict__[self.__name__]
+            return cast(RT, obj.__dict__[self.__name__])
         except KeyError:
             value = obj.__dict__[self.__name__] = self.__get(obj)
             return value
@@ -651,7 +663,7 @@ class cached_property(Generic[RT]):
         if self.__del is not None and value is not _sentinel:
             self.__del(obj, value)
 
-    def setter(self, fset: Callable[[Any, RT], None]) -> 'cached_property':
+    def setter(self, fset: Callable[[Any, RT], RT]) -> 'cached_property':
         return self.__class__(self.__get, fset, self.__del)
 
     def deleter(self, fdel: Callable[[Any, RT], None]) -> 'cached_property':

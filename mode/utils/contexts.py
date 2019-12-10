@@ -1,17 +1,24 @@
 """Context manager utilities."""
+import typing
 from types import TracebackType
-from typing import Any, Optional, Type
+from typing import Any, ContextManager, Optional, Type, cast
 
-try:  # pragma: no cover
-    from contextlib import AbstractAsyncContextManager
-    from contextlib import AsyncExitStack, ExitStack
-    from contextlib import asynccontextmanager
-    from contextlib import nullcontext
-except ImportError:  # pragma: no cover
+if typing.TYPE_CHECKING:
     from ._py37_contextlib import AbstractAsyncContextManager
     from ._py37_contextlib import AsyncExitStack, ExitStack
     from ._py37_contextlib import asynccontextmanager
     from ._py37_contextlib import nullcontext
+else:
+    try:  # pragma: no cover
+        from contextlib import AbstractAsyncContextManager
+        from contextlib import AsyncExitStack, ExitStack
+        from contextlib import asynccontextmanager
+        from contextlib import nullcontext
+    except ImportError:  # pragma: no cover
+        from ._py37_contextlib import AbstractAsyncContextManager
+        from ._py37_contextlib import AsyncExitStack, ExitStack
+        from ._py37_contextlib import asynccontextmanager
+        from ._py37_contextlib import nullcontext
 
 __all__ = [
     'AbstractAsyncContextManager',
@@ -49,11 +56,11 @@ class asyncnullcontext(AbstractAsyncContextManager):
     def __init__(self, enter_result: Any = None) -> None:
         self.enter_result = enter_result
 
-    async def __aenter__(self) -> 'asyncnullcontext':
+    async def __aenter__(self) -> Any:
         return self.enter_result
 
     async def __aexit__(self,
                         exc_type: Type[BaseException] = None,
                         exc_val: BaseException = None,
-                        exc_tb: TracebackType = None) -> Optional[bool]:
+                        exc_tb: TracebackType = None) -> None:
         ...

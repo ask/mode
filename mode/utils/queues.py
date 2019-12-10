@@ -2,7 +2,7 @@
 import asyncio
 import typing
 from collections import deque
-from typing import Any, TypeVar
+from typing import Any, List, TypeVar, cast
 from weakref import WeakSet
 from .locks import Event
 from .typing import Deque
@@ -97,11 +97,11 @@ class FlowControlQueue(asyncio.Queue):
 
     def __init__(self, maxsize: int = 0,
                  *,
-                 flow_control: FlowControlEvent = None,
+                 flow_control: FlowControlEvent,
                  clear_on_resume: bool = False,
                  **kwargs: Any) -> None:
-        self._flow_control = flow_control
-        self._clear_on_resume = clear_on_resume
+        self._flow_control: FlowControlEvent = flow_control
+        self._clear_on_resume: bool = clear_on_resume
         if self._clear_on_resume:
             self._flow_control.manage_queue(self)
         super().__init__(maxsize, **kwargs)
@@ -109,7 +109,7 @@ class FlowControlQueue(asyncio.Queue):
     def clear(self) -> None:
         self._queue.clear()  # type: ignore
 
-    async def put(self, value: _T) -> None:  # type: ignore
+    async def put(self, value: _T) -> None:
         await self._flow_control.acquire()
         await super().put(value)
 
@@ -118,6 +118,7 @@ class ThrowableQueue(FlowControlQueue):
     """Queue that can be notified of errors."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self._putters: List[asyncio.Future]
         super().__init__(*args, **kwargs)
         self._errors: Deque[BaseException] = deque()
 
@@ -140,7 +141,7 @@ class ThrowableQueue(FlowControlQueue):
     def get_nowait(self) -> _T:
         if self._errors:
             raise self._errors.popleft()
-        return super().get_nowait()
+        return cast(_T, super().get_nowait())
 
     async def throw(self, exc: BaseException) -> None:
         self._throw(exc)

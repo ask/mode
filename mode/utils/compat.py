@@ -50,6 +50,6 @@ def isatty(fh: IO) -> bool:
         return False
 
 
-class DummyContext(nullcontext, asyncnullcontext):  # pragma: no cover
+class DummyContext(nullcontext, asyncnullcontext):
     """Context for with-statement doing nothing."""
     # XXX deprecated, use nullcontext or asyncnullcontext

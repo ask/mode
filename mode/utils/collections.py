@@ -2,6 +2,7 @@
 import abc
 import collections.abc
 import threading
+import typing
 from collections import OrderedDict, UserList
 from heapq import (
     heapify,
@@ -18,6 +19,7 @@ from typing import (
     Callable,
     ContextManager,
     Dict,
+    Generic,
     ItemsView,
     Iterable,
     Iterator,
@@ -27,6 +29,7 @@ from typing import (
     MutableMapping,
     MutableSequence,
     MutableSet,
+    Optional,
     Sequence,
     Set,
     Tuple,
@@ -39,11 +42,14 @@ from typing import (
 
 from .contexts import nullcontext
 
-try:
+if typing.TYPE_CHECKING:
     from django.utils.functional import LazyObject, LazySettings
-except ImportError:
-    class LazyObject: ...  # noqa
-    class LazySettings: ...  # noqa
+else:
+    try:
+        from django.utils.functional import LazyObject, LazySettings
+    except ImportError:
+        class LazyObject: ...  # noqa
+        class LazySettings: ...  # noqa
 
 __all__ = [
     'Heap',
@@ -60,8 +66,10 @@ __all__ = [
 ]
 
 T = TypeVar('T')
+T_co = TypeVar('T_co', covariant=True)
 KT = TypeVar('KT')
 VT = TypeVar('VT')
+_S = TypeVar('_S')
 
 _Setlike = Union[AbstractSet[T], Iterable[T]]
 
@@ -73,12 +81,16 @@ class Heap(MutableSequence[T]):
         self.data = list(data or [])
         heapify(self.data)
 
-    def pop(self) -> T:
+    def pop(self, index: int = 0) -> T:
         """Pop the smallest item off the heap.
 
         Maintains the heap invariant.
         """
-        return heappop(self.data)
+        if index == 0:
+            return heappop(self.data)
+        else:
+            raise NotImplementedError(
+                'Heap can only pop index 0, please use h.data.pop(index)')
 
     def push(self, item: T) -> None:
         """Push item onto heap, maintaining the heap invariant."""
@@ -109,11 +121,17 @@ class Heap(MutableSequence[T]):
 
     def nlargest(self, n: int, key: Callable = None) -> List[T]:
         """Find the n largest elements in the dataset."""
-        return nlargest(n, self.data, key=key)
+        if key is not None:
+            return nlargest(n, self.data, key=key)
+        else:
+            return nlargest(n, self.data)
 
     def nsmallest(self, n: int, key: Callable = None) -> List[T]:
         """Find the n smallest elements in the dataset."""
-        return nsmallest(n, self.data, key=key)
+        if key is not None:
+            return nsmallest(n, self.data, key=key)
+        else:
+            return nsmallest(n, self.data)
 
     def insert(self, index: int, object: T) -> None:
         self.data.insert(index, object)
@@ -173,7 +191,7 @@ class FastUserDict(MutableMapping[KT, VT]):
     @classmethod
     def fromkeys(cls,
                  iterable: Iterable[KT],
-                 value: VT = None) -> 'FastUserSet':
+                 value: VT = None) -> 'FastUserDict':
         d = cls()
         d.update({k: value for k in iterable})
         return d
@@ -199,14 +217,14 @@ class FastUserDict(MutableMapping[KT, VT]):
 
     # Rest is fast versions of generic slow MutableMapping methods.
 
-    def __contains__(self, key: KT) -> bool:
+    def __contains__(self, key: object) -> bool:
         return key in self.data
 
     def __repr__(self) -> str:
         return repr(self.data)
 
     def copy(self) -> dict:
-        return self.data.copy()
+        return dict(self.data)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         self.data.update(*args, **kwargs)
@@ -231,8 +249,8 @@ class FastUserSet(MutableSet[T]):
 
     # -- Immutable Methods --
 
-    def __and__(self, other: Set) -> Set:
-        return self.data.__and__(other)
+    def __and__(self, other: AbstractSet[Any]) -> MutableSet[T]:
+        return cast(MutableSet, self.data.__and__(other))
 
     def __contains__(self, key: Any) -> bool:
         return self.data.__contains__(key)
@@ -249,29 +267,29 @@ class FastUserSet(MutableSet[T]):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __or__(self, other: AbstractSet[T]) -> Set[T]:
+    def __or__(self, other: AbstractSet) -> AbstractSet[Union[T, T_co]]:
         return self.data.__or__(other)
 
-    def __rand__(self, other: AbstractSet[T]) -> Set[T]:
+    def __rand__(self, other: AbstractSet[T]) -> MutableSet[T]:
         return self.__and__(other)
 
     def __reduce__(self) -> tuple:
-        return self.data.__reduce__()
+        return self.data.__reduce__()  #type: ignore
 
     def __reduce_ex__(self, protocol: Any) -> tuple:
-        return self.data.__reduce_ex__(protocol)
+        return self.data.__reduce_ex__(protocol)  # type: ignore
 
     def __repr__(self) -> str:
         return repr(self.data)
 
-    def __ror__(self, other: AbstractSet[T]) -> Set[T]:
-        return self.data.__ror__(other)
+    def __ror__(self, other: AbstractSet[T]) -> MutableSet[T]:
+        return cast(MutableSet, self.data.__ror__(other))  # type: ignore
 
-    def __rsub__(self, other: AbstractSet[T]) -> Set[T]:
-        return other.__rsub__(self.data)
+    def __rsub__(self, other: AbstractSet[T]) -> MutableSet[T]:
+        return cast(MutableSet, other.__rsub__(self.data))  # type: ignore
 
-    def __rxor__(self, other: AbstractSet[T]) -> Set[T]:
-        return other.__rxor__(self.data)
+    def __rxor__(self, other: AbstractSet[T]) -> MutableSet[T]:
+        return cast(MutableSet, other.__rxor__(self.data))  # type: ignore
 
     def __sizeof__(self) -> int:
         return self.data.__sizeof__()
@@ -279,51 +297,52 @@ class FastUserSet(MutableSet[T]):
     def __str__(self) -> str:
         return str(self.data)
 
-    def __sub__(self, other: AbstractSet[T]) -> Set[T]:
-        return self.data.__sub__(other)
+    def __sub__(self, other: AbstractSet[Any]) -> MutableSet[T_co]:
+        return cast(MutableSet, self.data.__sub__(other))
 
-    def __xor__(self, other: AbstractSet[T]) -> Set[T]:
-        return self.data.__xor__(other)
+    def __xor__(self, other: AbstractSet) -> MutableSet[T]:
+        return cast(MutableSet, self.data.__xor__(other))
 
-    def copy(self) -> Set[T]:
-        return self.data.copy()
+    def copy(self) -> MutableSet[T]:
+        return set(self.data)
 
-    def difference(self, other: _Setlike[T]) -> Set[T]:
-        return self.data.difference(other)
+    def difference(self, other: _Setlike[T]) -> MutableSet[T]:
+        return self.data.difference(other)  # type: ignore
 
-    def intersection(self, other: _Setlike[T]) -> Set[T]:
-        return self.data.intersection(other)
+    def intersection(self, other: _Setlike[T]) -> MutableSet[T]:
+        return self.data.intersection(other)  # type: ignore
 
-    def isdisjoint(self, other: AbstractSet[T]) -> bool:
+    def isdisjoint(self, other: Iterable[T]) -> bool:
         return self.data.isdisjoint(other)
 
     def issubset(self, other: AbstractSet[T]) -> bool:
-        return self.data.issubset(other)
+        return self.data.issubset(other)  # type: ignore
 
     def issuperset(self, other: AbstractSet[T]) -> bool:
-        return self.data.issuperset(other)
+        return self.data.issuperset(other)  # type: ignore
 
-    def symmetric_difference(self, other: _Setlike[T]) -> Set[T]:
-        return self.data.symmetric_difference(other)
+    def symmetric_difference(self, other: _Setlike[T]) -> MutableSet[T]:
+        return cast(MutableSet,
+            self.data.symmetric_difference(other))  # type: ignore
 
-    def union(self, other: _Setlike[T]) -> Set[T]:
-        return self.data.union(other)
+    def union(self, other: _Setlike[T]) -> MutableSet[T]:
+        return cast(MutableSet, self.data.union(other))  # type: ignore
 
     # -- Mutable Methods --
 
-    def __iand__(self, other: AbstractSet[T]) -> 'FastUserSet':
+    def __iand__(self, other: AbstractSet[Any]) -> 'FastUserSet':
         self.data.__iand__(other)
         return self
 
-    def __ior__(self, other: AbstractSet[T]) -> 'FastUserSet':
+    def __ior__(self, other: AbstractSet[_S]) -> 'FastUserSet':
         self.data.__ior__(other)
         return self
 
-    def __isub__(self, other: AbstractSet[T]) -> 'FastUserSet':
+    def __isub__(self, other: AbstractSet[Any]) -> 'FastUserSet[T]':
         self.data.__isub__(other)
         return self
 
-    def __ixor__(self, other: AbstractSet[T]) -> 'FastUserSet':
+    def __ixor__(self, other: AbstractSet[_S]) -> 'FastUserSet':
         self.data.__ixor__(other)
         return self
 
@@ -334,13 +353,13 @@ class FastUserSet(MutableSet[T]):
         self.data.clear()
 
     def difference_update(self, other: _Setlike[T]) -> None:
-        self.data.difference_update(other)
+        self.data.difference_update(other)  # type: ignore
 
     def discard(self, element: T) -> None:
         self.data.discard(element)
 
     def intersection_update(self, other: _Setlike[T]) -> None:
-        self.data.intersection_update(other)
+        self.data.intersection_update(other)  # type: ignore
 
     def pop(self) -> T:
         return self.data.pop()
@@ -349,44 +368,44 @@ class FastUserSet(MutableSet[T]):
         self.data.remove(element)
 
     def symmetric_difference_update(self, other: _Setlike[T]) -> None:
-        self.data.symmetric_difference_update(other)
+        self.data.symmetric_difference_update(other)  # type: ignore
 
     def update(self, other: _Setlike[T]) -> None:
-        self.data.update(other)
+        self.data.update(other)  # type: ignore
 
 
 class FastUserList(UserList):
     """Proxy to list."""
 
 
-class MappingViewProxy(abc.ABC):
+class MappingViewProxy(Generic[KT, VT]):
 
     @abc.abstractmethod
-    def _keys(self) -> Iterable[KT]:
+    def _keys(self) -> Iterator[KT]:
         ...
 
     @abc.abstractmethod
-    def _values(self) -> Iterable[VT]:
+    def _values(self) -> Iterator[VT]:
         ...
 
     @abc.abstractmethod
-    def _items(self) -> Iterable[Tuple[KT, VT]]:
+    def _items(self) -> Iterator[Tuple[KT, VT]]:
         ...
 
 
-class ProxyKeysView(KeysView):
+class ProxyKeysView(KeysView[KT]):
 
-    def __init__(self, mapping: MappingViewProxy) -> None:
-        self._mapping = mapping
+    def __init__(self, mapping: MappingViewProxy[KT, Any]) -> None:
+        self._mapping: MappingViewProxy[KT, Any] = mapping
 
     def __iter__(self) -> Iterator[KT]:
         return self._mapping._keys()
 
 
-class ProxyValuesView(ValuesView):
+class ProxyValuesView(ValuesView[VT]):
 
-    def __init__(self, mapping: MappingViewProxy) -> None:
-        self._mapping = mapping
+    def __init__(self, mapping: MappingViewProxy[Any, VT]) -> None:
+        self._mapping: MappingViewProxy[Any, VT] = mapping
 
     def __iter__(self) -> Iterator[VT]:
         yield from self._mapping._values()
@@ -413,7 +432,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
             to access/mutate the cache.
     """
 
-    limit: int
+    limit: Optional[int]
     thread_safety: bool
     _mutex: ContextManager
     data: OrderedDict
@@ -429,7 +448,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
     def __getitem__(self, key: KT) -> VT:
         with self._mutex:
             value = self[key] = self.data.pop(key)
-            return value
+            return cast(VT, value)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         with self._mutex:
@@ -495,7 +514,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
     def _new_lock(self) -> ContextManager:
         if self.thread_safety:
             return cast(ContextManager, threading.RLock())
-        return nullcontext()
+        return cast(ContextManager, nullcontext())
 
     def __getstate__(self) -> Mapping[str, Any]:
         d = dict(vars(self))
@@ -542,50 +561,71 @@ class ManagedUserSet(FastUserSet[T]):
         return element
 
     def raw_update(self, *args: Any, **kwargs: Any) -> None:
-        self.data.update(*args, **kwargs)
+        self.data.update(*args, **kwargs)  # type: ignore
 
-    def __iand__(self, other: AbstractSet[T]) -> 'FastUserSet':
-        self.on_change(added=set(), removed=self.difference(other))
+    def __iand__(self, other: AbstractSet[Any]) -> 'FastUserSet':
+        self.on_change(
+            added=set(),
+            removed=cast(Set, self).difference(other),
+        )
         self.data.__iand__(other)
         return self
 
-    def __ior__(self, other: AbstractSet[T]) -> 'FastUserSet':
-        self.on_change(added=other.difference(self), removed=set())
+    def __ior__(self, other: AbstractSet[_S]) -> 'FastUserSet':
+        self.on_change(
+            added=cast(Set, other).difference(self),
+            removed=set(),
+        )
         self.data.__ior__(other)
         return self
 
-    def __isub__(self, other: AbstractSet[T]) -> 'FastUserSet':
-        self.on_change(added=set(), removed=self.data.intersection(other))
+    def __isub__(self, other: AbstractSet[Any]) -> 'FastUserSet':
+        self.on_change(
+            added=set(),
+            removed=cast(Set, self.data).intersection(other)
+        )
         self.data.__isub__(other)
         return self
 
-    def __ixor__(self, other: AbstractSet[T]) -> 'FastUserSet':
+    def __ixor__(self, other: AbstractSet[_S]) -> 'FastUserSet':
         self.on_change(
-            added=other.difference(self.data),
-            removed=self.data.intersection(other),
+            added=cast(Set, other).difference(self.data),
+            removed=cast(Set, self.data).intersection(other),
         )
         self.data.__ixor__(other)
         return self
 
     def difference_update(self, other: _Setlike[T]) -> None:
-        self.on_change(added=set(), removed=self.data.intersection(other))
-        self.data.difference_update(other)
+        data = cast(Set, self.data)
+        self.on_change(
+            added=set(),
+            removed=data.intersection(other),
+        )
+        data.difference_update(other)
 
     def intersection_update(self, other: _Setlike[T]) -> None:
-        self.on_change(added=set(), removed=self.difference(other))
-        self.data.intersection_update(other)
+        data = cast(Set, self.data)
+        self.on_change(
+            added=set(),
+            removed=cast(Set, self).difference(other),
+        )
+        data.intersection_update(other)
 
     def symmetric_difference_update(self, other: _Setlike[T]) -> None:
+        data = cast(Set, self.data)
         self.on_change(
-            added=other.difference(self.data),
-            removed=self.data.intersection(other),
+            added=cast(Set, other).difference(self.data),
+            removed=data.intersection(other),
         )
-        self.data.symmetric_difference_update(other)
+        data.symmetric_difference_update(other)
 
     def update(self, other: _Setlike[T]) -> None:
         # union update
-        self.on_change(added=other.difference(self), removed=set())
-        self.data.update(other)
+        self.on_change(
+            added=cast(Set, other).difference(self),
+            removed=set(),
+        )
+        cast(Set, self.data).update(other)
 
 
 class ManagedUserDict(FastUserDict[KT, VT]):
@@ -644,7 +684,7 @@ class AttributeDictMixin:
     def __getattr__(self, k: str) -> Any:
         """`d.key -> d[key]`."""
         try:
-            return self[k]
+            return cast(Mapping, self)[k]
         except KeyError:
             raise AttributeError(
                 f'{type(self).__name__!r} object has no attribute {k!r}')
@@ -658,7 +698,7 @@ class AttributeDict(dict, AttributeDictMixin):
     """Dict subclass with attribute access."""
 
 
-class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
+class DictAttribute(MutableMapping[str, VT], MappingViewProxy):
     """Dict interface to attributes.
 
     `obj[k] -> obj.k`
@@ -706,19 +746,19 @@ class DictAttribute(MutableMapping[KT, VT], MappingViewProxy):
     def __contains__(self, key: Any) -> bool:
         return hasattr(self.obj, key)
 
-    def __iter__(self) -> Iterable[KT]:
+    def __iter__(self) -> Iterator[str]:
         return self._keys()
 
-    def _keys(self) -> Iterator[KT]:
+    def _keys(self) -> Iterator[str]:
         for key in dir(self.obj):
             yield key
 
-    def _values(self) -> Iterator[VT]:
+    def _values(self) -> Iterator[str]:
         obj = self.obj
         for key in self:
             yield getattr(obj, key)
 
-    def _items(self) -> Iterator[Tuple[KT, VT]]:
+    def _items(self) -> Iterator[Tuple[str, VT]]:
         obj = self.obj
         for key in self:
             yield key, getattr(obj, key)

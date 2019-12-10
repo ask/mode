@@ -9,7 +9,10 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Optional,
     Tuple,
+    TypeVar,
+    cast,
 )
 
 __all__ = [
@@ -22,9 +25,11 @@ __all__ = [
     'chunks',
 ]
 
+T = TypeVar('T')
 
-async def aenumerate(it: AsyncIterable[Any],
-                     start: int = 0) -> AsyncIterator[Tuple[int, Any]]:
+
+async def aenumerate(it: AsyncIterable[T],
+                     start: int = 0) -> AsyncIterator[Tuple[int, T]]:
     """``async for`` version of ``enumerate``."""
     i = start
     async for item in it:
@@ -32,16 +37,16 @@ async def aenumerate(it: AsyncIterable[Any],
         i += 1
 
 
-class AsyncIterWrapper(AsyncIterator):
+class AsyncIterWrapper(AsyncIterator[T]):
     """Wrap regular Iterator into an AsyncIterator."""
 
-    def __init__(self, it: Iterator) -> None:
-        self._it: Iterator = it
+    def __init__(self, it: Iterator[T]) -> None:
+        self._it: Iterator[T] = it
 
-    def __aiter__(self) -> AsyncIterator:
+    def __aiter__(self) -> AsyncIterator[T]:
         return self
 
-    async def __anext__(self) -> Any:
+    async def __anext__(self) -> T:
         try:
             return next(self._it)
         except StopIteration as exc:
@@ -52,7 +57,7 @@ class AsyncIterWrapper(AsyncIterator):
 
 
 @singledispatch
-def aiter(it: Any) -> AsyncIterator:
+def aiter(it: Any) -> AsyncIterator[T]:
     """Create iterator from iterable.
 
     Notes:
@@ -64,17 +69,17 @@ def aiter(it: Any) -> AsyncIterator:
 
 # XXX In Py3.7: register cannot take typing.AsyncIterator
 @aiter.register(collections.abc.AsyncIterable)
-def _aiter_async(it: AsyncIterable) -> AsyncIterator:
+def _aiter_async(it: AsyncIterable[T]) -> AsyncIterator[T]:
     return it.__aiter__()
 
 
 # XXX In Py3.7: register cannot take typing.Iterable
 @aiter.register(collections.abc.Iterable)
-def _aiter_iter(it: Iterable) -> AsyncIterator:
+def _aiter_iter(it: Iterable[T]) -> AsyncIterator[T]:
     return AsyncIterWrapper(iter(it)).__aiter__()
 
 
-async def anext(it: AsyncIterator, *default: Any) -> Any:
+async def anext(it: AsyncIterator[T], *default: Optional[T]) -> T:
     """Get next value from async iterator, or `default` if empty.
 
     Raises:
@@ -85,7 +90,7 @@ async def anext(it: AsyncIterator, *default: Any) -> Any:
         try:
             return await it.__anext__()
         except StopAsyncIteration:
-            return default[0]
+            return cast(T, default[0])
     return await it.__anext__()
 
 
@@ -108,7 +113,9 @@ class _ARangeIterator(AsyncIterator[int]):
 class arange(AsyncIterable[int]):
     """Async generator that counts like :class:`range`."""
 
-    def __init__(self, *slice_args: int, **slice_kwargs: Any) -> None:
+    def __init__(self,
+                 *slice_args: Optional[int],
+                 **slice_kwargs: Optional[int]) -> None:
         s = slice(*slice_args, **slice_kwargs)
         self.start = s.start or 0
         self.stop = s.stop
@@ -128,12 +135,12 @@ class arange(AsyncIterable[int]):
         return _ARangeIterator(self, iter(self._range))
 
 
-async def alist(ait):
+async def alist(ait: AsyncIterator[T]) -> List[T]:
     """Convert async generator to list."""
     return [x async for x in ait]
 
 
-async def aslice(ait, *slice_args):
+async def aslice(ait: AsyncIterator[T], *slice_args: int) -> AsyncIterator[T]:
     """Extract slice from async generator."""
     s = slice(*slice_args)
     start = s.start or 0
@@ -150,7 +157,7 @@ async def aslice(ait, *slice_args):
         return
 
 
-async def chunks(it: AsyncIterable, n: int) -> AsyncIterable[List]:
+async def chunks(it: AsyncIterable[T], n: int) -> AsyncIterable[List[T]]:
     """Split an async iterator into chunks with `n` elements each.
 
     Example:

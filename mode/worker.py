@@ -15,6 +15,7 @@ from contextlib import contextmanager, suppress
 from logging import Handler, Logger
 from typing import (
     Any,
+    Callable,
     ClassVar,
     Dict,
     IO,
@@ -360,7 +361,8 @@ class Worker(Service):
     @property
     def blocking_detector(self) -> BlockingDetector:
         if self._blocking_detector is None:
-            self._blocking_detector = symbol_by_name(self.BLOCK_DETECTOR)(
+            BlockDetector: Callable = symbol_by_name(self.BLOCK_DETECTOR)
+            self._blocking_detector = BlockDetector(
                 self.blocking_timeout,
                 beacon=self.beacon,
                 loop=self.loop,

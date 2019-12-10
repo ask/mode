@@ -15,6 +15,7 @@ from typing import (
 )
 
 from mode.utils.contexts import AsyncExitStack, ExitStack
+from mode.utils.logging import HasLog
 from mode.utils.types.trees import NodeT
 from mode.utils.typing import AsyncContextManager
 
@@ -49,7 +50,7 @@ class DiagT(abc.ABC):
         ...
 
 
-class ServiceT(AsyncContextManager):  # type: ignore
+class ServiceT(AsyncContextManager):
     """Abstract type for an asynchronous service that can be started/stopped.
 
     See Also:

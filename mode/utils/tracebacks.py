@@ -4,7 +4,7 @@ import inspect
 import io
 import sys
 from traceback import StackSummary, print_list, walk_tb
-from types import FrameType
+from types import FrameType, TracebackType
 from typing import (
     Any,
     Coroutine,
@@ -13,6 +13,7 @@ from typing import (
     Mapping,
     Optional,
     Union,
+    cast,
 )
 
 __all__ = [
@@ -33,7 +34,7 @@ def print_task_stack(task: asyncio.Task, *,
     tb = Traceback.from_task(task, limit=limit)
     print_list(
         StackSummary.extract(
-            walk_tb(tb),
+            cast(Generator, walk_tb(cast(TracebackType, tb))),
             limit=limit,
             capture_locals=capture_locals,
         ),
@@ -43,7 +44,7 @@ def print_task_stack(task: asyncio.Task, *,
 
 def format_task_stack(task: asyncio.Task, *,
                       limit: int = DEFAULT_MAX_FRAMES,
-                      capture_locals: bool = False) -> None:
+                      capture_locals: bool = False) -> str:
     """Format :class:`asyncio.Task` stack trace as a string."""
     f = io.StringIO()
     print_task_stack(task, file=f, limit=limit, capture_locals=capture_locals)
@@ -63,6 +64,7 @@ class _CustomFrame:
     f_globals: Mapping[str, Any]
     f_fileno: int
     f_code: _CustomCode
+    f_locals: Mapping[str, Any]
 
     def __init__(self,
                  globals: Mapping[str, Any],
@@ -78,14 +80,16 @@ class _BaseTraceback:
     tb_frame: FrameType
     tb_lineno: int
     tb_lasti: int
-    tb_next: Optional['Traceback']
+    tb_next: Optional['_BaseTraceback']
 
 
 class _Truncated(_BaseTraceback):
 
-    def __init__(self, filename='...', name='[rest of traceback truncated]'):
+    def __init__(self,
+                 filename: str = '...',
+                 name: str = '[rest of traceback truncated]') -> None:
         self.tb_lineno = -1
-        self.tb_frame = _CustomFrame(
+        self.tb_frame = cast(FrameType, _CustomFrame(
             globals={
                 '__file__': '',
                 '__name__': '',
@@ -96,7 +100,7 @@ class _Truncated(_BaseTraceback):
                 filename=filename,
                 name=name,
             ),
-        )
+        ))
         self.tb_next = None
         self.tb_lasti = -1
 
@@ -115,14 +119,14 @@ class Traceback(_BaseTraceback):
 
     @classmethod
     def from_task(cls, task: asyncio.Task, *,
-                  limit: int = DEFAULT_MAX_FRAMES) -> 'Traceback':
+                  limit: int = DEFAULT_MAX_FRAMES) -> _BaseTraceback:
         coro = task._coro  # type: ignore
         return cls.from_coroutine(coro, limit=limit)
 
     @classmethod
     def from_coroutine(cls, coro: Union[Coroutine, Generator], *,
                        depth: int = 0,
-                       limit: int = DEFAULT_MAX_FRAMES) -> 'Traceback':
+                       limit: int = DEFAULT_MAX_FRAMES) -> _BaseTraceback:
         try:
             frame = cls._get_coroutine_frame(coro)
         except AttributeError:
@@ -145,7 +149,7 @@ class Traceback(_BaseTraceback):
             current_frame = current_frame.f_back
         frames.reverse()
         prev = None
-        root: Traceback = None
+        root: Optional[_BaseTraceback] = None
         for f in frames:
             tb = cls(f)
             if root is None:
@@ -155,7 +159,7 @@ class Traceback(_BaseTraceback):
             prev = tb
         cr_await = cls._get_coroutine_next(coro)
         if cr_await is not None and asyncio.iscoroutine(cr_await):
-            next_node: Traceback
+            next_node: _BaseTraceback
             if limit is not None and depth > limit:
                 next_node = _Truncated()
             else:
@@ -165,6 +169,8 @@ class Traceback(_BaseTraceback):
                 root.tb_next = next_node
             else:
                 return next_node
+        if root is None:
+            raise RuntimeError('cannot find stack of coroutine')
         return root
 
     @staticmethod
@@ -172,10 +178,10 @@ class Traceback(_BaseTraceback):
         try:
             if inspect.isgenerator(coro):
                 # is a @asyncio.coroutine wrapped generator
-                return coro.gi_frame
+                return cast(Generator, coro).gi_frame
             else:
                 # is an async def function
-                return coro.cr_frame
+                return cast(Coroutine, coro).cr_frame
         except AttributeError as exc:
             raise AttributeError(
                 'WHAT IS THIS? str={0} repr={1!r} typ={2!r} dir={3}'.format(
@@ -185,7 +191,7 @@ class Traceback(_BaseTraceback):
     def _get_coroutine_next(coro: Union[Coroutine, Generator]) -> Any:
         if inspect.isgenerator(coro):
             # is a @asyncio.coroutine wrapped generator
-            return coro.gi_yieldfrom
+            return cast(Generator, coro).gi_yieldfrom
         else:
             # is an async def function
-            return coro.cr_await
+            return cast(Coroutine, coro).cr_await

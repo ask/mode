@@ -1,6 +1,7 @@
 """Text and string manipulation utilities."""
 from difflib import SequenceMatcher
 from typing import AnyStr, Iterable, Iterator, NamedTuple, Optional, cast
+from .utils.compat import want_str
 
 __all__ = [
     'FuzzyMatch',
@@ -183,7 +184,7 @@ def shorten_fqdn(s: str, max: int = 32) -> str:
     if len(s) > max:
         module, sep, cls = s.rpartition('.')
         if sep:
-            module = abbr(module, max - len(cls) - 3, None, words=True)
+            module = abbr(module, max - len(cls) - 3, '', words=True)
             return module + '[.]' + cls
     return s
 
@@ -197,7 +198,7 @@ def pluralize(n: int, text: str, suffix: str = 's') -> str:
 
 def maybecat(s: Optional[AnyStr], suffix: str = '',
              *,
-             prefix: str = '') -> AnyStr:
+             prefix: str = '') -> Optional[str]:
     """Concatenate string only if existing string s' is defined.
 
     Keyword Arguments:
@@ -205,5 +206,5 @@ def maybecat(s: Optional[AnyStr], suffix: str = '',
         prefix: add prefix is string s' is defined.
     """
     if s is not None:
-        return prefix + cast(AnyStr, s) + suffix
+        return cast(str, prefix + want_str(s) + suffix)
     return s

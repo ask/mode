@@ -1,19 +1,21 @@
 """Data structure: Trees."""
 from contextlib import suppress
-from typing import Any, Iterator, List, cast
+from typing import Any, Iterator, List, Optional, TypeVar, Union, cast
 
 from .graphs import DependencyGraph
 from .objects import shortlabel
 from .types.graphs import DependencyGraphT
-from .types.trees import NodeT, _T
+from .types.trees import NodeT
 from .typing import Deque
 
 __all__ = [
     'Node',
 ]
 
+T = TypeVar('T')
 
-class Node(NodeT[_T]):
+
+class Node(NodeT[T]):
     """Tree node.
 
     Notes:
@@ -35,24 +37,26 @@ class Node(NodeT[_T]):
         children (List[NodeT]): List of child nodes.
     """
 
-    _root: NodeT[_T] = None
-    _parent: NodeT[_T] = None
+    _root: Optional[NodeT[T]] = None
+    _parent: Optional[NodeT[T]] = None
 
     @classmethod
-    def _new_node(cls, data: _T, **kwargs: Any) -> NodeT[_T]:
-        return cls(data, **kwargs)  # type: ignore
+    def _new_node(cls, data: T, **kwargs: Any) -> NodeT[T]:
+        return cls(data, **kwargs)
 
-    def __init__(self, data: _T,
+    def __init__(self, data: T,
                  *,
                  root: NodeT = None,
                  parent: NodeT = None,
-                 children: List[NodeT[_T]] = None) -> None:
+                 children: List[NodeT[T]] = None) -> None:
         self.data = data
-        self.root = root
-        self.parent = parent
+        if root is not None:
+            self.root = root
+        if parent is not None:
+            self.parent = parent
         self.children = children or []
 
-    def new(self, data: _T) -> NodeT:
+    def new(self, data: T) -> NodeT:
         """Create new node from this node."""
         node = self._new_node(
             data,
@@ -62,33 +66,34 @@ class Node(NodeT[_T]):
         self.children.append(node)
         return node
 
-    def reattach(self, parent: NodeT[_T]) -> NodeT[_T]:
+    def reattach(self, parent: NodeT[T]) -> NodeT[T]:
         """Attach this node to `parent` node."""
         self.root = parent.root if parent.root is not None else parent
         self.parent = parent
         parent.add(self)
         return self
 
-    def detach(self, parent: NodeT[_T]) -> NodeT[_T]:
+    def detach(self, parent: NodeT[T]) -> NodeT[T]:
         """Detach this node from `parent` node."""
-        self.parent.discard(self)
-        self.parent = None
-        self.root = None
+        if self.parent is not None:
+            self.parent.discard(self)
+        self._parent = None
+        self._root = None
         return self
 
-    def add(self, data: _T) -> None:
+    def add(self, data: Union[T, NodeT[T]]) -> None:
         """Add node as a child node."""
         self.children.append(data)
 
-    def discard(self, data: _T) -> None:
+    def discard(self, data: T) -> None:
         """Remove node so it's no longer a child of this node."""
         # XXX slow
         with suppress(ValueError):
             self.children.remove(data)
 
-    def traverse(self) -> Iterator[NodeT[_T]]:
+    def traverse(self) -> Iterator[NodeT[T]]:
         """Iterate over the tree in BFS order."""
-        stack: Deque[NodeT[_T]] = Deque([self])
+        stack: Deque[NodeT[T]] = Deque([self])
         while stack:
             node = stack.popleft()
             yield node
@@ -98,12 +103,12 @@ class Node(NodeT[_T]):
                 else:
                     yield child
 
-    def walk(self) -> Iterator[NodeT[_T]]:
+    def walk(self) -> Iterator[NodeT[T]]:
         """Iterate over hierarchy backwards.
 
         This will yield parent nodes all the way up to the root.
         """
-        node: NodeT[_T] = self
+        node: Optional[NodeT[T]] = self
         while node:
             yield node
             node = node.parent
@@ -140,7 +145,7 @@ class Node(NodeT[_T]):
         ]))
 
     @property
-    def parent(self) -> NodeT:
+    def parent(self) -> Optional[NodeT]:
         return self._parent
 
     @parent.setter
@@ -150,7 +155,7 @@ class Node(NodeT[_T]):
         self._parent = node
 
     @property
-    def root(self) -> NodeT:
+    def root(self) -> Optional[NodeT]:
         return self._root
 
     @root.setter

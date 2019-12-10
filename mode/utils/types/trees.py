@@ -1,6 +1,6 @@
 """Type classes for :mod:`mode.utils.trees`."""
 import abc
-from typing import Any, Generic, Iterator, List, TypeVar
+from typing import Any, Generic, Iterator, List, Optional, TypeVar, Union
 from .graphs import DependencyGraphT
 
 __all__ = ['NodeT']
@@ -11,9 +11,7 @@ _T = TypeVar('_T')
 class NodeT(Generic[_T]):
     """Node in a tree data structure."""
 
-    root: 'NodeT' = None
-    children: List[Any] = None
-    parent: 'NodeT' = None
+    children: List[Any]
     data: Any = None
 
     @classmethod
@@ -26,7 +24,7 @@ class NodeT(Generic[_T]):
         ...
 
     @abc.abstractmethod
-    def add(self, data: _T) -> None:
+    def add(self, data: Union[_T, 'NodeT[_T]']) -> None:
         ...
 
     @abc.abstractmethod
@@ -49,9 +47,13 @@ class NodeT(Generic[_T]):
     def as_graph(self) -> DependencyGraphT:
         ...
 
+    @abc.abstractmethod
+    def detach(self, parent: 'NodeT') -> 'NodeT':
+        ...
+
     @property
     @abc.abstractmethod
-    def parent(self) -> 'NodeT':
+    def parent(self) -> Optional['NodeT']:
         ...
 
     @parent.setter
@@ -60,7 +62,7 @@ class NodeT(Generic[_T]):
 
     @property
     @abc.abstractmethod
-    def root(self) -> 'NodeT':
+    def root(self) -> Optional['NodeT']:
         ...
 
     @root.setter

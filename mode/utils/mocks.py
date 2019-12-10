@@ -7,7 +7,18 @@ import unittest.mock
 from asyncio import coroutine
 from contextlib import contextmanager
 from itertools import count
-from typing import Any, Callable, ContextManager, List, Optional, Type, Union
+from types import ModuleType
+from typing import (
+    Any,
+    Callable,
+    ContextManager,
+    Iterator,
+    List,
+    Optional,
+    Type,
+    Union,
+    cast,
+)
 
 __all__ = [
     'ANY',
@@ -37,7 +48,7 @@ class IN:
 
     """
 
-    def __init__(self, *alternatives):
+    def __init__(self, *alternatives: Any) -> None:
         self.alternatives = alternatives
 
     def __eq__(self, other: Any) -> bool:
@@ -51,13 +62,13 @@ class IN:
         return f'<IN: {sep.join(map(str, self.alternatives))}>'
 
 
-class Mock(unittest.mock.Mock):
+class Mock(unittest.mock.Mock):  # type: ignore
     """Mock object."""
 
     global_call_count: Optional[int] = None
-    call_counts: List[int] = None
+    call_counts: List[int]
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         ret = super().__call__(*args, **kwargs)
         count = self.global_call_count = next(MOCK_CALL_COUNT)
         if self.call_counts is None:
@@ -66,7 +77,7 @@ class Mock(unittest.mock.Mock):
             self.call_counts.append(count)
         return ret
 
-    def reset_mock(self, *args, **kwargs):
+    def reset_mock(self, *args: Any, **kwargs: Any) -> None:
         super().reset_mock(*args, **kwargs)
         if self.call_counts is not None:
             self.call_counts.clear()
@@ -95,14 +106,14 @@ def ContextMock(*args: Any, **kwargs: Any) -> _ContextMock:
     obj = _ContextMock(*args, **kwargs)
     obj.attach_mock(_ContextMock(), '__enter__')
     obj.attach_mock(_ContextMock(), '__exit__')
-    obj.__enter__.return_value = obj
+    obj.__enter__.return_value = obj  # type: ignore
     # if __exit__ return a value the exception is ignored,
     # so it must return None here.
-    obj.__exit__.return_value = None
+    obj.__exit__.return_value = None  # type: ignore
     return obj
 
 
-class AsyncMock(unittest.mock.Mock):
+class AsyncMock(unittest.mock.Mock):  # type: ignore
     """Mock for ``async def`` function/method or anything awaitable."""
 
     def __init__(self, *args: Any,
@@ -114,7 +125,7 @@ class AsyncMock(unittest.mock.Mock):
         self.side_effect = coroutine(coro)
 
 
-class AsyncMagicMock(unittest.mock.MagicMock):
+class AsyncMagicMock(unittest.mock.MagicMock):  # type: ignore
     """A magic mock type for ``async def`` functions/methods."""
 
     def __init__(self, *args: Any,
@@ -126,7 +137,7 @@ class AsyncMagicMock(unittest.mock.MagicMock):
         self.side_effect = coroutine(coro)
 
 
-class AsyncContextMock(unittest.mock.Mock):
+class AsyncContextMock(unittest.mock.Mock):  # type: ignore
     """Mock for :class:`typing.AsyncContextManager`.
 
     You can use this to mock asynchronous context managers,
@@ -199,34 +210,34 @@ class AsyncContextMock(unittest.mock.Mock):
 AsyncContextManagerMock = AsyncContextMock  # XXX compat alias
 
 
-class FutureMock(unittest.mock.Mock):
+class FutureMock(unittest.mock.Mock):  # type: ignore
     """Mock a :class:`asyncio.Future`."""
 
     awaited = False
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._loop = asyncio.get_event_loop()
 
-    def __await__(self):
+    def __await__(self) -> Any:
         self.awaited = True
         yield self()
 
-    def assert_awaited(self):
+    def assert_awaited(self) -> None:
         assert self.awaited
 
-    def assert_not_awaited(self):
+    def assert_not_awaited(self) -> None:
         assert not self.awaited
 
 
 @contextmanager
-def patch_module(*names: str, new_callable: Any = Mock):
+def patch_module(*names: str, new_callable: Any = Mock) -> Iterator:
     """Mock one or modules such that every attribute is a :class:`Mock`."""
     prev = {}
 
     class MockModule(types.ModuleType):
 
-        def __getattr__(self, attr):
+        def __getattr__(self, attr: str) -> Any:
             setattr(self, attr, new_callable())
             return types.ModuleType.__getattribute__(self, attr)
 
@@ -252,7 +263,7 @@ def patch_module(*names: str, new_callable: Any = Mock):
 
 
 @contextmanager
-def mask_module(*modnames):
+def mask_module(*modnames: str) -> Iterator:
     """Ban some modules from being importable inside the context.
 
     For example::
@@ -274,11 +285,11 @@ def mask_module(*modnames):
     """
     realimport = builtins.__import__
 
-    def myimp(name, *args, **kwargs):
+    def myimp(name: str, *args: Any, **kwargs: Any) -> ModuleType:
         if name in modnames:
             raise ImportError(f'No module named {name}')
         else:
-            return realimport(name, *args, **kwargs)
+            return cast(ModuleType, realimport(name, *args, **kwargs))
 
     builtins.__import__ = myimp
     try:

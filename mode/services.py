@@ -89,7 +89,10 @@ class ServiceBase(ServiceT):
 
     #: Logger used by this service.
     #: If not explicitly set this will be based on get_logger(cls.__name__)
-    logger: Optional[logging.Logger] = None
+    # This is automatically set when class is constructed, and so is only
+    # None on the class, never on an instance. For simplicity we cast
+    # the None to logger.
+    logger: logging.Logger = cast(logging.Logger, None)
 
     def __init_subclass__(self) -> None:
         if self.abstract:
@@ -101,7 +104,7 @@ class ServiceBase(ServiceT):
         # make sure class has a logger.
         if cls.logger is None or getattr(cls.logger, '__modex__', False):
             logger = cls.logger = get_logger(cls.__module__)
-            logger.__modex__ = True
+            logger.__modex__ = True  # type: ignore
 
     def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
         self.log = CompositeLogger(self.logger, formatter=self._format_log)
@@ -646,7 +649,7 @@ class Service(ServiceBase, ServiceCallbacks):
         coro = asyncio.wait(
             cast(Iterable[Awaitable[Any]], coros),
             return_when=asyncio.ALL_COMPLETED,
-            timeout=timeout,
+            timeout=want_seconds(timeout),
             loop=self.loop,
         )
         return await self._wait_one(coro, timeout=timeout)
@@ -670,6 +673,8 @@ class Service(ServiceBase, ServiceCallbacks):
         }
         futures[stopped] = asyncio.ensure_future(stopped.wait(), loop=loop)
         futures[crashed] = asyncio.ensure_future(crashed.wait(), loop=loop)
+        done: Set[asyncio.Future]
+        pending: Set[asyncio.Future]
         try:
             done, pending = await asyncio.wait(
                 futures.values(),
@@ -804,8 +809,8 @@ class Service(ServiceBase, ServiceCallbacks):
                     if node in seen:
                         self.log.warning(
                             'Recursive loop in beacon: %r: %r', node, seen)
-                        if root and root.data is not self:
-                            cast(Service, self.beacon.root.data)._crash(reason)
+                        if root is not None and root.data is not self:
+                            cast(Service, root.data)._crash(reason)
                         break
                     seen.add(node)
                     for child in [node.data] + node.children:
@@ -872,22 +877,17 @@ class Service(ServiceBase, ServiceCallbacks):
         while self._futures:
             # Gather all futures added via .add_future
             try:
-                await self._wait_for_futures(timeout=timeout)
+                await self._maybe_wait_for_futures(timeout=timeout)
             except asyncio.CancelledError:
                 continue
             else:
                 break
         self._futures.clear()
 
-    async def _wait_for_futures(self, *, timeout: float = None) -> None:
+    async def _maybe_wait_for_futures(self, *, timeout: float = None) -> None:
         if self._futures:
             try:
-                await asyncio.shield(asyncio.wait(
-                    self._futures,
-                    return_when=asyncio.ALL_COMPLETED,
-                    loop=self.loop,
-                    timeout=timeout,
-                ))
+                await asyncio.shield(self._wait_for_futures(timeout=timeout))
             except ValueError:
                 if self._futures:
                     raise
@@ -896,6 +896,14 @@ class Service(ServiceBase, ServiceCallbacks):
                 # but empty when asyncio.wait receives it.
             except asyncio.CancelledError:
                 pass
+
+    async def _wait_for_futures(self, *, timeout: float = None) -> None:
+        await asyncio.wait(
+            self._futures,
+            return_when=asyncio.ALL_COMPLETED,
+            loop=self.loop,
+            timeout=timeout,
+        )
 
     async def restart(self) -> None:
         """Restart this service."""

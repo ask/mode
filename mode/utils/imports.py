@@ -2,6 +2,7 @@
 import importlib
 import os
 import sys
+import typing
 import warnings
 from contextlib import contextmanager, suppress
 from types import ModuleType
@@ -15,6 +16,7 @@ from typing import (
     Mapping,
     MutableMapping,
     NamedTuple,
+    Optional,
     Set,
     Type,
     TypeVar,
@@ -26,14 +28,17 @@ from .collections import FastUserDict
 from .objects import cached_property
 from .text import didyoumean
 
-try:
+if typing.TYPE_CHECKING:
     from yarl import URL
-except ImportError:  # pragma: no cover
-    class URL:
+else:
+    try:
+        from yarl import URL
+    except ImportError:  # pragma: no cover
+        class URL:
 
-        def __init__(self, url: str) -> None:
-            assert '://' in url
-            self.scheme = url.split('://')[0]
+            def __init__(self, url: str) -> None:
+                assert '://' in url
+                self.scheme = url.split('://')[0]
 
 # - these are taken from kombu.utils.imports
 
@@ -82,7 +87,7 @@ class FactoryMapping(FastUserDict, Generic[_T]):
     _finalized: bool = False
 
     def __init__(self, *args: Mapping, **kwargs: str) -> None:
-        self.aliases = dict(*args, **kwargs)  # type: ignore
+        self.aliases = dict(*args, **kwargs)
         self.namespaces = set()
 
     def iterate(self) -> Iterator[_T]:
@@ -95,7 +100,7 @@ class FactoryMapping(FastUserDict, Generic[_T]):
         # we remove anything after ; so urlparse can recognize the url.
         return self.by_name(URL(url).scheme)
 
-    def by_name(self, name: SymbolArg[_T_contra]) -> _T:
+    def by_name(self, name: SymbolArg[_T]) -> _T:
         self._maybe_finalize()
         try:
             return symbol_by_name(name, aliases=self.aliases)
@@ -141,13 +146,13 @@ def _ensure_identifier(path: str, full: str) -> None:
 
 
 def symbol_by_name(
-        name: SymbolArg,
+        name: SymbolArg[_T],
         aliases: Mapping[str, str] = None,
         imp: Any = None,
         package: str = None,
         sep: str = '.',
-        default: Any = None,
-        **kwargs: Any) -> Any:
+        default: _T = None,
+        **kwargs: Any) -> _T:
     """Get symbol by qualified name.
 
     The name should be the full dot-separated path to the class::
@@ -186,8 +191,11 @@ def symbol_by_name(
     if not isinstance(name, str):
         return name  # already a class
 
+    attr: Optional[str]
+    module_name: Optional[str]
     name = (aliases or {}).get(name) or name
     sep = ':' if ':' in name else sep
+
     module_name, _, attr = name.rpartition(sep)
     if not module_name:
         attr, module_name = None, package if package else attr
@@ -198,12 +206,19 @@ def symbol_by_name(
         _ensure_identifier(module_name, full=name)
     try:
         try:
-            module = imp(module_name, package=package, **kwargs)
+            module = imp(  # type: ignore
+                module_name or '', package=package,
+                # kwargs can be used to extend symbol_by_name when a custom
+                # `imp` function is used.
+                # importib does not support additional arguments
+                # beyond (name, package=None), so we have to silence
+                # mypy error here.
+                **kwargs)
         except ValueError as exc:
             raise ValueError(
                 f'Cannot import {name!r}: {exc}',
             ).with_traceback(sys.exc_info()[2])
-        return getattr(module, attr) if attr else module
+        return cast(_T, getattr(module, attr) if attr else module)
     except (ImportError, AttributeError):
         if default is None:
             raise
@@ -239,7 +254,7 @@ def load_extension_classes(namespace: str) -> Iterable[EntrypointExtension]:
     """
     for name, cls_name in load_extension_class_names(namespace):
         try:
-            cls = symbol_by_name(cls_name)
+            cls: Type = symbol_by_name(cls_name)
         except (ImportError, SyntaxError) as exc:
             warnings.warn(
                 f'Cannot load {namespace} extension {cls_name!r}: {exc!r}')
