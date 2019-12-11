@@ -61,6 +61,7 @@ Utils
     mode.utils.graphs
     mode.utils.imports
     mode.utils.locals
+    mode.utils.locks
     mode.utils.logging
     mode.utils.loops
     mode.utils.mocks

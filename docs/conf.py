@@ -35,8 +35,11 @@ globals().update(conf.build_config(
         'mode.loop.gevent',
         'mode.loop.uvloop',
         'mode.loop._gevent_loop',
+        'mode.utils',
+        'mode.utils._py37_contextlib',
         'mode.utils.graphs.formatter',
         'mode.utils.graphs.graph',
+        'mode.utils.types',
     ],
 ))
 
