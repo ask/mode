@@ -8,8 +8,10 @@
 
 4.1.5
 =====
-:release-date: 2019-12-10 3:55 P.M PST
+:release-date: 2019-12-11 3:45 P.M PST
 :release-by: Ask Solem (:github_user:`ask`)
+
+- Tests passing on Python 3.8.0
 
 - Fixed typing related issues.
 
