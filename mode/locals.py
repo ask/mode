@@ -390,7 +390,7 @@ class Proxy(Generic[T]):
         return hash(self._get_current_object())
 
     def __reduce__(self) -> Tuple:
-        return self._get_current_object().__reduce__()  # type: ignore
+        return cast(Tuple, self._get_current_object().__reduce__())
 
 
 class AwaitableRole(Awaitable[T]):

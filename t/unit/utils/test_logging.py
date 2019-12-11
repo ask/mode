@@ -86,10 +86,10 @@ class test_CompositeLogger:
             severity, 'msg', 'arg1', kw1=3, kw2=5, **extra)
 
     def test_dev__enabled(self, log):
-        log.info = Mock()
+        log.log = Mock()
         with patch('mode.utils.logging.DEVLOG', True):
             log.dev('msg', 1, k=2)
-            log.info.assert_called_once_with('msg', 1, k=2)
+            log.log.assert_called_once_with(logging.INFO, 'msg', 1, k=2)
 
     def test_dev__disabled(self, log):
         log.info = Mock()
@@ -524,7 +524,7 @@ class test_FileLogProxy:
         f.write('msg')
         logger.log.assert_not_called()
 
-        f.closed = False
+        f._closed = False
         f.write(' msg ')
         logger.log.assert_called_once_with(f.severity, 'msg')
 

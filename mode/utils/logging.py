@@ -528,6 +528,7 @@ def print_task_name(task: asyncio.Task, file: IO) -> None:
 
 class LogMessage(NamedTuple):
     """Archived log message."""
+
     severity: int
     message: str
     asctime: str

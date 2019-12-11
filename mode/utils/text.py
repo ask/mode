@@ -1,7 +1,7 @@
 """Text and string manipulation utilities."""
 from difflib import SequenceMatcher
-from typing import AnyStr, Iterable, Iterator, NamedTuple, Optional, cast
-from .utils.compat import want_str
+from typing import AnyStr, Iterable, Iterator, NamedTuple, Optional
+from .compat import want_str
 
 __all__ = [
     'FuzzyMatch',
@@ -206,5 +206,5 @@ def maybecat(s: Optional[AnyStr], suffix: str = '',
         prefix: add prefix is string s' is defined.
     """
     if s is not None:
-        return cast(str, prefix + want_str(s) + suffix)
+        return prefix + want_str(s) + suffix
     return s

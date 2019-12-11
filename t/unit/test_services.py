@@ -668,7 +668,14 @@ class test_Service:
         service._futures = [Mock()]
         with patch('asyncio.shield', AsyncMock()) as shield:
             with patch('asyncio.wait', AsyncMock()):
-                shield.coro.side_effect = ValueError()
+
+                async def on_shield(fut, *args, **kwargs):
+                    # if we don't wait for coroutine passed to shield
+                    # we get 'was never awaited' warning.
+                    await fut
+                    raise ValueError()
+
+                shield.coro.side_effect = on_shield
                 with pytest.raises(ValueError):
                     await service._maybe_wait_for_futures()
 
@@ -678,7 +685,10 @@ class test_Service:
         with patch('asyncio.shield', AsyncMock()) as shield:
             with patch('asyncio.wait', AsyncMock()):
 
-                def on_shield(*args, **kwargs):
+                async def on_shield(fut, *args, **kwargs):
+                    # if we don't wait for coroutine passed to shield
+                    # we get 'was never awaited' warning.
+                    await fut
                     service._futures.clear()
                     raise ValueError()
 
@@ -690,7 +700,14 @@ class test_Service:
         service._futures = [Mock()]
         with patch('asyncio.shield', AsyncMock()) as shield:
             with patch('asyncio.wait', AsyncMock()):
-                shield.coro.side_effect = asyncio.CancelledError()
+
+                async def on_shield(fut, *args, **kwargs):
+                    # if we don't wait for coroutine passed to shield
+                    # we get 'was never awaited' warning.
+                    await fut
+                    raise asyncio.CancelledError()
+
+                shield.coro.side_effect = on_shield
                 await service._maybe_wait_for_futures()
 
     @pytest.mark.asyncio

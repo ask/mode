@@ -898,12 +898,13 @@ class Service(ServiceBase, ServiceCallbacks):
                 pass
 
     async def _wait_for_futures(self, *, timeout: float = None) -> None:
-        await asyncio.wait(
-            self._futures,
-            return_when=asyncio.ALL_COMPLETED,
-            loop=self.loop,
-            timeout=timeout,
-        )
+        if self._futures:
+            await asyncio.wait(
+                self._futures,
+                return_when=asyncio.ALL_COMPLETED,
+                loop=self.loop,
+                timeout=timeout,
+            )
 
     async def restart(self) -> None:
         """Restart this service."""

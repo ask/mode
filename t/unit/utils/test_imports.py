@@ -109,8 +109,12 @@ class test_symbol_by_name:
         return Mock(name='imp')
 
     def test_missing_module(self):
-        with pytest.raises(ModuleNotFoundError):
+        with pytest.raises(ValueError):
             symbol_by_name(':foo')
+
+    def test_missing_module_but_valid_package(self):
+        from mode.utils import logging
+        assert symbol_by_name('.logging', package='mode.utils') is logging
 
     def test_already_object(self):
         obj = object()

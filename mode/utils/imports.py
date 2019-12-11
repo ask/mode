@@ -145,6 +145,69 @@ def _ensure_identifier(path: str, full: str) -> None:
                 f'Component {part!r} of {full!r} is not a valid identifier')
 
 
+class ParsedSymbol(NamedTuple):
+    """Tuple returned by :func:`parse_symbol`."""
+
+    module_name: Optional[str]
+    attribute_name: Optional[str]
+
+
+def parse_symbol(s: str, *,
+                 package: str = None,
+                 strict_separator: str = ':',
+                 relative_separator: str = '.') -> ParsedSymbol:
+    """Parse :func:`symbol_by_name` argument into components.
+
+    Returns:
+        ParsedSymbol: Tuple of ``(module_name, attribute_name)``
+
+    Raises:
+        ValueError: if relative import (arg starts with '.') and
+            no ``package`` argument is specified.
+
+    Examples:
+        >>> parse_symbol('mode.services')
+        ParsedSymbol(module_name='mode.services', attribute_name=None)
+
+        >>> parse_symbol('.services', package='mode')
+        ParsedSymbol(module_name='.services', attribute_name=None)
+
+        >>> parse_symbol('mode.services.Service')
+        ParsedSymbol(module_name='mode.services', attribute_name='Service')
+
+        >>> parse_symbol('mode.services:Service')
+        ParsedSymbol(module_name='mode.services', attribute_name='Service')
+    """
+    module_name: Optional[str]
+    attribute_name: Optional[str]
+    partition_by = (strict_separator
+                    if strict_separator in s else relative_separator)
+
+    module_name, used_separator, attribute_name = s.rpartition(partition_by)
+    if not module_name:
+        # Module name is missing must be either ".foo" or ":foo",
+        # and is a relative import.
+        if used_separator == ':':
+            # ":foo" is illegal and will result in ValueError below.
+            raise ValueError(f'Missing module name with ":" separator: {s!r}')
+        elif used_separator == '.':
+            # ".foo" is legal but requires a ``package`` argument.
+            if not package:
+                raise ValueError(
+                    f'Relative import {s!r} but package=None (required)')
+            module_name, attribute_name = s, None
+        else:
+            attribute_name, module_name = (
+                None, package if package else attribute_name)
+
+    if attribute_name:
+        _ensure_identifier(attribute_name, full=s)
+    if module_name:  # pragma: no cover
+        _ensure_identifier(module_name.strip(relative_separator), full=s)
+
+    return ParsedSymbol(module_name, attribute_name)
+
+
 def symbol_by_name(
         name: SymbolArg[_T],
         aliases: Mapping[str, str] = None,
@@ -190,20 +253,10 @@ def symbol_by_name(
 
     if not isinstance(name, str):
         return name  # already a class
-
-    attr: Optional[str]
-    module_name: Optional[str]
     name = (aliases or {}).get(name) or name
-    sep = ':' if ':' in name else sep
 
-    module_name, _, attr = name.rpartition(sep)
-    if not module_name:
-        attr, module_name = None, package if package else attr
+    module_name, attribute_name = parse_symbol(name, package=package)
 
-    if attr:
-        _ensure_identifier(attr, full=name)
-    if module_name:  # pragma: no cover
-        _ensure_identifier(module_name, full=name)
     try:
         try:
             module = imp(  # type: ignore
@@ -218,7 +271,10 @@ def symbol_by_name(
             raise ValueError(
                 f'Cannot import {name!r}: {exc}',
             ).with_traceback(sys.exc_info()[2])
-        return cast(_T, getattr(module, attr) if attr else module)
+        if attribute_name:
+            return cast(_T, getattr(module, attribute_name))
+        else:
+            return cast(_T, module)
     except (ImportError, AttributeError):
         if default is None:
             raise
