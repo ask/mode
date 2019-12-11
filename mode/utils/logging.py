@@ -153,7 +153,7 @@ class HasLog(Protocol):
     @abc.abstractmethod
     def log(self,
             severity: int,
-            msg: str,
+            message: str,
             *args: Any, **kwargs: Any) -> None:
         ...
 
@@ -170,38 +170,40 @@ class LogSeverityMixin(HasLog):
         ...
         ...    def log(self,
         ...            severity: int,
-        ...            msg: str,
+        ...            message: str,
         ...            *args: Any, **kwargs: Any) -> None:
-        ...        return self.logger.log(severity, msg, *args, **kwargs)
+        ...        return self.logger.log(severity, message, *args, **kwargs)
     """
 
-    def dev(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
+    def dev(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if DEVLOG:
-            self.log(logging.INFO, msg, *args, **kwargs)
+            self.log(logging.INFO, message, *args, **kwargs)
 
-    def debug(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.DEBUG, msg, *args, **kwargs)
+    def debug(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.DEBUG, message, *args, **kwargs)
 
-    def info(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.INFO, msg, *args, **kwargs)
+    def info(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.INFO, message, *args, **kwargs)
 
-    def warn(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.WARN, msg, *args, **kwargs)
+    def warn(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.WARN, message, *args, **kwargs)
 
-    def warning(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.WARN, msg, *args, **kwargs)
+    def warning(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.WARN, message, *args, **kwargs)
 
-    def error(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.ERROR, msg, *args, **kwargs)
+    def error(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.ERROR, message, *args, **kwargs)
 
-    def crit(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.CRITICAL, msg, *args, **kwargs)
+    def crit(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
+        self.log(logging.CRITICAL, message, *args, **kwargs)
 
-    def critical(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.CRITICAL, msg, *args, **kwargs)
+    def critical(self: HasLog, message: str,
+                 *args: Any, **kwargs: Any) -> None:
+        self.log(logging.CRITICAL, message, *args, **kwargs)
 
-    def exception(self: HasLog, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.log(logging.ERROR, msg, *args, exc_info=1, **kwargs)
+    def exception(self: HasLog, message: str,
+                  *args: Any, **kwargs: Any) -> None:
+        self.log(logging.ERROR, message, *args, exc_info=1, **kwargs)
 
 
 class CompositeLogger(LogSeverityMixin):
@@ -225,10 +227,10 @@ class CompositeLogger(LogSeverityMixin):
                     formatter=self._format_log,
                 )
 
-            def _format_log(self, severity: int, msg: str,
+            def _format_log(self, severity: int, message: str,
                             *args: Any, **kwargs: Any) -> str:
                 return (f'[^{"-" * (self.beacon.depth - 1)}'
-                        f'{self.shortlabel}]: {msg}')
+                        f'{self.shortlabel}]: {message}')
 
     This means those defining a service may also use it to log:
 
@@ -248,17 +250,17 @@ class CompositeLogger(LogSeverityMixin):
         self.logger = logger
         self.formatter: Optional[Callable[..., str]] = formatter
 
-    def log(self, severity: int, msg: str,
+    def log(self, severity: int, message: str,
             *args: Any, **kwargs: Any) -> None:
         self.logger.log(severity,
-                        self.format(severity, msg, *args, **kwargs),
+                        self.format(severity, message, *args, **kwargs),
                         *args, **kwargs)
 
-    def format(self, severity: int, msg: str,
+    def format(self, severity: int, message: str,
                *args: Any, **kwargs: Any) -> str:
         if self.formatter:
-            return self.formatter(severity, msg, *args, **kwargs)
-        return msg
+            return self.formatter(severity, message, *args, **kwargs)
+        return message
 
 
 def formatter(fun: FormatterHandler) -> FormatterHandler:
@@ -707,10 +709,10 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         ident = ident or self._ident()
         if logs:
             try:
-                for sev, msg, datestr, args, kwargs in logs:
+                for sev, message, datestr, args, kwargs in logs:
                     self._fill_extra_context(kwargs)
                     logger.log(
-                        sev, f'[%s] (%s) {msg}', ident, datestr,
+                        sev, f'[%s] (%s) {message}', ident, datestr,
                         *args, **kwargs)
             finally:
                 logs.clear()
@@ -749,11 +751,11 @@ class _FlightRecorderProxy(LogSeverityMixin):
 
     def log(self,
             severity: int,
-            msg: str,
+            message: str,
             *args: Any, **kwargs: Any) -> None:
         fl = self.current_flight_recorder()
         if fl is not None:
-            return fl.log(severity, msg, *args, **kwargs)
+            return fl.log(severity, message, *args, **kwargs)
 
     def current_flight_recorder(self) -> Optional[flight_recorder]:
         return current_flight_recorder()

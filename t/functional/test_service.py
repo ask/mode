@@ -304,6 +304,6 @@ async def assert_mundane_level_is(level: int, service: mode.ServiceT) -> None:
 def _find_logging_call_severity(mock, needle):
     assert mock.call_count
     for call_ in mock.call_args_list:
-        severity, msg, *_ = call_[0]
-        if needle in msg:
+        severity, message, *_ = call_[0]
+        if needle in message:
             return severity
