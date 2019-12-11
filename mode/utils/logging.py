@@ -158,7 +158,7 @@ class HasLog(Protocol):
         ...
 
 
-class LogSeverityMixin:
+class LogSeverityMixin(HasLog):
     """Mixin class that delegates standard logging methods to logger.
 
     The class that mixes in this class must define the ``log`` method.

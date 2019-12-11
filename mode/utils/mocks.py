@@ -303,6 +303,7 @@ ANY = unittest.mock.ANY
 
 MagicMock = unittest.mock.MagicMock
 
+
 class _Call(unittest.mock._Call):
     # Fixes bug in Python 3.8 where call is an instance of unittest.mock._Call
     # but call.__doc__ returns a mocked method and not the class attribute.
@@ -311,6 +312,8 @@ class _Call(unittest.mock._Call):
         if attr == '__doc__':
             return unittest.mock._Call.__doc__
         return super().__getattr__(attr)
+
+
 call = _Call(from_kall=False)
 
 patch = unittest.mock.patch
