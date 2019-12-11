@@ -142,7 +142,8 @@ def maybe_cancel(fut: Optional[asyncio.Future]) -> bool:
     return False
 
 
-def maybe_set_exception(fut: asyncio.Future, exc: BaseException) -> bool:
+def maybe_set_exception(fut: Optional[asyncio.Future],
+                        exc: BaseException) -> bool:
     """Set future exception if not already done."""
     if fut is not None and not fut.done():
         fut.set_exception(exc)
@@ -150,7 +151,8 @@ def maybe_set_exception(fut: asyncio.Future, exc: BaseException) -> bool:
     return False
 
 
-def maybe_set_result(fut: asyncio.Future, result: Any) -> bool:
+def maybe_set_result(fut: Optional[asyncio.Future],
+                     result: Any) -> bool:
     """Set future result if not already done."""
     if fut is not None and not fut.done():
         fut.set_result(result)

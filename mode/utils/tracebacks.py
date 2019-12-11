@@ -124,9 +124,10 @@ class Traceback(_BaseTraceback):
         return cls.from_coroutine(coro, limit=limit)
 
     @classmethod
-    def from_coroutine(cls, coro: Union[Coroutine, Generator], *,
-                       depth: int = 0,
-                       limit: int = DEFAULT_MAX_FRAMES) -> _BaseTraceback:
+    def from_coroutine(
+            cls, coro: Union[Coroutine, Generator], *,
+            depth: int = 0,
+            limit: Optional[int] = DEFAULT_MAX_FRAMES) -> _BaseTraceback:
         try:
             frame = cls._get_coroutine_frame(coro)
         except AttributeError:
@@ -148,7 +149,7 @@ class Traceback(_BaseTraceback):
             num_frames += 1
             current_frame = current_frame.f_back
         frames.reverse()
-        prev = None
+        prev: Optional[_BaseTraceback] = None
         root: Optional[_BaseTraceback] = None
         for f in frames:
             tb = cls(f)

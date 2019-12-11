@@ -304,7 +304,9 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
         else:
             if not isinstance(record.args, tuple):
                 # logger.log(severity, "msg %s", foo)
-                record.args = (record.args,)
+                # mypy thinks this is unreachable as record is
+                # always Tuple
+                record.args = (record.args,)  # type: ignore
             # logger.log(severity, "msg %s", ('foo',))
             record.args = tuple(
                 self._format_arg(arg) for arg in record.args

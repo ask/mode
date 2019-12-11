@@ -102,9 +102,10 @@ class ServiceBase(ServiceT):
     @classmethod
     def _init_subclass_logger(cls) -> None:
         # make sure class has a logger.
-        if cls.logger is None or getattr(cls.logger, '__modex__', False):
-            logger = cls.logger = get_logger(cls.__module__)
-            logger.__modex__ = True  # type: ignore
+        logger = cast(Optional[logging.Logger], cls.logger)
+        if logger is None or getattr(logger, '__modex__', False):
+            _logger = cls.logger = get_logger(cls.__module__)
+            _logger.__modex__ = True  # type: ignore
 
     def __init__(self, *, loop: asyncio.AbstractEventLoop = None) -> None:
         self.log = CompositeLogger(self.logger, formatter=self._format_log)
@@ -570,7 +571,7 @@ class Service(ServiceBase, ServiceCallbacks):
     async def add_async_context(self, context: AsyncContextManager) -> Any:
         if isinstance(context, AsyncContextManager):
             return await self.async_exit_stack.enter_async_context(context)
-        elif isinstance(context, ContextManager):
+        elif isinstance(context, ContextManager):  # type: ignore
             raise TypeError(
                 'Use `self.add_context(ctx)` for non-async context')
         raise TypeError(f'Not a context/async context: {type(context)!r}')

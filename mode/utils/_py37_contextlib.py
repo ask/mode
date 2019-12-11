@@ -85,9 +85,9 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
             raise RuntimeError("generator didn't yield") from None
 
     async def __aexit__(self,
-                        typ: Type[BaseException],
-                        value: BaseException,
-                        traceback: types.TracebackType) -> None:
+                        typ: Optional[Type[BaseException]],
+                        value: Optional[BaseException],
+                        traceback: Optional[types.TracebackType]) -> None:
         if typ is None:
             try:
                 await self.gen.__anext__()

@@ -72,7 +72,8 @@ class Mock(unittest.mock.Mock):  # type: ignore
         ret = super().__call__(*args, **kwargs)
         count = self.global_call_count = next(MOCK_CALL_COUNT)
         if self.call_counts is None:
-            self.call_counts = [count]
+            # mypy thinks this is unreachable as we mask that this is Optional
+            self.call_counts = [count]  # type: ignore
         else:
             self.call_counts.append(count)
         return ret

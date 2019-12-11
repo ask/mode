@@ -114,8 +114,8 @@ class Worker(Service):
             logfile: Union[str, IO] = None,
             redirect_stdouts: bool = True,
             redirect_stdouts_level: logging.Severity = None,
-            stdout: IO = sys.stdout,
-            stderr: IO = sys.stderr,
+            stdout: Optional[IO] = sys.stdout,
+            stderr: Optional[IO] = sys.stderr,
             console_port: int = 50101,
             loghandlers: List[Handler] = None,
             blocking_timeout: Seconds = 10.0,
@@ -134,12 +134,8 @@ class Worker(Service):
         self.redirect_stdouts_level = logging.level_number(
             redirect_stdouts_level or 'WARN')
         self.override_logging = override_logging
-        if stdout is None:
-            stdout = sys.stdout
-        self.stdout = stdout
-        if stderr is None:
-            stderr = sys.stderr
-        self.stderr = stderr
+        self.stdout = sys.stdout if stdout is None else stdout
+        self.stderr = sys.stderr if stderr is None else stderr
         self.console_port = console_port
         self.blocking_timeout = blocking_timeout
         self.daemon = daemon
