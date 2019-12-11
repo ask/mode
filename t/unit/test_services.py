@@ -4,7 +4,6 @@ from mode import Service
 from mode.services import Diag, ServiceTask, WaitResult
 from mode.utils.logging import get_logger
 from mode.utils.mocks import (
-    ANY,
     AsyncContextManagerMock,
     AsyncMock,
     ContextMock,
@@ -525,7 +524,7 @@ class test_Service:
         coro = Mock()
         ret = await service.wait(coro, timeout=1.14)
         assert ret is service._wait_one.coro.return_value
-        service._wait_one.assert_called_once_with(ANY, timeout=1.14)
+        service._wait_one.assert_called_once_with(coro, timeout=1.14)
 
     @pytest.mark.asyncio
     async def test_wait_many(self, *, service):
@@ -544,7 +543,7 @@ class test_Service:
             )
 
             service._wait_one.assert_called_once_with(
-                ANY, timeout=3.34)
+                wait.return_value, timeout=3.34)
 
     @pytest.mark.asyncio
     async def test_wait_first__propagates_exceptions(self, *, service):

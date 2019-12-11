@@ -7,7 +7,6 @@ import os
 import sys
 import threading
 import traceback
-import typing
 from contextlib import contextmanager
 from functools import singledispatch, wraps
 from itertools import count
@@ -159,13 +158,7 @@ class HasLog(Protocol):
         ...
 
 
-if typing.TYPE_CHECKING:
-    LogSeverityMixinBase = HasLog
-else:
-    LogSeverityMixinBase = object
-
-
-class LogSeverityMixin(LogSeverityMixinBase):
+class LogSeverityMixin(HasLog):
     """Mixin class that delegates standard logging methods to logger.
 
     The class that mixes in this class must define the ``log`` method.
