@@ -30,6 +30,7 @@ all: help
 help:
 	@echo "docs                 - Build documentation."
 	@echo "test-all             - Run tests for all supported python versions."
+	@echo "develop              - Install all dependencies into current virtualenv."
 	@echo "distcheck ---------- - Check distribution for problems."
 	@echo "  test               - Run unittests using current python."
 	@echo "  lint ------------  - Check codebase for problems."
@@ -69,6 +70,36 @@ bump-major:
 
 release:
 	$(PYTHON) setup.py register sdist bdist_wheel upload --sign --identity="$(PGPIDENT)"
+
+
+. PHONY: deps-default
+deps-default:
+	$(PIP) install -U -r requirements/default.txt
+
+. PHONY: deps-dist
+deps-dist:
+	$(PIP) install -U -r requirements/dist.txt
+
+. PHONY: deps-docs
+deps-docs:
+	$(PIP) install -U -r requirements/docs.txt
+
+. PHONY: deps-test
+deps-test:
+	$(PIP) install -U -r requirements/test.txt
+
+. PHONY: deps-typecheck
+deps-typecheck:
+	$(PIP) install -U -r requirements/typecheck.txt
+
+. PHONY: deps-extras
+deps-extras:
+	$(PIP) install -U -r requirements/extras/eventlet.txt
+	$(PIP) install -U -r requirements/extras/uvloop.txt
+
+. PHONY: develop
+develop: deps-default deps-dist deps-docs deps-test deps-typecheck deps-extras
+	$(PYTHON) setup.py develop
 
 . PHONY: Documentation
 Documentation:
