@@ -593,10 +593,12 @@ class test_AwaitableProxy:
 
     @pytest.fixture()
     def s(self):
-        return AwaitableProxy(lambda: self.asynfun())
+        return AwaitableProxy(lambda: self.asynfun(), cache=True)
 
-    def test_type(self, *, s):
+    @pytest.mark.asyncio
+    async def test_type(self, *, s):
         assert isinstance(s, Awaitable)
+        assert await s  # fixes 'was never awaited' warning.
 
     @pytest.mark.asyncio
     async def test_awaitable(self, *, s):
