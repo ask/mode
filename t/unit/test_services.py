@@ -4,6 +4,7 @@ from mode import Service
 from mode.services import Diag, ServiceTask, WaitResult
 from mode.utils.logging import get_logger
 from mode.utils.mocks import (
+    ANY,
     AsyncContextManagerMock,
     AsyncMock,
     ContextMock,
@@ -528,7 +529,7 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_wait_many(self, *, service):
-        with patch('asyncio.wait') as wait:
+        with patch('asyncio.wait', AsyncMock()) as wait:
             service._wait_one = AsyncMock()
             m1 = AsyncMock()
             m2 = AsyncMock()
@@ -543,7 +544,7 @@ class test_Service:
             )
 
             service._wait_one.assert_called_once_with(
-                wait.return_value, timeout=3.34)
+                ANY, timeout=3.34)
 
     @pytest.mark.asyncio
     async def test_wait_first__propagates_exceptions(self, *, service):
