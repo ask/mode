@@ -4,6 +4,22 @@
  Change history
 ================
 
+.. _version-4.1.6:
+
+4.1.6
+=====
+:release-date: 2019-12-12 2:30 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- logging: Fixes recursion error on Python 3.6 (Issue #52)
+
+- Makefile: Added `make develop` to install dependencies into the currently
+    activated virtualenv.
+
+- Tests: Removed `was never awaited` warning during test run.
+
+- CI: Revert back to using Python 3.7.5 for Windows build.
+
 .. _version-4.1.5:
 
 4.1.5
