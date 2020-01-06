@@ -45,12 +45,13 @@ class Event:
         All coroutines waiting for it to become true are awakened.
         Coroutine that call wait() once the flag is true will not block at all.
         """
+        from .futures import notify
+
         if not self._value:
             self._value = True
 
-            for fut in self._waiters:
-                if not fut.done():
-                    fut.set_result(True)
+            for fut in self._waiters.copy():
+                notify(fut, True)
 
     def clear(self) -> None:
         """Reset the internal flag to false.

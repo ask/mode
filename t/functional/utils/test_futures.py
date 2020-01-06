@@ -155,7 +155,9 @@ async def test_maybe_set_result():
     loop = asyncio.get_event_loop()
     future = loop.create_future()
     maybe_set_result(future, 42)
+    await asyncio.sleep(0.001)
     assert future.result() == 42
     maybe_set_result(future, 53)
     maybe_set_result(None, 57)
+    await asyncio.sleep(0.001)
     assert future.result() == 42

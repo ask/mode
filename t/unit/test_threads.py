@@ -161,7 +161,9 @@ class test_ServiceThread:
         await thread.stop()
         thread._started.set()
         thread._shutdown.set()
+        thread._thread = Mock()
         await thread.stop()
+        thread._thread.stop.assert_called_once_with()
 
     @pytest.mark.asyncio
     async def test_stop_children(self, *, thread):

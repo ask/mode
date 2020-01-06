@@ -177,6 +177,8 @@ class test_CrashingSupervisor:
         wakeup = sup._please_wakeup = Mock()
         wakeup.done.return_value = False
         wakeup.cancelled.return_value = False
+        loop = wakeup.get_loop.return_value = Mock()
         sup.wakeup()
         assert sup._stopped.is_set()
-        wakeup.set_result.assert_called_with(None)
+        wakeup.get_loop.assert_called_once()
+        loop.call_soon_threadsafe.assert_called_with(wakeup.set_result, None)

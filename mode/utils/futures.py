@@ -155,7 +155,7 @@ def maybe_set_result(fut: Optional[asyncio.Future],
                      result: Any) -> bool:
     """Set future result if not already done."""
     if fut is not None and not fut.done():
-        fut.set_result(result)
+        notify(fut, result)
         return True
     return False
 
@@ -165,4 +165,5 @@ def notify(fut: Optional[asyncio.Future], result: Any = None) -> None:
     # can be used to turn a Future into a lockless, single-consumer condition,
     # for multi-consumer use asyncio.Condition
     if fut is not None and not fut.done():
-        fut.set_result(result)
+        loop = fut.get_loop()
+        loop.call_soon_threadsafe(fut.set_result, result)
