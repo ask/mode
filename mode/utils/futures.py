@@ -165,5 +165,8 @@ def notify(fut: Optional[asyncio.Future], result: Any = None) -> None:
     # can be used to turn a Future into a lockless, single-consumer condition,
     # for multi-consumer use asyncio.Condition
     if fut is not None and not fut.done():
-        loop = fut.get_loop()
+        try:
+            loop = fut.get_loop()
+        except AttributeError:
+            loop = fut._loop
         loop.call_soon_threadsafe(fut.set_result, result)
