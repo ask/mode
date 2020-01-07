@@ -176,8 +176,11 @@ class ServiceThread(Service):
 
     async def crash(self, exc: BaseException) -> None:
         # <- .start() will raise
-        self.parent_loop.call_soon_threadsafe(
-            maybe_set_exception, self._thread_running, exc)
+        if asyncio.get_event_loop() is self.parent_loop:
+            maybe_set_exception(self._thread_running, exc)
+        else:
+            self.parent_loop.call_soon_threadsafe(
+                maybe_set_exception, self._thread_running, exc)
         await super().crash(exc)
 
     def _start_thread(self) -> None:
