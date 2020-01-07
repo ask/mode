@@ -4,7 +4,7 @@
 
 |build-status| |coverage| |license| |wheel| |pyversion| |pyimp|
 
-:Version: 4.1.6
+:Version: 4.1.7
 :Web: http://mode.readthedocs.org/
 :Download: http://pypi.org/project/mode
 :Source: http://github.com/ask/mode
