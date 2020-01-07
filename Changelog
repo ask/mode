@@ -4,6 +4,35 @@
  Change history
 ================
 
+.. _version-4.1.8:
+
+4.1.8
+=====
+:release-date: 2020-01-07 4:00 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- ``ServiceThread.crash()`` now immediately sets exception
+  when called in main thread.
+
+.. _version-4.1.7:
+
+4.1.7
+=====
+:release-date: 2020-01-07 3:20 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Now depends on :pypi:`typing_extensions` (Issue #53)
+
+    This dependency was previously missing resulting in errors.
+
+- Fixed :class:`~mode.threads.ServiceThread` hang on exceptions raised
+  (Issue #54).
+
+    Contributed by Alexey Basov (:github_user:`r313pp`)
+    and Jonathan Booth (:github_user:`jbooth-mastery`).
+
+
+
 .. _version-4.1.6:
 
 4.1.6
