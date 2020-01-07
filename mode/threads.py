@@ -175,8 +175,9 @@ class ServiceThread(Service):
             self._thread_running = None
 
     async def crash(self, exc: BaseException) -> None:
-        if self._thread_running and not self._thread_running.done():
-            self._thread_running.set_exception(exc)  # <- .start() will raise
+        # <- .start() will raise
+        self.parent_loop.call_soon_threadsafe(
+            maybe_set_exception, self._thread_running, exc)
         await super().crash(exc)
 
     def _start_thread(self) -> None:
@@ -193,6 +194,8 @@ class ServiceThread(Service):
     async def stop(self) -> None:
         if self._started.is_set():
             await super().stop()
+            if self._thread is not None:
+                self._thread.stop()
 
     async def _stop_children(self) -> None:
         ...   # called by thread instead of .stop()
@@ -208,8 +211,6 @@ class ServiceThread(Service):
         await self.on_thread_stop()
         self.set_shutdown()
         await self._default_stop_futures()
-        if self._thread is not None:
-            self._thread.stop()
         await self._default_stop_exit_stacks()
 
     async def _serve(self) -> None:
@@ -219,7 +220,7 @@ class ServiceThread(Service):
             # allow ServiceThread.start() to return
             # when wait_for_thread is enabled.
             await self.on_thread_started()
-            notify(self._thread_running)
+            self.parent_loop.call_soon_threadsafe(notify, self._thread_running)
             await self.wait_until_stopped()
         except asyncio.CancelledError:
             raise
