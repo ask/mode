@@ -43,9 +43,9 @@ from .locals import LocalStack
 from .text import title
 from .times import Seconds, want_seconds
 from .tracebacks import format_task_stack, print_task_stack
+from .typing import Protocol
 
 import colorlog
-from typing_extensions import Protocol
 
 __all__ = [
     'CompositeLogger',
