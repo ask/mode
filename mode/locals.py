@@ -286,8 +286,8 @@ class Proxy(Generic[T]):
     def __class__(self) -> Any:
         return self._get_class()
 
-    @__class__.setter
-    def __class__(self, t: Type[T]) -> None:  # noqa: F811
+    @__class__.setter  # noqa: F811
+    def __class__(self, t: Type[T]) -> None:
         raise NotImplementedError()
 
     def _get_current_object(self) -> T:
@@ -513,8 +513,8 @@ class SequenceRole(Sequence[T_co]):
     def __getitem__(self, i: int) -> T_co:
         ...
 
-    @overload
-    def __getitem__(self, s: slice) -> MutableSequence[T_co]:  # noqa: F811
+    @overload  # noqa: F811
+    def __getitem__(self, s: slice) -> MutableSequence[T_co]:
         ...
 
     def __getitem__(self, s: Any) -> Any:  # noqa: F811
@@ -558,8 +558,8 @@ class MutableSequenceRole(SequenceRole[T], MutableSequence[T]):
     def __setitem__(self, i: int, o: T) -> None:
         ...
 
-    @overload
-    def __setitem__(self, s: slice, o: Iterable[T]) -> None:  # noqa: F811
+    @overload  # noqa: F811
+    def __setitem__(self, s: slice, o: Iterable[T]) -> None:
         ...
 
     def __setitem__(self, index_or_slice: Any, o: Any) -> None:  # noqa: F811
@@ -569,8 +569,8 @@ class MutableSequenceRole(SequenceRole[T], MutableSequence[T]):
     def __delitem__(self, i: int) -> None:
         ...
 
-    @overload
-    def __delitem__(self, i: slice) -> None:  # noqa: F811
+    @overload  # noqa: F811
+    def __delitem__(self, i: slice) -> None:
         ...
 
     def __delitem__(self, i: Any) -> None:  # noqa: F811
@@ -744,8 +744,8 @@ class MappingRole(Mapping[KT, VT_co]):
     def get(self, k: KT) -> Optional[VT_co]:
         ...
 
-    @overload
-    def get(self, k: KT,  # noqa: F811
+    @overload  # noqa: F811
+    def get(self, k: KT,
             default: Union[VT_co, T]) -> Union[VT_co, T]:
         ...
 
@@ -796,8 +796,8 @@ class MutableMappingRole(MappingRole[KT, VT], MutableMapping[KT, VT]):
     def pop(self, k: KT) -> VT:
         ...
 
-    @overload
-    def pop(self, k: KT,  # noqa: F811
+    @overload  # noqa: F811
+    def pop(self, k: KT,
             default: Union[VT, T] = ...) -> Union[VT, T]:
         ...
 
@@ -814,13 +814,13 @@ class MutableMappingRole(MappingRole[KT, VT], MutableMapping[KT, VT]):
     def update(self, __m: Mapping[KT, VT], **kwargs: VT) -> None:
         ...
 
-    @overload
-    def update(self, __m: Iterable[Tuple[KT, VT]],  # noqa: F811
+    @overload  # noqa: F811
+    def update(self, __m: Iterable[Tuple[KT, VT]],
                **kwargs: VT) -> None:
         ...
 
-    @overload
-    def update(self, **kwargs: VT) -> None:  # noqa: F811
+    @overload  # noqa: F811
+    def update(self, **kwargs: VT) -> None:
         ...
 
     def update(self, *args: Any, **kwargs: Any) -> None:  # noqa: F811

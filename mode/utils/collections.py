@@ -146,8 +146,8 @@ class Heap(MutableSequence[T]):
     def __getitem__(self, i: int) -> T:
         ...
 
-    @overload
-    def __getitem__(self, s: slice) -> MutableSequence[T]:  # noqa: F811
+    @overload  # noqa: F811
+    def __getitem__(self, s: slice) -> MutableSequence[T]:
         ...
 
     def __getitem__(self, s: Any) -> Any:  # noqa: F811
@@ -157,8 +157,8 @@ class Heap(MutableSequence[T]):
     def __setitem__(self, i: int, o: T) -> None:
         ...
 
-    @overload
-    def __setitem__(self, s: slice, o: Iterable[T]) -> None:  # noqa: F811
+    @overload  # noqa: F811
+    def __setitem__(self, s: slice, o: Iterable[T]) -> None:
         ...
 
     def __setitem__(self, index_or_slice: Any, o: Any) -> None:  # noqa: F811
@@ -168,8 +168,8 @@ class Heap(MutableSequence[T]):
     def __delitem__(self, i: int) -> None:
         ...
 
-    @overload
-    def __delitem__(self, i: slice) -> None:  # noqa: F811
+    @overload  # noqa: F811
+    def __delitem__(self, i: slice) -> None:
         ...
 
     def __delitem__(self, i: Any) -> None:  # noqa: F811
