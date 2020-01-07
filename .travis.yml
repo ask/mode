@@ -37,11 +37,6 @@ matrix:
       os: linux
       dist: xenial
       stage: lint
-    - python: 3.6.0
-      env: TOXENV=3.6 RUN_SUITE=y
-      os: linux
-      dist: trusty
-      stage: test
     - python: 3.6.1
       env: TOXENV=3.6 RUN_SUITE=y
       os: linux
