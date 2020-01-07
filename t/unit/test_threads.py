@@ -25,24 +25,24 @@ class test_WorkerThread:
     def test_run(self, *, thread, service):
         thread.run()
         service._start_thread.assert_called_once_with()
-        assert service._is_stopped.is_set()
+        assert service.is_stopped.is_set()
 
     def test_stop__alive(self, *, thread):
-        thread._is_stopped = Mock()
+        thread.is_stopped = Mock()
         thread.is_alive = Mock(return_value=True)
         thread.join = Mock()
         thread.stop()
 
-        thread._is_stopped.wait.assert_called_once_with()
+        thread.is_stopped.wait.assert_called_once_with()
         thread.join.assert_called_with(threading.TIMEOUT_MAX)
 
     def test_stop__not_alive(self, *, thread):
-        thread._is_stopped = Mock()
+        thread.is_stopped = Mock()
         thread.is_alive = Mock(return_value=False)
         thread.join = Mock()
         thread.stop()
 
-        thread._is_stopped.wait.assert_called_once_with()
+        thread.is_stopped.wait.assert_called_once_with()
         thread.join.assert_not_called()
 
 

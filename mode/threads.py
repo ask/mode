@@ -52,13 +52,13 @@ class WorkerThread(threading.Thread):
     """Thread class used for services running in a dedicated thread."""
 
     service: 'ServiceThread'
-    _is_stopped: threading.Event
+    is_stopped: threading.Event
 
     def __init__(self, service: 'ServiceThread', **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.service = service
         self.daemon = False
-        self._is_stopped = threading.Event()
+        self.is_stopped = threading.Event()
 
     def run(self) -> None:
         try:
@@ -68,14 +68,14 @@ class WorkerThread(threading.Thread):
 
     def _set_stopped(self) -> None:
         try:
-            self._is_stopped.set()
+            self.is_stopped.set()
         except TypeError:  # pragma: no cover
             # we lost the race at interpreter shutdown,
             # so gc collected built-in modules.
             pass
 
     def stop(self) -> None:
-        self._is_stopped.wait()
+        self.is_stopped.wait()
         if self.is_alive():
             self.join(threading.TIMEOUT_MAX)
 
