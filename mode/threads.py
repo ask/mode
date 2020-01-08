@@ -115,7 +115,7 @@ class ServiceThread(Service):
         super().__init__(loop=self.thread_loop, **kwargs)
         assert self._shutdown.loop is self.parent_loop
 
-    def __del__(self):
+    def __del__(self) -> None:
         # Since services can restart, the thread loop must not be closed
         # until the service is being fully removed, not just stopped.
         try:

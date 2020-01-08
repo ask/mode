@@ -166,7 +166,7 @@ def notify(fut: Optional[asyncio.Future], result: Any = None) -> None:
     # for multi-consumer use asyncio.Condition
     if fut is not None and not fut.done():
         try:
-            loop = fut.get_loop()
+            loop = fut.get_loop()  # type: ignore
         except AttributeError:
             loop = fut._loop
         loop.call_soon_threadsafe(fut.set_result, result)
