@@ -281,6 +281,10 @@ class MethodQueueWorker(Service):
                 item = await get()
                 await process_enqueued(item)
 
+    @property
+    def label(self) -> str:
+        return f'{type(self).__name__}@{id(self):#x} index={self.index}'
+
 
 class MethodQueue(Service):
     Worker: Type[MethodQueueWorker] = MethodQueueWorker
@@ -349,6 +353,10 @@ class MethodQueue(Service):
             else:
                 maybe_set_result(promise, result)
         return promise
+
+    @property
+    def label(self) -> str:
+        return f'{type(self).__name__}@{id(self):#x}'
 
 
 class QueueServiceThread(ServiceThread):
