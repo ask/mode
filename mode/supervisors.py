@@ -187,6 +187,10 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
         except MaxRestartsExceeded as exc:
             self.log.warning('Max restarts exceeded: %r', exc, exc_info=1)
 
+    @property
+    def label(self) -> str:
+        return f'{type(self).__name__}: ({len(self._services)}@{id(self):#x})'
+
 
 class OneForOneSupervisor(SupervisorStrategy):
     """Supervisor simply restarts any crashed service."""
