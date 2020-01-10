@@ -70,7 +70,7 @@ class Node(NodeT[T]):
         """Attach this node to `parent` node."""
         self.root = parent.root if parent.root is not None else parent
         self.parent = parent
-        parent.add(self)
+        parent.add_deduplicate(self)
         return self
 
     def detach(self, parent: NodeT[T]) -> NodeT[T]:
@@ -80,6 +80,10 @@ class Node(NodeT[T]):
         self._parent = None
         self._root = None
         return self
+
+    def add_deduplicate(self, data: Union[T, NodeT[T]]) -> None:
+        if data not in self.children:
+            self.children.append(data)
 
     def add(self, data: Union[T, NodeT[T]]) -> None:
         """Add node as a child node."""
