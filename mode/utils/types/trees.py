@@ -28,6 +28,10 @@ class NodeT(Generic[_T]):
         ...
 
     @abc.abstractmethod
+    def add_deduplicate(self, data: Union[_T, 'NodeT[_T]']) -> None:
+        ...
+
+    @abc.abstractmethod
     def discard(self, data: _T) -> None:
         ...
 
