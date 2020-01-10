@@ -210,8 +210,8 @@ class ServiceThread(Service):
         ...   # called by thread instead of .stop()
 
     async def _shutdown_thread(self) -> None:
-        await self._default_stop_children()
         await self.on_thread_stop()
+        await self._default_stop_children()
         self.set_shutdown()
         await self._default_stop_futures()
         await self._default_stop_exit_stacks()
