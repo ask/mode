@@ -4,6 +4,17 @@
  Change history
 ================
 
+.. _version-4.1.9:
+
+4.1.9
+=====
+:release-date: 2020-01-13 11:18 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- QueueServiceThread: Stop method queue before stopping child services.
+
+- Small fixes to render graph images correctly.
+
 .. _version-4.1.8:
 
 4.1.8
