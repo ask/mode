@@ -966,14 +966,14 @@ class Service(ServiceBase, ServiceCallbacks):
             ...   await perform_some_http_request()
         """
         sleepfun = sleep or self.sleep
-        for sleep_time in timer_intervals(
+        if self.should_stop:
+            return
+        async for sleep_time in timer_intervals(
                 interval,
                 name=name,
                 max_drift_correction=max_drift_correction,
-                clock=clock):
-            if self.should_stop:
-                break
-            await sleepfun(sleep_time, loop=loop)
+                clock=clock,
+                sleep=sleepfun):
             if self.should_stop:
                 break
             yield sleep_time

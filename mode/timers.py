@@ -1,7 +1,8 @@
 """AsyncIO Timers."""
+import asyncio
 from itertools import count
 from time import perf_counter
-from typing import Callable, Iterator
+from typing import AsyncIterator, Awaitable, Callable
 from .utils.logging import get_logger
 from .utils.times import Seconds, want_seconds
 
@@ -11,14 +12,17 @@ MAX_DRIFT_PERCENT: float = 0.90
 MAX_DRIFT_CEILING: float = 1.2
 
 ClockArg = Callable[[], float]
+SleepArg = Callable[[float], Awaitable[None]]
 
 logger = get_logger(__name__)
 
 
-def timer_intervals(interval: Seconds,
-                    max_drift_correction: float = 0.1,
-                    name: str = '',
-                    clock: ClockArg = perf_counter) -> Iterator[float]:
+async def timer_intervals(
+        interval: Seconds,
+        max_drift_correction: float = 0.1,
+        name: str = '',
+        clock: ClockArg = perf_counter,
+        sleep: SleepArg = asyncio.sleep) -> AsyncIterator[float]:
     """Generate timer sleep times.
 
     Example:
@@ -50,11 +54,18 @@ def timer_intervals(interval: Seconds,
     epoch = clock()
     # time of last timer run, updated after each run.
     last_run_at = epoch - interval_s
+    # time of last timer run, only including the time
+    # spent sleeping, not the time running timer callbacks.
+    sleep_end = epoch - interval_s
 
     for i in count():
         now = clock()
         since_epoch = now - epoch
-        time_spent = now - last_run_at
+        time_spent = now - sleep_end
+        if time_spent < 0.01:
+            # protect against overflow with very small numbers.
+            time_spent = interval_s
+        callback_time = last_run_at - sleep_end
         drift = interval_s - time_spent
         abs_drift = abs(drift)
         drift_time = interval_s + drift
@@ -81,7 +92,14 @@ def timer_intervals(interval: Seconds,
                 'time_spent=%r drift=%r sleep_time=%r since_epoch=%r',
                 name, i, time_spent, drift, sleep_time, since_epoch)
 
+        if callback_time > interval_s:
+            logger.warning(
+                'Timer %s is overlapping (interval=%r runtime=%r)',
+                name, interval, callback_time)
+
         last_run_at = clock()
+        await sleep(sleep_time)
+        sleep_end = clock()
         yield sleep_time
     else:  # pragma: no cover
         pass  # never exits

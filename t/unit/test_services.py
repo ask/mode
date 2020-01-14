@@ -715,9 +715,13 @@ class test_Service:
     async def test_itertimer(self, *, service):
         with patch('mode.services.timer_intervals') as timer_intervals:
 
-            timer_intervals.return_value = [
-                1.0, 1.003, 0.995,
-            ]
+            async def on_timer_intervals(*args, **kwargs):
+                yield 1.0
+                yield 1.003
+                yield 0.995
+
+            timer_intervals.side_effect = on_timer_intervals
+
             service.sleep = AsyncMock()
             values = [value async for value in service.itertimer(1.0)]
             assert values == [1.0, 1.003, 0.995]
@@ -726,9 +730,9 @@ class test_Service:
     async def test_itertimer__first_stop(self, *, service):
         with patch('mode.services.timer_intervals') as timer_intervals:
 
-            def on_timer_intervals(*args, **kwargs):
+            async def on_timer_intervals(*args, **kwargs):
                 service._stopped.set()
-                return [1.0]
+                yield 1.0
 
             timer_intervals.side_effect = on_timer_intervals
             values = [value async for value in service.itertimer(1.0)]
@@ -737,7 +741,13 @@ class test_Service:
     @pytest.mark.asyncio
     async def test_itertimer__second_stop(self, *, service):
         with patch('mode.services.timer_intervals') as timer_intervals:
-            timer_intervals.return_value = [0.784512, 0.2, 0.3]
+
+            async def on_timer_intervals(*args, **kwargs):
+                for val in [0.784512, 0.2, 0.3]:
+                    await service.sleep(val)
+                    yield val
+
+            timer_intervals.side_effect = on_timer_intervals
 
             service.sleep = AsyncMock(name='sleep')
 
@@ -754,7 +764,14 @@ class test_Service:
     @pytest.mark.asyncio
     async def test_itertimer__third_stop(self, *, service):
         with patch('mode.services.timer_intervals') as timer_intervals:
-            timer_intervals.return_value = [0.1341, 0.2, 0.3, 0.4]
+
+            async def on_timer_intervals(*args, **kwargs):
+                yield 0.1341
+                yield 0.2
+                yield 0.3
+                yield 0.4
+
+            timer_intervals.side_effect = on_timer_intervals
 
             sleep = AsyncMock(name='sleep')
 

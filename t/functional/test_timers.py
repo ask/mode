@@ -1,15 +1,14 @@
 import asyncio
 import pytest
 from mode.timers import timer_intervals
-from mode.utils.mocks import Mock, patch
+from mode.utils.mocks import AsyncMock, Mock, patch
 
 
 @pytest.mark.asyncio
 async def test_timer_intervals():
     i = 0
-    for sleep_time in timer_intervals(0.1):
+    async for sleep_time in timer_intervals(0.1, sleep=asyncio.sleep):
         assert sleep_time == pytest.approx(0.1, 2e-1)
-        await asyncio.sleep(sleep_time)
         if i > 10:
             break
         i += 1
@@ -24,7 +23,9 @@ async def test_timer_intervals__too_late():
     #                          ^- skips
     with patch('mode.timers.logger') as logger:
         i = 0
-        for sleep_time in timer_intervals(1.0, clock=clock):
+        async for sleep_time in timer_intervals(1.0,
+                                                clock=clock,
+                                                sleep=AsyncMock()):
             clock.return_value = next(clock_values)
             assert sleep_time == (0.9 if i == 5 else 1.0)
             if i >= 8:
@@ -42,7 +43,8 @@ async def test_timer_intervals__too_early():
     #                          ^- too fast
     with patch('mode.timers.logger') as logger:
         i = 0
-        for sleep_time in timer_intervals(1.0, clock=clock):
+        sleep = AsyncMock()
+        async for sleep_time in timer_intervals(1.0, clock=clock, sleep=sleep):
             clock.return_value = next(clock_values)
             assert sleep_time == (1.1 if i == 5 else 1.0)
             if i >= 6:
