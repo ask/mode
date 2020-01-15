@@ -57,7 +57,7 @@ class Clock:
     min_interval_s: float
     max_interval_s: float
 
-    last_run_at: float
+    last_wakeup_at: float
     sleep_end_at: float
     iteration: int
 
@@ -92,22 +92,36 @@ class Clock:
         # usually callers will sleep before starting first timer
         self.epoch = self.clock()
         # time of last timer run, updated after each run.
-        self.last_run_at = self.epoch - interval_s
+        self.last_wakeup_at = self.epoch
         # time of last timer run, only including the time
         # spent sleeping, not the time running timer callbacks.
-        self.sleep_end_at = self.epoch - interval_s
+        self.sleep_end_at = self.epoch
 
         self.iteration = 0
 
-    def update(self) -> float:
+    def __repr__(self) -> str:
         now = self.clock()
+        secs_since_epoch = now - self.epoch
+        secs_since_wakeup = now - self.last_wakeup_at
+        secs_since_sleep = now - self.sleep_end_at
+        return (f'<{type(self).__name__}: {self.name} {self.interval}'
+                f'since_epoch={secs_since_epoch} '
+                f'since_wakeup={secs_since_wakeup} '
+                f'since_sleep={secs_since_sleep} '
+                f'>')
+
+    def update(self) -> float:
         interval_s = self.interval_s
+        now = self.clock()
+        if self.sleep_end_at == self.epoch:
+            self.last_wakeup_at = now
+            return interval_s
         since_epoch = now - self.epoch
-        time_spent = now - self.sleep_end_at
-        if time_spent < 0.01:
-            # protect against overflow with very small numbers.
-            time_spent = interval_s
-        callback_time = self.last_run_at - self.sleep_end_at
+        time_spent = self.sleep_end_at - self.last_wakeup_at
+        #if time_spent < 0.01:
+        #    # protect against overflow with very small numbers.
+        #    time_spent = interval_s
+        callback_time = now - self.last_wakeup_at - time_spent
         drift = interval_s - time_spent
         abs_drift = abs(drift)
         drift_time = interval_s + drift
@@ -122,12 +136,12 @@ class Clock:
         if interval_s >= 1.0 and abs_drift >= self.max_drift:
             if drift < 0:
                 logger.info(
-                    'Timer %s woke up too late, with a drift of +%r',
-                    self.name, abs_drift)
+                    'Timer %s woke up too late, with a drift of +%r (%r)',
+                    self.name, abs_drift, self)
             else:
                 logger.info(
-                    'Timer %s woke up too early, with a drift of -%r',
-                    self.name, abs_drift)
+                    'Timer %s woke up too early, with a drift of -%r (%r)',
+                    self.name, abs_drift, self)
         else:
             logger.debug(
                 'Timer %s woke up - iteration=%r '
@@ -141,7 +155,7 @@ class Clock:
                 self.name, self.interval, callback_time)
 
         self.iteration += 1
-        self.last_run_at = now
+        self.last_wakeup_at = now
 
         return sleep_time
 
