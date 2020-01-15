@@ -28,7 +28,7 @@ from typing import (
     cast,
 )
 
-from .timers import timer_intervals
+from .timers import itertimer
 from .types import DiagT, ServiceT
 from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.locks import Event
@@ -949,7 +949,7 @@ class Service(ServiceBase, ServiceCallbacks):
         """Sleep ``interval`` seconds for every iteration.
 
         This is an async iterator that takes advantage
-        of :func:`~mode.timers.timer_intervals` to act as a timer
+        of :func:`~mode.timers.itertimer` to act as a timer
         that stop drift from occurring, and adds a tiny amount of drift
         to timers so that they don't start at the same time.
 
@@ -968,17 +968,22 @@ class Service(ServiceBase, ServiceCallbacks):
         sleepfun = sleep or self.sleep
         if self.should_stop:
             return
-        async for sleep_time in timer_intervals(
-                interval,
-                name=name,
-                max_drift_correction=max_drift_correction,
-                clock=clock,
-                sleep=sleepfun):
-            if self.should_stop:
-                break
-            yield sleep_time
-            if self.should_stop:
-                break
+        try:
+            async for sleep_time in itertimer(
+                    interval,
+                    name=name,
+                    max_drift_correction=max_drift_correction,
+                    clock=clock,
+                    sleep=sleepfun):
+                if self.should_stop:
+                    break
+                yield sleep_time
+                if self.should_stop:
+                    break
+        finally:
+            # this is required to collect the async_generator_athrow()
+            # tasks left running after the `async for` block ends.
+            await asyncio.sleep(0)
 
     @property
     def started(self) -> bool:

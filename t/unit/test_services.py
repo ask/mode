@@ -713,14 +713,14 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_itertimer(self, *, service):
-        with patch('mode.services.timer_intervals') as timer_intervals:
+        with patch('mode.services.itertimer') as itertimer:
 
-            async def on_timer_intervals(*args, **kwargs):
+            async def on_itertimer(*args, **kwargs):
                 yield 1.0
                 yield 1.003
                 yield 0.995
 
-            timer_intervals.side_effect = on_timer_intervals
+            itertimer.side_effect = on_itertimer
 
             service.sleep = AsyncMock()
             values = [value async for value in service.itertimer(1.0)]
@@ -728,26 +728,26 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_itertimer__first_stop(self, *, service):
-        with patch('mode.services.timer_intervals') as timer_intervals:
+        with patch('mode.services.itertimer') as itertimer:
 
-            async def on_timer_intervals(*args, **kwargs):
+            async def on_itertimer(*args, **kwargs):
                 service._stopped.set()
                 yield 1.0
 
-            timer_intervals.side_effect = on_timer_intervals
+            itertimer.side_effect = on_itertimer
             values = [value async for value in service.itertimer(1.0)]
             assert values == []
 
     @pytest.mark.asyncio
     async def test_itertimer__second_stop(self, *, service):
-        with patch('mode.services.timer_intervals') as timer_intervals:
+        with patch('mode.services.itertimer') as itertimer:
 
-            async def on_timer_intervals(*args, **kwargs):
+            async def on_itertimer(*args, **kwargs):
                 for val in [0.784512, 0.2, 0.3]:
                     await service.sleep(val)
                     yield val
 
-            timer_intervals.side_effect = on_timer_intervals
+            itertimer.side_effect = on_itertimer
 
             service.sleep = AsyncMock(name='sleep')
 
@@ -763,15 +763,15 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_itertimer__third_stop(self, *, service):
-        with patch('mode.services.timer_intervals') as timer_intervals:
+        with patch('mode.services.itertimer') as itertimer:
 
-            async def on_timer_intervals(*args, **kwargs):
+            async def on_itertimer(*args, **kwargs):
                 yield 0.1341
                 yield 0.2
                 yield 0.3
                 yield 0.4
 
-            timer_intervals.side_effect = on_timer_intervals
+            itertimer.side_effect = on_itertimer
 
             sleep = AsyncMock(name='sleep')
 
