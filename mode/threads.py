@@ -160,6 +160,7 @@ class ServiceThread(Service):
         assert not self._thread_started.is_set()
         self._thread_started.set()
         self._thread_running = asyncio.Future(loop=self.parent_loop)
+        self.add_future(self._keepalive2())
         try:
             self._thread = self.Worker(self)
             self._thread.start()
@@ -175,6 +176,11 @@ class ServiceThread(Service):
                 await self._thread_running
         finally:
             self._thread_running = None
+
+    async def _keepalive2(self):
+        while not self.should_stop:
+            await self.sleep(1.1)
+            asyncio.run_coroutine_threadsafe(self.sleep(1.0), self.thread_loop)
 
     async def crash(self, exc: BaseException) -> None:
         # <- .start() will raise
@@ -242,7 +248,7 @@ class ServiceThread(Service):
     async def _thread_keepalive(self) -> None:
         async for sleep_time in self.itertimer(
                 1.0,
-                name='_thread_keepalive',
+                name=f'_thread_keepalive-{self.label}',
                 loop=self.thread_loop):  # pragma: no cover
             # The consumer thread will have a separate event loop,
             # and so we use this trick to make sure our loop is
