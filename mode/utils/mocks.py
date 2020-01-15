@@ -10,11 +10,8 @@ from itertools import count
 from types import ModuleType
 from typing import (
     Any,
-    AsyncIterable,
-    AsyncIterator,
     Callable,
     ContextManager,
-    Iterable,
     Iterator,
     List,
     Optional,
@@ -28,7 +25,6 @@ __all__ = [
     'IN',
     'AsyncMagicMock',
     'AsyncMock',
-    'AsyncIterableMock',
     'AsyncContextMock',
     'ContextMock',
     'FutureMock',
@@ -140,22 +136,6 @@ class AsyncMagicMock(unittest.mock.MagicMock):  # type: ignore
         coro = MagicMock(*args, **kwargs)
         self.attach_mock(coro, 'coro')
         self.side_effect = coroutine(coro)
-
-
-class AsyncIterableMock(unittest.mock.Mock, AsyncIterable):  # type: ignore
-
-    def __init__(self, values: Iterable,
-                 on_aiter: Callable = None,
-                 **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        self._values = values
-        self.on_aiter = on_aiter
-
-    async def __aiter__(self) -> AsyncIterator:
-        if self.on_aiter is not None:
-            self.on_aiter()
-        for value in self._values:
-            yield value
 
 
 class AsyncContextMock(unittest.mock.Mock):  # type: ignore
