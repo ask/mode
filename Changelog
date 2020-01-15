@@ -4,6 +4,15 @@
  Change history
 ================
 
+.. _version-4.2.0:
+
+4.2.0
+=====
+:release-date: 2020-01-14 3:26 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Timers: Exclude timer callback time in drift calculation
+
 .. _version-4.1.9:
 
 4.1.9
