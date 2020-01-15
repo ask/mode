@@ -48,6 +48,8 @@ async def itertimer(
 
 
 class Clock:
+    """Timer state."""
+
     interval: Seconds
     interval_s: float
 
