@@ -13,6 +13,9 @@
 
 - Timers: Exclude timer callback time in drift calculation
 
+- Service: `maybe_start()` now returns bool, and :const:`True`
+  if the service was started.
+
 .. _version-4.1.9:
 
 4.1.9
