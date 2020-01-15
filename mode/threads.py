@@ -150,9 +150,11 @@ class ServiceThread(Service):
     def _new_shutdown_event(self) -> Event:
         return Event(loop=self.parent_loop)
 
-    async def maybe_start(self) -> None:
+    async def maybe_start(self) -> bool:
         if not self._thread_started.is_set():
             await self.start()
+            return True
+        return False
 
     async def start(self) -> None:
         assert not self._thread_started.is_set()

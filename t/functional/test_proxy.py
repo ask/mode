@@ -71,7 +71,8 @@ class test_Proxy:
 
     @pytest.mark.asyncio
     async def test_maybe_start(self, *, proxy, service):
-        await proxy.maybe_start()
+        service.maybe_start.coro.return_value = False
+        assert not await proxy.maybe_start()
         service.maybe_start.assert_called_once_with()
 
     @pytest.mark.asyncio

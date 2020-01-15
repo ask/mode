@@ -94,7 +94,7 @@ class ServiceT(AsyncContextManager):
         ...
 
     @abc.abstractmethod
-    async def maybe_start(self) -> None:
+    async def maybe_start(self) -> bool:
         ...
 
     @abc.abstractmethod

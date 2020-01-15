@@ -785,10 +785,12 @@ class Service(ServiceBase, ServiceCallbacks):
             # the exception will be re-raised by the main thread.
             await self.crash(exc)
 
-    async def maybe_start(self) -> None:
+    async def maybe_start(self) -> bool:
         """Start the service, if it has not already been started."""
         if not self._started.is_set():
             await self.start()
+            return True
+        return False
 
     def _log_mundane(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.log.log(self._mundane_level, msg, *args, **kwargs)

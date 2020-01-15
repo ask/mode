@@ -70,8 +70,8 @@ class test_ServiceTask:
 async def test_start_stop():
     s = S()
     assert s.state == 'init'
-    await s.maybe_start()
-    await s.maybe_start()
+    assert await s.maybe_start()
+    assert not await s.maybe_start()
     assert s.state == 'running'
     s.on_started_log.assert_called_with()
     await s.stop()
@@ -247,7 +247,7 @@ class test_Service:
         service.add_dependency(m)
 
     @pytest.mark.asyncio
-    async def test_add_runtimne_dependency__when_started(self, *, service):
+    async def test_add_runtime_dependency__when_started(self, *, service):
         s2 = Mock(maybe_start=AsyncMock())
         service.add_dependency = Mock()
         service._started.set()
@@ -256,7 +256,7 @@ class test_Service:
         s2.maybe_start.coro.assert_called_once_with()
 
     @pytest.mark.asyncio
-    async def test_add_runtimne_dependency__not_started(self, *, service):
+    async def test_add_runtime_dependency__not_started(self, *, service):
         s2 = Mock(maybe_start=AsyncMock())
         service.add_dependency = Mock()
         service._started.clear()

@@ -49,8 +49,8 @@ class ServiceProxy(ServiceBase):
     async def start(self) -> None:
         await self._service.start()
 
-    async def maybe_start(self) -> None:
-        await self._service.maybe_start()
+    async def maybe_start(self) -> bool:
+        return await self._service.maybe_start()
 
     async def crash(self, reason: BaseException) -> None:
         await self._service.crash(reason)
