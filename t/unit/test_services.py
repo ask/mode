@@ -713,7 +713,7 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_itertimer(self, *, service):
-        with patch('mode.services.itertimer') as itertimer:
+        with patch('mode.services.Timer') as itertimer:
 
             async def on_itertimer(*args, **kwargs):
                 yield 1.0
@@ -728,7 +728,7 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_itertimer__first_stop(self, *, service):
-        with patch('mode.services.itertimer') as itertimer:
+        with patch('mode.services.Timer') as itertimer:
 
             async def on_itertimer(*args, **kwargs):
                 service._stopped.set()
@@ -740,7 +740,7 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_itertimer__second_stop(self, *, service):
-        with patch('mode.services.itertimer') as itertimer:
+        with patch('mode.services.Timer') as itertimer:
 
             async def on_itertimer(*args, **kwargs):
                 for val in [0.784512, 0.2, 0.3]:
@@ -763,7 +763,7 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_itertimer__third_stop(self, *, service):
-        with patch('mode.services.itertimer') as itertimer:
+        with patch('mode.services.Timer') as itertimer:
 
             async def on_itertimer(*args, **kwargs):
                 yield 0.1341

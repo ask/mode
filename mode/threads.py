@@ -177,7 +177,7 @@ class ServiceThread(Service):
         finally:
             self._thread_running = None
 
-    async def _keepalive2(self):
+    async def _keepalive2(self) -> None:
         while not self.should_stop:
             await self.sleep(1.1)
             asyncio.run_coroutine_threadsafe(self.sleep(1.0), self.thread_loop)

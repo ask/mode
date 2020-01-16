@@ -28,7 +28,7 @@ from typing import (
     cast,
 )
 
-from .timers import itertimer
+from .timers import Timer
 from .types import DiagT, ServiceT
 from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.locks import Event
@@ -951,11 +951,10 @@ class Service(ServiceBase, ServiceCallbacks):
         """Sleep ``interval`` seconds for every iteration.
 
         This is an async iterator that takes advantage
-        of :func:`~mode.timers.itertimer` to act as a timer
-        that stop drift from occurring, and adds a tiny amount of drift
-        to timers so that they don't start at the same time.
+        of :func:`~mode.timers.Timer` to monitor drift and timer
+        oerlap.
 
-        Uses ``Service.sleep`` which will bail-out-quick if the service is
+        Uses ``Service.sleep`` so exits fast when the service is
         stopped.
 
         Note:
@@ -971,7 +970,7 @@ class Service(ServiceBase, ServiceCallbacks):
         if self.should_stop:
             return
         try:
-            async for sleep_time in itertimer(
+            async for sleep_time in Timer(
                     interval,
                     name=name,
                     max_drift_correction=max_drift_correction,

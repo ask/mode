@@ -6,9 +6,9 @@ from typing import AsyncIterator, Awaitable, Callable, Iterator
 from .utils.logging import get_logger
 from .utils.times import Seconds, want_seconds
 
-__all__ = ['Clock', 'itertimer']
+__all__ = ['Timer']
 
-MAX_DRIFT_PERCENT: float = 0.90
+MAX_DRIFT_PERCENT: float = 0.10
 MAX_DRIFT_CEILING: float = 1.2
 
 ClockArg = Callable[[], float]
@@ -34,20 +34,10 @@ async def itertimer(
         ...         # You do not have to sleep here, as itertimer
         ...         # already sleeps for every iteration.
     """
-    state = Clock(interval,
-                  max_drift_correction=max_drift_correction,
-                  name=name,
-                  clock=clock)
-    for _ in count():
-        sleep_time = state.update()
-        await sleep(sleep_time)
-        state.on_sleep_end()
-        yield sleep_time
-    else:  # pragma: no cover
-        pass  # never exits
+    pass
 
 
-class Clock:
+class Timer:
     """Timer state."""
 
     interval: Seconds
@@ -58,17 +48,19 @@ class Clock:
     max_interval_s: float
 
     last_wakeup_at: float
-    sleep_end_at: float
+    last_yield_at: float
     iteration: int
 
     def __init__(self, interval: Seconds, *,
                  max_drift_correction: float = 0.1,
                  name: str = '',
-                 clock: ClockArg = perf_counter) -> None:
+                 clock: ClockArg = perf_counter,
+                 sleep: SleepArg = asyncio.sleep) -> None:
         self.interval = interval
         self.max_drift_correction = max_drift_correction
         self.name = name
         self.clock: ClockArg = clock
+        self.sleep: SleepArg = sleep
         interval_s = self.interval_s = want_seconds(interval)
 
         # Log when drift exceeds this number
@@ -95,72 +87,79 @@ class Clock:
         self.last_wakeup_at = self.epoch
         # time of last timer run, only including the time
         # spent sleeping, not the time running timer callbacks.
-        self.sleep_end_at = self.epoch
+        self.last_yield_at = self.epoch
 
         self.iteration = 0
+        self.drifting = 0
+        self.drifting_early = 0
+        self.drifting_late = 0
+        self.overlaps = 0
 
-    def __repr__(self) -> str:
-        now = self.clock()
-        secs_since_epoch = now - self.epoch
-        secs_since_wakeup = now - self.last_wakeup_at
-        secs_since_sleep = now - self.sleep_end_at
-        return (f'<{type(self).__name__}: {self.name} {self.interval}'
-                f'since_epoch={secs_since_epoch} '
-                f'since_wakeup={secs_since_wakeup} '
-                f'since_sleep={secs_since_sleep} '
-                f'>')
+    async def __aiter__(self) -> AsyncIterator[float]:
+        for _ in count():
+            sleep_time = self.tick()
+            await self.sleep(sleep_time)
+            self.on_before_yield()
+            yield sleep_time
+        else:  # pragma: no cover
+            pass  # never exits
 
-    def update(self) -> float:
+    def adjust_interval(self, drift: float) -> float:
+        interval_s = self.interval_s
+        interval_with_drift = interval_s + drift
+        if interval_with_drift > interval_s:
+            return min(interval_with_drift, self.max_interval_s)
+        elif interval_with_drift < interval_s:
+            return max(interval_with_drift, self.min_interval_s)
+        else:
+            return interval_s
+
+    def tick(self) -> float:
         interval_s = self.interval_s
         now = self.clock()
-        if self.sleep_end_at == self.epoch:
+        if self.last_yield_at == self.epoch:
             self.last_wakeup_at = now
             return interval_s
         since_epoch = now - self.epoch
-        time_spent = self.sleep_end_at - self.last_wakeup_at
-        #if time_spent < 0.01:
-        #    # protect against overflow with very small numbers.
-        #    time_spent = interval_s
-        callback_time = now - self.last_wakeup_at - time_spent
-        drift = interval_s - time_spent
-        abs_drift = abs(drift)
-        drift_time = interval_s + drift
+        time_spent_sleeping = self.last_yield_at - self.last_wakeup_at
+        time_spent_yielding = now - self.last_wakeup_at - time_spent_sleeping
+        drift = interval_s - time_spent_sleeping
 
-        if drift_time > interval_s:
-            sleep_time = min(drift_time, self.max_interval_s)
-        elif drift_time < interval_s:
-            sleep_time = max(drift_time, self.min_interval_s)
-        else:
-            sleep_time = interval_s
+        new_interval = self.adjust_interval(drift)
 
-        if interval_s >= 1.0 and abs_drift >= self.max_drift:
+        if interval_s >= 1.0 and abs(drift) >= self.max_drift:
+            self.drifting += 1
             if drift < 0:
+                self.drifting_late += 1
                 logger.info(
-                    'Timer %s woke up too late, with a drift of +%r (%r)',
-                    self.name, abs_drift, self)
+                    'Timer %s woke up too late, with a drift of +%r',
+                    self.name, abs(drift))
             else:
+                self.drifting_early += 1
                 logger.info(
-                    'Timer %s woke up too early, with a drift of -%r (%r)',
-                    self.name, abs_drift, self)
+                    'Timer %s woke up too early, with a drift of -%r',
+                    self.name, abs(drift))
         else:
             logger.debug(
                 'Timer %s woke up - iteration=%r '
-                'time_spent=%r drift=%r sleep_time=%r since_epoch=%r',
+                'time_spent_sleeping=%r drift=%r '
+                'new_interval=%r since_epoch=%r',
                 self.name, self.iteration,
-                time_spent, drift, sleep_time, since_epoch)
+                time_spent_sleeping, drift, new_interval, since_epoch)
 
-        if callback_time > interval_s:
+        if time_spent_yielding > interval_s:
+            self.overlaps += 1
             logger.warning(
                 'Timer %s is overlapping (interval=%r runtime=%r)',
-                self.name, self.interval, callback_time)
+                self.name, self.interval, time_spent_yielding)
 
         self.iteration += 1
         self.last_wakeup_at = now
 
-        return sleep_time
+        return new_interval
 
-    def on_sleep_end(self) -> None:
-        self.sleep_end_at = self.clock()
+    def on_before_yield(self) -> None:
+        self.last_yield_at = self.clock()
 
 
 def timer_intervals(  # XXX deprecated
@@ -174,13 +173,13 @@ def timer_intervals(  # XXX deprecated
     instead (this function also sleeps and calculates sleep time correctly.)
 
     """
-    state = Clock(interval,
+    state = Timer(interval,
                   max_drift_correction=max_drift_correction,
                   name=name,
                   clock=clock)
     for _ in count():
-        sleep_time = state.update()
+        sleep_time = state.tick()
+        state.on_before_yield()  # includes callback time.
         yield sleep_time
-        state.on_sleep_end()  # includes callback time.
     else:  # pragma: no cover
         pass  # never exits
