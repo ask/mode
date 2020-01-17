@@ -228,6 +228,7 @@ class Worker(Service):
         self.loop.add_signal_handler(signal.SIGINT, self._on_sigint)
         self.loop.add_signal_handler(signal.SIGTERM, self._on_sigterm)
         self.loop.add_signal_handler(signal.SIGUSR1, self._on_sigusr1)
+        self.loop.add_signal_handler(signal.SIGUSR2, self._on_sigusr2)
 
     def _on_sigint(self) -> None:
         self.carp('-INT- -INT- -INT- -INT- -INT- -INT-')
@@ -242,8 +243,16 @@ class Worker(Service):
     def _on_sigusr1(self) -> None:
         self.add_future(self._cry())
 
+    def _on_sigusr2(self) -> None:
+        self._enter_debugger()
+
     async def _cry(self) -> None:
         logging.cry(file=self.stderr)
+
+    def _enter_debugger(self):
+        self.carp('Starting debugger...')
+        import pdb
+        pdb.set_trace()
 
     def _schedule_shutdown(self, signal: signal.Signals) -> None:
         if not self._signal_stop_time:
@@ -345,14 +354,6 @@ class Worker(Service):
 
     def _repr_info(self) -> str:
         return _repr(self.services)
-
-    @Service.task
-    async def _keepalive(self) -> None:
-        async for sleep_time in self.itertimer(  # pragma: no cover
-                1.0, sleep=asyncio.sleep, name='_main_keepalive'):
-            # Keeps MainThread loop alive, by ensuring it wakes up
-            # every second.
-            pass  # pragma: no cover
 
     @property
     def blocking_detector(self) -> BlockingDetector:
