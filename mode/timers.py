@@ -17,26 +17,6 @@ SleepArg = Callable[[float], Awaitable[None]]
 logger = get_logger(__name__)
 
 
-async def itertimer(
-        interval: Seconds,
-        max_drift_correction: float = 0.1,
-        name: str = '',
-        clock: ClockArg = perf_counter,
-        sleep: SleepArg = asyncio.sleep) -> AsyncIterator[float]:
-    """Forever running timer, sleeping at intervals.
-
-    Example:
-        >>> async def my_timer(interval=1.0):
-        ...     # wait interval before running first time.
-        ...     await asyncio.sleep(interval)
-        ...     async for time_slept in itertimer(1.0, name='my_timer'):
-        ...         # do something that takes a while.
-        ...         # You do not have to sleep here, as itertimer
-        ...         # already sleeps for every iteration.
-    """
-    pass
-
-
 class Timer:
     """Timer state."""
 
