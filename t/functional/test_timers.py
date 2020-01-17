@@ -4,6 +4,7 @@ from functools import reduce
 from itertools import chain
 from typing import List, NamedTuple, Tuple
 from mode.timers import Timer
+from mode.utils.aiter import aslice
 from mode.utils.contexts import asynccontextmanager
 from mode.utils.mocks import ANY, AsyncMock, Mock, patch
 
@@ -213,14 +214,7 @@ class test_Timer:
         ]
 
     async def consume_timer(self, timer: Timer, limit: int) -> List[float]:
-        i = 1
-        sleep_times = []
-        async for sleep_time in timer:
-            sleep_times.append(sleep_time)
-            if i >= limit:
-                break
-            i += 1
-        return sleep_times
+        return [sleep_time async for sleep_time in aslice(timer, 0, limit)]
 
 
 class test_Timer_1s_half_second_skew(test_Timer):
