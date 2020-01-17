@@ -10,6 +10,7 @@ import asyncio
 import sys
 import threading
 import traceback
+from time import monotonic
 from typing import (
     Any,
     Awaitable,
@@ -96,6 +97,8 @@ class ServiceThread(Service):
     _thread_started: Event
     _thread_running: Optional[asyncio.Future] = None
 
+    last_wakeup_at: float = 0.0
+
     def __init__(self,
                  *,
                  executor: Any = None,
@@ -180,7 +183,16 @@ class ServiceThread(Service):
     async def _keepalive2(self) -> None:
         while not self.should_stop:
             await self.sleep(1.1)
-            asyncio.run_coroutine_threadsafe(self.sleep(1.0), self.thread_loop)
+            if self.last_wakeup_at:
+                if monotonic() - self.last_wakeup_at > 3.0:
+                    self.log.error('Thread keepalive is not responding...')
+            asyncio.run_coroutine_threadsafe(
+                self._wakeup_timer_in_thread(), self.thread_loop)
+
+    async def _wakeup_timer_in_thread(self):
+        self.last_wakeup_at = monotonic()
+        await self.sleep(0)
+        asyncio.run_coroutine_threadsafe(asyncio.sleep(0), self.parent_loop)
 
     async def crash(self, exc: BaseException) -> None:
         # <- .start() will raise
@@ -330,7 +342,8 @@ class MethodQueue(Service):
                    fun: Callable[..., Awaitable],
                    *args: Any,
                    **kwargs: Any) -> asyncio.Future:
-        await self._queue.put(QueuedMethod(promise, fun, args, kwargs))
+        method = QueuedMethod(promise, fun, args, kwargs)
+        self._queue.put_nowait(method)
         self._queue_ready.set()
         return promise
 
@@ -339,7 +352,8 @@ class MethodQueue(Service):
                    *args: Any,
                    **kwargs: Any) -> None:
         promise = self.loop.create_future()
-        await self._queue.put(QueuedMethod(promise, fun, args, kwargs))
+        method = QueuedMethod(promise, fun, args, kwargs)
+        self._queue.put_nowait(method)
         self._queue_ready.set()
 
     async def flush(self) -> None:
