@@ -132,13 +132,17 @@ class Timer:
             if drift < 0:
                 self.drifting_late += 1
                 logger.info(
-                    'Timer %s woke up too late, with a drift of +%r',
-                    self.name, abs(drift))
+                    'Timer %s woke up too late, with a drift of +%r '
+                    'runtime=%r sleeptime=%r',
+                    self.name, abs(drift),
+                    time_spent_yielding, time_spent_sleeping)
             else:
                 self.drifting_early += 1
                 logger.info(
-                    'Timer %s woke up too early, with a drift of -%r',
-                    self.name, abs(drift))
+                    'Timer %s woke up too early, with a drift of -%r ',
+                    'runtime=%r sleeptime=%r',
+                    self.name, abs(drift),
+                    time_spent_yielding, time_spent_sleeping)
         else:
             logger.debug(
                 'Timer %s woke up - iteration=%r '
