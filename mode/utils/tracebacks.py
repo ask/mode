@@ -42,12 +42,38 @@ def print_task_stack(task: asyncio.Task, *,
     )
 
 
+def print_coro_stack(coro: Coroutine, *,
+                     file: IO = sys.stderr,
+                     limit: int = DEFAULT_MAX_FRAMES,
+                     capture_locals: bool = False) -> None:
+    """Print the stack trace for a currently running coroutine."""
+    print(f'Stack for {coro!r} (most recent call last):', file=file)
+    tb = Traceback.from_coroutine(coro, limit=limit)
+    print_list(
+        StackSummary.extract(
+            cast(Generator, walk_tb(cast(TracebackType, tb))),
+            limit=limit,
+            capture_locals=capture_locals,
+        ),
+        file=file,
+    )
+
+
 def format_task_stack(task: asyncio.Task, *,
                       limit: int = DEFAULT_MAX_FRAMES,
                       capture_locals: bool = False) -> str:
     """Format :class:`asyncio.Task` stack trace as a string."""
     f = io.StringIO()
     print_task_stack(task, file=f, limit=limit, capture_locals=capture_locals)
+    return f.getvalue()
+
+
+def format_coro_stack(coro: Coroutine, *,
+                      limit: int = DEFAULT_MAX_FRAMES,
+                      capture_locals: bool = False) -> str:
+    """Format coroutine stack trace as a string."""
+    f = io.StringIO()
+    print_coro_stack(coro, file=f, limit=limit, capture_locals=capture_locals)
     return f.getvalue()
 
 
