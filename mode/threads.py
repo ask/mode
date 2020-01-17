@@ -297,6 +297,7 @@ class MethodQueueWorker(Service):
         process_enqueued = method_queue._process_enqueued
         while not self.should_stop and not method_queue.should_stop:
             await wait(queue_ready)
+
             if not method_queue.should_stop:
                 item = await get()
                 await process_enqueued(item)
@@ -343,7 +344,7 @@ class MethodQueue(Service):
                    *args: Any,
                    **kwargs: Any) -> asyncio.Future:
         method = QueuedMethod(promise, fun, args, kwargs)
-        self._queue.put_nowait(method)
+        self._loop.call_soon_threadsafe(self._queue.put_nowait, method)
         self._queue_ready.set()
         return promise
 
@@ -371,9 +372,11 @@ class MethodQueue(Service):
             try:
                 result = await maybe_async(method(*args, **kwargs))
             except BaseException as exc:
-                maybe_set_exception(promise, exc)
+                promise._loop.call_soon_threadsafe(
+                    maybe_set_exception, promise, exc)
             else:
-                maybe_set_result(promise, result)
+                promise._loop.call_soon_threadsafe(
+                    maybe_set_result, promise, result)
         return promise
 
     @property
