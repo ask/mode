@@ -835,7 +835,7 @@ class Service(ServiceBase, ServiceCallbacks):
         """Stop the service."""
         if not self._stopped.is_set():
             self._log_mundane('Stopping...')
-            self._stopped.set()
+            self._stopped_set()
             await self.on_stop()
             await self._stop_children()
             self.log.debug('Shutting down...')
@@ -849,6 +849,9 @@ class Service(ServiceBase, ServiceCallbacks):
             await self._stop_exit_stacks()
             await self.on_shutdown()
             self.log.debug('-Stopped!')
+
+    def _stopped_set(self) -> None:
+        self._stopped.set()
 
     async def _stop_children(self) -> None:
         await self._default_stop_children()

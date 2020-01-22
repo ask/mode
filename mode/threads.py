@@ -117,6 +117,7 @@ class ServiceThread(Service):
             self.Worker = Worker
         super().__init__(loop=self.thread_loop, **kwargs)
         assert self._shutdown.loop is self.parent_loop
+        assert self._stopped.loop is self.thread_loop
 
     async def on_thread_started(self) -> None:
         ...
@@ -219,6 +220,12 @@ class ServiceThread(Service):
             await super().stop()
             if self._thread is not None:
                 self._thread.stop()
+
+    def _stopped_set(self) -> None:
+        self.thread_loop.call_soon_threadsafe(self._stopped.set)
+
+    def set_shutdown(self) -> None:
+        self.parent_loop.call_soon_threadsafe(self._shutdown.set)
 
     async def _stop_children(self) -> None:
         ...   # called by thread instead of .stop()
@@ -344,9 +351,12 @@ class MethodQueue(Service):
                    *args: Any,
                    **kwargs: Any) -> asyncio.Future:
         method = QueuedMethod(promise, fun, args, kwargs)
-        self._loop.call_soon_threadsafe(self._queue.put_nowait, method)
-        self._queue_ready.set()
+        self._loop.call_soon_threadsafe(self._queue_put, method)
         return promise
+
+    def _queue_put(self, method: QueuedMethod) -> None:
+        self._queue.put_nowait(method)
+        self._queue_ready.set()
 
     async def cast(self,
                    fun: Callable[..., Awaitable],
