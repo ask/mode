@@ -421,20 +421,6 @@ class test_Worker:
     def test_repr_info(self, worker):
         assert repr(worker)
 
-    @pytest.mark.asyncio
-    async def test__keepalive(self, worker):
-        consumed = False
-
-        async def timer(secs, **kwargs):
-            for _ in range(3):
-                yield secs
-            nonlocal consumed
-            consumed = True
-
-        worker.itertimer = timer
-        await worker._keepalive(worker)
-        assert consumed
-
     def test_blocking_detector(self, worker):
         b = worker.blocking_detector
         assert isinstance(b, BlockingDetector)

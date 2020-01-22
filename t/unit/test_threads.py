@@ -312,6 +312,8 @@ class test_MethodQueue:
                 futures.append(fut)
             await all_done.wait()
 
+            await asyncio.sleep(0)
+
             for future in futures:
                 if not future.cancelled():
                     with pytest.raises(KeyError):

@@ -82,8 +82,9 @@ class test_Timer:
         ]
         async with self.assert_timer(timer, clock, intervals) as logger:
             logger.info.assert_called_once_with(
-                'Timer %s woke up too early, with a drift of -%r',
-                'test', ANY)
+                'Timer %s woke up too early, with a drift '
+                'of -%r runtime=%r sleeptime=%r',
+                'test', ANY, ANY, ANY)
             assert timer.drifting == 1
             assert timer.drifting_early == 1
             assert not timer.drifting_late
@@ -102,8 +103,9 @@ class test_Timer:
         ]
         async with self.assert_timer(timer, clock, intervals) as logger:
             logger.info.assert_called_once_with(
-                'Timer %s woke up too late, with a drift of +%r',
-                'test', ANY)
+                'Timer %s woke up too late, with a drift '
+                'of +%r runtime=%r sleeptime=%r',
+                'test', ANY, ANY, ANY)
             assert timer.drifting == 1
             assert timer.drifting_late == 1
             assert not timer.drifting_early
