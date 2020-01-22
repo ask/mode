@@ -4,6 +4,28 @@
  Change history
 ================
 
+.. _version-4.3.0:
+
+4.3.0
+=====
+:release-date: 2020-01-22 2:25 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Threads: Now runs with :envvar:`PYTHONASYNCIODEBUG`.
+
+- Threads: Fixed race condition where pending methods are lost
+
+- utils.tracebacks: Adds ``print_coro_stack`` and
+  ``format_coro_stack`` for debugging coroutines.
+
+- Timers: Adds sleeptime and runtime to logs for more info.
+
+- Threads: Threads now do two-way keepalive (thread -> parent, parent -> thread)
+
+- Service: ``add_future`` now sets task name
+
+- Worker: ``SIGUSR2`` now starts :mod:`pdb` session.
+
 .. _version-4.2.0:
 
 4.2.0
