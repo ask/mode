@@ -591,7 +591,7 @@ class Service(ServiceBase, ServiceCallbacks):
         """
         fut = asyncio.ensure_future(self._execute_task(coro), loop=self.loop)
         try:
-            fut.set_name(repr(coro))
+            fut.set_name(repr(coro))  # type: ignore
         except AttributeError:
             pass
         fut.__wrapped__ = coro  # type: ignore

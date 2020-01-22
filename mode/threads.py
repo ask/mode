@@ -190,7 +190,7 @@ class ServiceThread(Service):
             asyncio.run_coroutine_threadsafe(
                 self._wakeup_timer_in_thread(), self.thread_loop)
 
-    async def _wakeup_timer_in_thread(self):
+    async def _wakeup_timer_in_thread(self) -> None:
         self.last_wakeup_at = monotonic()
         await self.sleep(0)
         asyncio.run_coroutine_threadsafe(asyncio.sleep(0), self.parent_loop)
@@ -351,7 +351,7 @@ class MethodQueue(Service):
                    *args: Any,
                    **kwargs: Any) -> asyncio.Future:
         method = QueuedMethod(promise, fun, args, kwargs)
-        self._loop.call_soon_threadsafe(self._queue_put, method)
+        self.loop.call_soon_threadsafe(self._queue_put, method)
         return promise
 
     def _queue_put(self, method: QueuedMethod) -> None:

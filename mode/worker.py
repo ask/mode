@@ -249,10 +249,10 @@ class Worker(Service):
     async def _cry(self) -> None:
         logging.cry(file=self.stderr)
 
-    def _enter_debugger(self):
+    def _enter_debugger(self) -> None:
         self.carp('Starting debugger...')
-        import pdb
-        pdb.set_trace()
+        import pdb          # noqa: T100
+        pdb.set_trace()     # noqa: T100
 
     def _schedule_shutdown(self, signal: signal.Signals) -> None:
         if not self._signal_stop_time:
