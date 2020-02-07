@@ -12,6 +12,7 @@ __all__ = [
     'fuzzymatch_best',
     'abbr',
     'abbr_fqdn',
+    'enumeration',
     'shorten_fqdn',
     'pluralize',
     'maybecat',
@@ -78,6 +79,17 @@ def didyoumean(haystack: Iterable[str], needle: str,
         fmt_one=fmt_one,
         fmt_none=fmt_none,
         min_ratio=min_ratio,
+    )
+
+
+def enumeration(l: Iterable[str], *,
+                start=1,
+                sep='\n',
+                template='{index}) {item}') -> str:
+    """Enumerate list of strings: ``1) x\n2) y\n3) ...``."""
+    return sep.join(
+        template.format(index, item)
+        for index, item in enumerate(l, start=start)
     )
 
 
