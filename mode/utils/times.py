@@ -18,6 +18,8 @@ __all__ = [
     'rate',
     'rate_limit',
     'want_seconds',
+    'humanize_seconds',
+    'humanize_seconds_ago',
 ]
 
 TIME_MONOTONIC: Callable[[], float]
@@ -236,6 +238,7 @@ def _want_seconds_timedelta(s: timedelta) -> float:
 
 def humanize_seconds(secs: float, *,
                      prefix: str = '',
+                     suffix: str = '',
                      sep: str = '',
                      now: str = 'now',
                      microseconds: bool = False) -> str:
@@ -255,9 +258,30 @@ def humanize_seconds(secs: float, *,
     for unit, divider, formatter in TIME_UNITS:
         if secs >= divider:
             w = secs / float(divider)
-            return '{0}{1}{2} {3}'.format(prefix, sep, formatter(w),
-                                          pluralize(int(w), unit))
+            return '{0}{1}{2} {3}{4}'.format(
+                prefix, sep, formatter(w),
+                pluralize(int(w), unit), suffix)
     if microseconds and secs > 0.0:
-        return '{prefix}{sep}{0:.2f} seconds'.format(
-            secs, sep=sep, prefix=prefix)
+        return '{prefix}{sep}{0:.2f} seconds{suffix}'.format(
+            secs, sep=sep, prefix=prefix, suffix=suffix)
     return now
+
+
+def humanize_seconds_ago(secs: float, *,
+                         prefix: str = '',
+                         suffix: str = ' ago',
+                         sep: str = '',
+                         now: str = 'just now',
+                         microseconds: bool = False) -> str:
+    """Show seconds in "3.33 seconds ago" form.
+
+    If seconds are less than one, returns "just now".
+    """
+    return humanize_seconds(
+        secs,
+        prefix=prefix,
+        suffix=suffix,
+        sep=sep,
+        now=now,
+        microseconds=microseconds,
+    )
