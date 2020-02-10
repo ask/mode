@@ -250,6 +250,7 @@ def humanize_seconds(secs: float, *,
         secs: Seconds to format (as :class:`float` or :class:`int`).
         prefix (str): can be used to add a preposition to the output
             (e.g., 'in' will give 'in 1 second', but add nothing to 'now').
+        suffix (str): same as prefix, adds suffix unless 'now'.
         sep (str): separator between prefix and number.
         now (str): Literal 'now'.
         microseconds (bool): Include microseconds.

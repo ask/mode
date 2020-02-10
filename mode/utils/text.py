@@ -86,7 +86,12 @@ def enumeration(l: Iterable[str], *,
                 start: int = 1,
                 sep: str = '\n',
                 template: str = '{index}) {item}') -> str:
-    """Enumerate list of strings: ``1) x\n2) y\n3) ...```."""
+    r"""Enumerate list of strings.
+
+    Example:
+        >>> enumeration(['x', 'y', '...'])
+        "1) x\n2) y\n3) ..."
+    """
     return sep.join(
         template.format(index=index, item=item)
         for index, item in enumerate(l, start=start)
