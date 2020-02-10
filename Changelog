@@ -4,6 +4,28 @@
  Change history
 ================
 
+.. _version-4.3.1:
+
+4.3.1
+=====
+:release-date: 2020-02-10 2:40 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Added :func:`mode.utils.times.humanize_seconds_ago`
+
+    This formats seconds float to text "n seconds ago",
+    or "just now" if less than one second.
+
+- Added :func:`mode.utils.text.enumeration`
+
+    This formats a list of strings to a enumerated list,
+    for example:
+
+    .. sourcecode:: pycon
+
+        >>> text.enumeration(['x', 'y', '...'])
+        "1) x\n2) y\n3) ..."
+
 .. _version-4.3.0:
 
 4.3.0
