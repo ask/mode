@@ -83,9 +83,9 @@ def didyoumean(haystack: Iterable[str], needle: str,
 
 
 def enumeration(l: Iterable[str], *,
-                start=1,
-                sep='\n',
-                template='{index}) {item}') -> str:
+                start: int = 1,
+                sep: str = '\n',
+                template: str = '{index}) {item}') -> str:
     """Enumerate list of strings: ``1) x\n2) y\n3) ...```."""
     return sep.join(
         template.format(index=index, item=item)
