@@ -4,6 +4,45 @@
  Change history
 ================
 
+.. _version-4.3.2:
+
+4.3.2
+=====
+:release-date: 2020-02-13 3:21 P.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Tracebacks: Added support for async generators.
+
+    Also added new functions:
+
+        + :func:`~mode.utils.tracebacks.format_agen_stack`
+        + :func:`~mode.utils.tracebacks.print_agen_stack`
+
+- Logging: New version of log argument formatters.
+
+    The existing log argument formatter callbacks did
+    not have access to the original log record, so could
+    not make decisions based on matching the log message string
+    for example.
+
+    A new :func:`~mode.utils.logging.formatter2` decorator
+    has been added that registers callbacks taking two arguments.
+
+    Example:
+
+    .. sourcecode:: python
+
+        from mode.utils.logging import formatter2
+
+        @formatter2
+        def format_log_argument(arg: Any, record: logging.LogRecord):
+            # improve aiokafka logging to sort the list
+            # of topics logged when subscribing to topics
+            # and make it more human readable
+            if record.msg.startswith('Subscribing to topics'):
+                if isinstance(arg, frozenset):
+                    return ', '.join(sorted(arg))
+
 .. _version-4.3.1:
 
 4.3.1
