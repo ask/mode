@@ -58,6 +58,7 @@ __all__ = [
     'cry',
     'flight_recorder',
     'formatter',
+    'formatter2',
     'get_logger',
     'level_name',
     'level_number',
@@ -133,9 +134,11 @@ def create_logconfig(version: int = 1,
 LOG_ISATTY: bool = False
 
 FormatterHandler = Callable[[Any], Any]
+FormatterHandler2 = Callable[[Any, logging.LogRecord], Any]
 Severity = Union[int, str]
 
 _formatter_registry: Set[FormatterHandler] = set()
+_formatter_registry2: Set[FormatterHandler2] = set()
 
 
 def get_logger(name: str) -> Logger:
@@ -276,6 +279,20 @@ def formatter(fun: FormatterHandler) -> FormatterHandler:
     return fun
 
 
+def formatter2(fun: FormatterHandler2) -> FormatterHandler2:
+    """Register formatter for logging positional args.
+
+    Like :func:`formatter` but the handler accepts
+    two arguments instead of one: ``(arg, logrecord)``.
+
+    Passing the log record as additional argument expands
+    the capabilities of the formatter to do things
+    such as read the log message.
+    """
+    _formatter_registry2.add(fun)
+    return fun
+
+
 def _format_extra(record: logging.LogRecord) -> str:
     return ', '.join(
         f'{k}={v!r}' for k, v in record.__dict__.get('data', {}).items()
@@ -305,10 +322,11 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
         return cast(str, super().format(record))
 
     def _format_args(self, record: logging.LogRecord) -> None:
+        format_arg = self.format_arg
         if isinstance(record.args, Mapping):
             # logger.log(severity, "msg %(foo)s", foo=303)
             record.args = {
-                k: self._format_arg(v) for k, v in record.args.items()
+                k: format_arg(v, record) for k, v in record.args.items()
             }
         else:
             if not isinstance(record.args, tuple):
@@ -318,13 +336,23 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
                 record.args = (record.args,)  # type: ignore
             # logger.log(severity, "msg %s", ('foo',))
             record.args = tuple(
-                self._format_arg(arg) for arg in record.args
+                format_arg(arg, record) for arg in record.args
             )
+
+    def format_arg(self, arg: Any, record: logging.LogRecord) -> Any:
+        return self._format_arg2(self._format_arg(arg), record)
 
     def _format_arg(self, arg: Any) -> Any:
         # Reduce value by calling all registered formatters.
         for fun in _formatter_registry:
             res = fun(arg)
+            if res is not None:
+                arg = res
+        return arg
+
+    def _format_arg2(self, arg: Any, record: logging.LogRecord) -> Any:
+        for fun in _formatter_registry2:
+            res = fun(arg, record)
             if res is not None:
                 arg = res
         return arg
