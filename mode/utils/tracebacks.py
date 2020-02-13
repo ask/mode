@@ -7,6 +7,7 @@ from traceback import StackSummary, print_list, walk_tb
 from types import FrameType, TracebackType
 from typing import (
     Any,
+    AsyncGenerator,
     Coroutine,
     Generator,
     IO,
@@ -59,6 +60,23 @@ def print_coro_stack(coro: Coroutine, *,
     )
 
 
+def print_agen_stack(agen: AsyncGenerator, *,
+                     file: IO = sys.stderr,
+                     limit: int = DEFAULT_MAX_FRAMES,
+                     capture_locals: bool = False) -> None:
+    """Print the stack trace for a currently running async generator."""
+    print(f'Stack for {agen!r} (most recent call last):', file=file)
+    tb = Traceback.from_agen(agen, limit=limit)
+    print_list(
+        StackSummary.extract(
+            cast(Generator, walk_tb(cast(TracebackType, tb))),
+            limit=limit,
+            capture_locals=capture_locals,
+        ),
+        file=file,
+    )
+
+
 def format_task_stack(task: asyncio.Task, *,
                       limit: int = DEFAULT_MAX_FRAMES,
                       capture_locals: bool = False) -> str:
@@ -74,6 +92,14 @@ def format_coro_stack(coro: Coroutine, *,
     """Format coroutine stack trace as a string."""
     f = io.StringIO()
     print_coro_stack(coro, file=f, limit=limit, capture_locals=capture_locals)
+    return f.getvalue()
+
+
+def format_agen_stack(agen: AsyncGenerator, *,
+                      limit: int = DEFAULT_MAX_FRAMES,
+                      capture_locals: bool = False) -> str:
+    f = io.StringIO()
+    print_agen_stack(agen, file=f, limit=limit, capture_locals=capture_locals)
     return f.getvalue()
 
 
@@ -150,12 +176,17 @@ class Traceback(_BaseTraceback):
         return cls.from_coroutine(coro, limit=limit)
 
     @classmethod
+    def from_agen(cls, agen: AsyncGenerator, *,
+                  limit: int = DEFAULT_MAX_FRAMES) -> _BaseTraceback:
+        return cls.from_coroutine(agen, limit=limit)
+
+    @classmethod
     def from_coroutine(
-            cls, coro: Union[Coroutine, Generator], *,
+            cls, coro: Union[AsyncGenerator, Coroutine, Generator], *,
             depth: int = 0,
             limit: Optional[int] = DEFAULT_MAX_FRAMES) -> _BaseTraceback:
         try:
-            frame = cls._get_coroutine_frame(coro)
+            frame = cls._detect_frame(coro)
         except AttributeError:
             if type(coro).__name__ == 'async_generator_asend':
                 return _Truncated(filename='async_generator_asend')
@@ -200,8 +231,15 @@ class Traceback(_BaseTraceback):
             raise RuntimeError('cannot find stack of coroutine')
         return root
 
-    @staticmethod
-    def _get_coroutine_frame(coro: Union[Coroutine, Generator]) -> FrameType:
+    @classmethod
+    def _detect_frame(cls, obj: Any) -> FrameType:
+        if inspect.isasyncgen(obj):
+            return cls._get_agen_frame(obj)
+        return cls._get_coroutine_frame(obj)
+
+    @classmethod
+    def _get_coroutine_frame(cls,
+                             coro: Union[Coroutine, Generator]) -> FrameType:
         try:
             if inspect.isgenerator(coro):
                 # is a @asyncio.coroutine wrapped generator
@@ -210,13 +248,28 @@ class Traceback(_BaseTraceback):
                 # is an async def function
                 return cast(Coroutine, coro).cr_frame
         except AttributeError as exc:
-            raise AttributeError(
-                'WHAT IS THIS? str={0} repr={1!r} typ={2!r} dir={3}'.format(
-                    coro, coro, type(coro), dir(coro))) from exc
+            raise cls._what_is_this(coro) from exc
+
+    @classmethod
+    def _what_is_this(cls, obj: Any) -> AttributeError:
+        return AttributeError(
+            'WHAT IS THIS? str={0} repr={1!r} typ={2!r} dir={3}'.format(
+                obj, obj, type(obj), dir(obj)))
+
+    @classmethod
+    def _get_agen_frame(cls, agen: AsyncGenerator) -> FrameType:
+        try:
+            return agen.ag_frame
+        except AttributeError as exc:
+            raise cls._what_is_this(agen) from exc
 
     @staticmethod
-    def _get_coroutine_next(coro: Union[Coroutine, Generator]) -> Any:
-        if inspect.isgenerator(coro):
+    def _get_coroutine_next(
+            coro: Union[AsyncGenerator, Coroutine, Generator]) -> Any:
+        if inspect.isasyncgen(coro):
+            # is a async def async-generator
+            return cast(AsyncGenerator, coro).ag_await
+        elif inspect.isgenerator(coro):
             # is a @asyncio.coroutine wrapped generator
             return cast(Generator, coro).gi_yieldfrom
         else:
