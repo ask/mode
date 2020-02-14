@@ -129,6 +129,7 @@ matrix:
 
 before_install:
 install:
+- python -m pip install aiocontextvars
 - python -m pip install --upgrade tox
 after_success:
 - |
