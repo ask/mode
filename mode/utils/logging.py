@@ -189,7 +189,7 @@ class LogSeverityMixin(LogSeverityMixinBase):
     def dev(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault('stacklevel', 3)
         if DEVLOG:
-            self.log(logging.INFO, message, *args, stacklevel=stacklevel, **kwargs)
+            self.log(logging.INFO, message, *args, **kwargs)
 
     def debug(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault('stacklevel', 3)

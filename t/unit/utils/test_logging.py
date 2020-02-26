@@ -56,9 +56,10 @@ class test_CompositeLogger:
         logger.log.assert_called_once_with(
             logging.INFO,
             formatter.return_value,
-            1, kw=2,
+            1, stacklevel=2, kw=2,
         )
-        formatter.assert_called_once_with(logging.INFO, 'msg', 1, kw=2)
+        formatter.assert_called_once_with(
+            logging.INFO, 'msg', 1, kw=2, stacklevel=2)
 
     def test_log__no_formatter(self, *, log, logger):
         log.formatter = None
@@ -66,7 +67,7 @@ class test_CompositeLogger:
         logger.log.assert_called_once_with(
             logging.INFO,
             'msg',
-            1, kw=2,
+            1, kw=2, stacklevel=2,
         )
 
     @pytest.mark.parametrize('method,severity,extra', [
@@ -83,13 +84,14 @@ class test_CompositeLogger:
         log.formatter = None
         getattr(log, method)('msg', 'arg1', kw1=3, kw2=5)
         logger.log.assert_called_once_with(
-            severity, 'msg', 'arg1', kw1=3, kw2=5, **extra)
+            severity, 'msg', 'arg1', kw1=3, kw2=5, stacklevel=3, **extra)
 
     def test_dev__enabled(self, log):
         log.log = Mock()
         with patch('mode.utils.logging.DEVLOG', True):
             log.dev('msg', 1, k=2)
-            log.log.assert_called_once_with(logging.INFO, 'msg', 1, k=2)
+            log.log.assert_called_once_with(
+                logging.INFO, 'msg', 1, k=2, stacklevel=3)
 
     def test_dev__disabled(self, log):
         log.info = Mock()
@@ -408,7 +410,7 @@ class test_flight_recorder:
         bb._buffer_log = Mock()
         bb.log(logging.DEBUG, 'msg %r %(foo)s', 1, foo='bar')
         logger.log.assert_called_once_with(
-            logging.DEBUG, 'msg %r %(foo)s', 1, foo='bar',
+            logging.DEBUG, 'msg %r %(foo)s', 1, foo='bar', stacklevel=2,
         )
 
     def test__buffer_log(self, bb):
@@ -606,14 +608,27 @@ def _assert_log_severities(logger):
     logger.critical('CRITICAL %d %(e)s', 5, e='E')
 
 
+def _log_kwargs(kwargs):
+    kwargs.setdefault('stacklevel', 3)
+    return kwargs
+
+
 EXPECTED_LOG_MESSAGES = [
-    LogMessage(logging.DEBUG, 'DEBUG %d %(a)s', 'TIME', (1,), {'a': 'A'}),
-    LogMessage(logging.INFO, 'INFO %d %(b)s', 'TIME', (2,), {'b': 'B'}),
     LogMessage(
-        logging.WARNING, 'WARNING %d %(c)s', 'TIME', (3,), {'c': 'C'}),
-    LogMessage(logging.ERROR, 'ERROR %d %(d)s', 'TIME', (4,), {'d': 'D'}),
+        logging.DEBUG,
+        'DEBUG %d %(a)s', 'TIME', (1,), _log_kwargs({'a': 'A'})),
     LogMessage(
-        logging.CRITICAL, 'CRITICAL %d %(e)s', 'TIME', (5,), {'e': 'E'}),
+        logging.INFO,
+        'INFO %d %(b)s', 'TIME', (2,), _log_kwargs({'b': 'B'})),
+    LogMessage(
+        logging.WARNING,
+        'WARNING %d %(c)s', 'TIME', (3,), _log_kwargs({'c': 'C'})),
+    LogMessage(
+        logging.ERROR,
+        'ERROR %d %(d)s', 'TIME', (4,), _log_kwargs({'d': 'D'})),
+    LogMessage(
+        logging.CRITICAL,
+        'CRITICAL %d %(e)s', 'TIME', (5,), _log_kwargs({'e': 'E'})),
 ]
 
 
