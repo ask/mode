@@ -1,10 +1,12 @@
 """Queue utilities - variations of :class:`asyncio.Queue`."""
 import asyncio
+import math
 import typing
 from collections import deque
-from typing import Any, List, TypeVar, cast
+from typing import Any, Callable, List, Set, TypeVar, cast, no_type_check
 from weakref import WeakSet
 from .locks import Event
+from .objects import cached_property
 from .typing import Deque
 
 _T = TypeVar('_T')
@@ -94,6 +96,10 @@ class FlowControlQueue(asyncio.Queue):
     See Also:
         :class:`FlowControlEvent`.
     """
+    pressure_high_ratio = 1.25   # divided by
+    pressure_drop_ratio = 0.40   # multiplied by
+
+    _pending_pressure_drop_callbacks: Set[Callable]
 
     def __init__(self, maxsize: int = 0,
                  *,
@@ -104,14 +110,87 @@ class FlowControlQueue(asyncio.Queue):
         self._clear_on_resume: bool = clear_on_resume
         if self._clear_on_resume:
             self._flow_control.manage_queue(self)
+        self._pending_pressure_drop_callbacks = set()
         super().__init__(maxsize, **kwargs)
 
     def clear(self) -> None:
         self._queue.clear()  # type: ignore
 
+    def put_nowait_enhanced(self, value: _T, *,
+                            on_pressure_high: Callable,
+                            on_pressure_drop: Callable) -> bool:
+        in_pressure_high_state = self.in_pressure_high_state(on_pressure_drop)
+        if in_pressure_high_state:
+            on_pressure_high()
+            self.force_put_nowait(value)
+        else:
+            self.put_nowait(value)
+        return in_pressure_high_state
+
+    def in_pressure_high_state(self, callback: Callable) -> bool:
+        pending = self._pending_pressure_drop_callbacks
+        if callback not in pending:
+            qsize = self.qsize()
+            pressure_high_size = self.pressure_high_size
+            if qsize >= pressure_high_size:
+                pending.add(callback)
+                self.on_pressure_high()
+                return True
+        return False
+
+    def on_pressure_high(self) -> None:
+        ...
+
+    def on_pressure_drop(self) -> None:
+        ...
+
+    def maybe_endorse_pressure_drop(self) -> None:
+        pending = self._pending_pressure_drop_callbacks
+        if pending:
+            size = self.qsize()
+            if size:
+                pressure_drop_size = self.pressure_drop_size
+                if size <= pressure_drop_size:
+                    # still have items left in the queue that
+                    # will eventually call the rest of the callbacks.
+                    pressure_drop_callback = pending.pop()
+                    pressure_drop_callback()
+                    self.on_pressure_drop()
+            else:
+                # if the queue is empty we have to process all of
+                # the remaining sentinels.
+                for pressure_drop_callback in pending:
+                    pressure_drop_callback()
+                pending.clear()
+                self.on_pressure_drop()
+
+    async def get(self) -> _T:
+        if self.empty():
+            self.maybe_endorse_pressure_drop()
+        return cast(_T, await super().get())
+
+    def get_nowait(self) -> _T:
+        self.maybe_endorse_pressure_drop()
+        return cast(_T, super().get_nowait())
+
     async def put(self, value: _T) -> None:
         await self._flow_control.acquire()
         await super().put(value)
+
+    @no_type_check
+    def force_put_nowait(self, item: _T) -> None:
+        self._put(item)
+        self._unfinished_tasks += 1
+        self._finished.clear()
+        self._wakeup_next(self._getters)
+
+    @cached_property
+    def pressure_high_size(self) -> int:
+        return math.floor(self.maxsize / self.pressure_high_ratio)
+
+    @cached_property
+    def pressure_drop_size(self) -> int:
+        return math.floor(self.maxsize * self.pressure_drop_ratio)
 
 
 class ThrowableQueue(FlowControlQueue):
