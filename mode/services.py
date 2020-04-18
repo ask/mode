@@ -36,6 +36,7 @@ from .utils.logging import CompositeLogger, get_logger, level_number
 from .utils.objects import iter_mro_reversed, qualname
 from .utils.text import maybecat
 from .utils.times import Seconds, want_seconds
+from .utils.tracebacks import format_task_stack
 from .utils.trees import Node
 from .utils.typing import AsyncContextManager
 from .utils.types.trees import NodeT
@@ -598,6 +599,28 @@ class Service(ServiceBase, ServiceCallbacks):
         fut.add_done_callback(self._on_future_done)
         self._futures.add(fut)
         return fut
+
+    def _get_task_name(self, t: Any) -> str:
+        try:
+            return cast(str, t.get_name())
+        except AttributeError:
+            return repr(t)
+
+    def tracebacks(self) -> Mapping[str, str]:
+        return {
+            self._get_task_name(f): format_task_stack(cast(asyncio.Task, f))
+            for f in self._futures
+            if not f.done()
+        }
+
+    def human_tracebacks(self) -> str:
+        return '\n'.join([
+            '\n'.join([
+                name,
+                '=' * len(name),
+                tb,
+            ]) for name, tb in self.tracebacks().items()
+        ])
 
     def _on_future_done(self, fut: asyncio.Future) -> None:
         self._futures.discard(fut)
