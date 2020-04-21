@@ -19,7 +19,9 @@ it much easier to use.
 In Mode your program is built out of services that you can start, stop,
 restart and supervise.
 
-A service is just a class::
+A service is just a class:
+
+.. code-block:: python
 
     class PageViewCache(Service):
         redis: Redis = None
@@ -37,7 +39,9 @@ A service is just a class::
 Services are started, stopped and restarted and have
 callbacks for those actions.
 
-It can start another service::
+It can start another service:
+
+.. code-block:: python
 
     class App(Service):
         page_view_cache: PageViewCache = None
@@ -49,7 +53,9 @@ It can start another service::
         def page_view_cache(self) -> PageViewCache:
             return PageViewCache()
 
-It can include background tasks::
+It can include background tasks:
+
+.. code-block:: python
 
     class PageViewCache(Service):
 
@@ -64,12 +70,14 @@ Worker
     Mode optionally provides a worker that you can use to start the program,
     with support for logging, blocking detection, remote debugging and more.
 
-    To start a worker add this to your program::
+    To start a worker add this to your program:
+
+.. code-block:: python
 
         if __name__ == '__main__':
             from mode import Worker
             Worker(Service(), loglevel="info").execute_from_commandline()
-
+..
     Then execute your program to start the worker:
 
     .. sourcecode:: console
@@ -126,6 +134,8 @@ Beacons
     Let's change the app service class to dump the graph to an image
     at startup::
 
+.. code-block:: python
+
         class AppService(Service):
 
             async def on_start(self) -> None:
@@ -145,7 +155,10 @@ Creating a Service
 ==================
 
 To define a service, simply subclass and fill in the methods
-to do stuff as the service is started/stopped etc.::
+to do stuff as the service is started/stopped etc.:
+
+.. code-block:: python
+
 
     class MyService(Service):
 
@@ -158,12 +171,16 @@ to do stuff as the service is started/stopped etc.::
         async def on_stop(self) -> None:
             print('Im stopping now')
 
-To start the service, call ``await service.start()``::
+To start the service, call ``await service.start()``:
+
+.. code-block:: python
 
     await service.start()
 
 Or you can use ``mode.Worker`` (or a subclass of this) to start your
-services-based asyncio program from the console::
+services-based asyncio program from the console:
+
+.. code-block:: python
 
     if __name__ == '__main__':
         import mode
@@ -180,14 +197,18 @@ It's a Graph!
 
 Services can start other services, coroutines, and background tasks.
 
-1) Starting other services using ``add_depenency``::
+1) Starting other services using ``add_depenency``:
+
+.. code-block:: python
 
     class MyService(Service):
 
         def __post_init__(self) -> None:
            self.add_dependency(OtherService(loop=self.loop))
 
-2) Start a list of services using ``on_init_dependencies``::
+2) Start a list of services using ``on_init_dependencies``:
+
+.. code-block:: python
 
     class MyService(Service):
 
@@ -198,7 +219,9 @@ Services can start other services, coroutines, and background tasks.
                 ServiceC(loop=self.loop),
             ]
 
-3) Start a future/coroutine (that will be waited on to complete on stop)::
+3) Start a future/coroutine (that will be waited on to complete on stop):
+
+.. code-block:: python
 
     class MyService(Service):
 
@@ -208,7 +231,9 @@ Services can start other services, coroutines, and background tasks.
         async def my_coro(self) -> None:
             print('Executing coroutine')
 
-4) Start a background task::
+4) Start a background task:
+
+.. code-block:: python
 
     class MyService(Service):
 
@@ -217,7 +242,9 @@ Services can start other services, coroutines, and background tasks.
             print('Executing coroutine')
 
 
-5) Start a background task that keeps running::
+5) Start a background task that keeps running:
+
+.. code-block:: python
 
     class MyService(Service):
 
@@ -351,30 +378,30 @@ Here are some of the steps required to accomplish this:
 
 - Source code transformation to rewrite variable annotations to comments
 
-  for example, the code::
+.. code-block:: python
 
-        class Point:
-            x: int = 0
-            y: int = 0
+    class BadPoint:
+        x: int = 0
+        y: int = 0
 
-   must be rewritten into::
+.. code-block:: python
 
-        class Point:
-            x = 0  # type: int
-            y = 0  # type: int
+    class BetterPoint:
+        x = 0  # type: int
+        y = 0  # type: int
 
 - Source code transformation to rewrite async functions
 
-    for example, the code::
+.. code-block:: python
 
-        async def foo():
-            await asyncio.sleep(1.0)
+    async def badfoo():
+        await asyncio.sleep(1.0)
 
-    must be rewritten into::
+.. code-block:: python
 
-        @coroutine
-        def foo():
-            yield from asyncio.sleep(1.0)
+    @coroutine
+    def betterfoo():
+        yield from asyncio.sleep(1.0)
 
 Will you support Python 2?
 --------------------------
