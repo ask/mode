@@ -122,9 +122,7 @@ class FlowControlQueue(asyncio.Queue):
         in_pressure_high_state = self.in_pressure_high_state(on_pressure_drop)
         if in_pressure_high_state:
             on_pressure_high()
-            self.force_put_nowait(value)
-        else:
-            self.put_nowait(value)
+        self.force_put_nowait(value)
         return in_pressure_high_state
 
     def in_pressure_high_state(self, callback: Callable) -> bool:
