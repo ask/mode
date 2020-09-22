@@ -186,6 +186,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
                     await service.restart()
         except MaxRestartsExceeded as exc:
             self.log.warning('Max restarts exceeded: %r', exc, exc_info=1)
+            raise SystemExit(1)
 
     @property
     def label(self) -> str:
