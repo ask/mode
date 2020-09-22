@@ -12,7 +12,7 @@ def dedent_initial(s: str, n: int = 4) -> str:
 
 def dedent(s: str, n: int = 4, sep: str = '\n') -> str:
     """Remove identation."""
-    return sep.join(dedent_initial(l) for l in s.splitlines())
+    return sep.join(dedent_initial(line) for line in s.splitlines())
 
 
 class DOT:

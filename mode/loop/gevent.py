@@ -10,7 +10,7 @@ except ImportError:
         'Gevent loop requires the gevent library: '
         'pip install gevent') from None
 gevent.monkey.patch_all()
-from typing import Optional, cast  # noqa: F401
+from typing import Optional, cast  # noqa: F401,E402
 
 try:
     import psycopg2  # noqa: F401

@@ -82,7 +82,7 @@ def didyoumean(haystack: Iterable[str], needle: str,
     )
 
 
-def enumeration(l: Iterable[str], *,
+def enumeration(items: Iterable[str], *,
                 start: int = 1,
                 sep: str = '\n',
                 template: str = '{index}) {item}') -> str:
@@ -94,7 +94,7 @@ def enumeration(l: Iterable[str], *,
     """
     return sep.join(
         template.format(index=index, item=item)
-        for index, item in enumerate(l, start=start)
+        for index, item in enumerate(items, start=start)
     )
 
 

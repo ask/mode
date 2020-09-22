@@ -31,6 +31,8 @@ __all__ = [
 T = TypeVar('T')
 T_contra = TypeVar('T_contra', contravariant=True)
 
+signal = None   # just here to fix flake8 bug
+
 SignalHandlerT = Union[
     Callable[
         [T, VarArg(), NamedArg('BaseSignalT', name='signal'), KwArg()],
