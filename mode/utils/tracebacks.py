@@ -204,7 +204,7 @@ class Traceback(_BaseTraceback):
                     break
             frames.append(current_frame)
             num_frames += 1
-            current_frame = current_frame.f_back
+            current_frame = current_frame.f_back  # type: ignore
         frames.reverse()
         prev: Optional[_BaseTraceback] = None
         root: Optional[_BaseTraceback] = None

@@ -62,7 +62,7 @@ class IN:
         return f'<IN: {sep.join(map(str, self.alternatives))}>'
 
 
-class Mock(unittest.mock.Mock):  # type: ignore
+class Mock(unittest.mock.Mock):
     """Mock object."""
 
     global_call_count: Optional[int] = None
@@ -114,7 +114,7 @@ def ContextMock(*args: Any, **kwargs: Any) -> _ContextMock:
     return obj
 
 
-class AsyncMock(unittest.mock.Mock):  # type: ignore
+class AsyncMock(unittest.mock.Mock):
     """Mock for ``async def`` function/method or anything awaitable."""
 
     def __init__(self, *args: Any,
@@ -126,7 +126,7 @@ class AsyncMock(unittest.mock.Mock):  # type: ignore
         self.side_effect = coroutine(coro)
 
 
-class AsyncMagicMock(unittest.mock.MagicMock):  # type: ignore
+class AsyncMagicMock(unittest.mock.MagicMock):
     """A magic mock type for ``async def`` functions/methods."""
 
     def __init__(self, *args: Any,
@@ -138,7 +138,7 @@ class AsyncMagicMock(unittest.mock.MagicMock):  # type: ignore
         self.side_effect = coroutine(coro)
 
 
-class AsyncContextMock(unittest.mock.Mock):  # type: ignore
+class AsyncContextMock(unittest.mock.Mock):
     """Mock for :class:`typing.AsyncContextManager`.
 
     You can use this to mock asynchronous context managers,
@@ -211,7 +211,7 @@ class AsyncContextMock(unittest.mock.Mock):  # type: ignore
 AsyncContextManagerMock = AsyncContextMock  # XXX compat alias
 
 
-class FutureMock(unittest.mock.Mock):  # type: ignore
+class FutureMock(unittest.mock.Mock):
     """Mock a :class:`asyncio.Future`."""
 
     awaited = False

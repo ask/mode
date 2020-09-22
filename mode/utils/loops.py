@@ -7,7 +7,7 @@ __all__ = ['clone_loop', 'call_asap']
 
 def _is_unix_loop(loop: asyncio.AbstractEventLoop) -> bool:
     try:
-        from asyncio import unix_events  # type: ignore
+        from asyncio import unix_events
     except ImportError:
         return False
     else:
