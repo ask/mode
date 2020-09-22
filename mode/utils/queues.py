@@ -96,6 +96,7 @@ class FlowControlQueue(asyncio.Queue):
     See Also:
         :class:`FlowControlEvent`.
     """
+
     pressure_high_ratio = 1.25   # divided by
     pressure_drop_ratio = 0.40   # multiplied by
 
