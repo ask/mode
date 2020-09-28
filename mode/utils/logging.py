@@ -219,7 +219,8 @@ class LogSeverityMixin(LogSeverityMixinBase):
         self.log(logging.ERROR, message, *args, **kwargs)
 
     def crit(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.CRITICAL, message, *args, **kwargs)
 
     def critical(self: HasLog, message: str,
