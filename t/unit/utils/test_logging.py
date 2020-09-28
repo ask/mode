@@ -7,6 +7,7 @@ import pytest
 from copy import deepcopy
 
 from mode.utils.logging import (
+    HAS_STACKLEVEL,
     CompositeLogger,
     DefaultFormatter,
     FileLogProxy,
@@ -37,6 +38,21 @@ def test__logger_config():
     }
 
 
+def log_called_with(logger, *args, stacklevel, **kwargs):
+    if HAS_STACKLEVEL:
+        logger.log.assert_called_once_with(
+            *args, stacklevel=stacklevel, **kwargs)
+    else:
+        logger.log.assert_called_once_with( *args, **kwargs)
+
+
+def formatter_called_with(formatter, *args, stacklevel, **kwargs):
+    if HAS_STACKLEVEL:
+        formatter.assert_called_once_with(
+            *args, stacklevel=stacklevel, **kwargs)
+    else:
+        formatter.assert_called_once_with( *args, **kwargs)
+
 class test_CompositeLogger:
 
     @pytest.fixture()
@@ -53,18 +69,20 @@ class test_CompositeLogger:
 
     def test_log(self, *, log, logger, formatter):
         log.log(logging.INFO, 'msg', 1, kw=2)
-        logger.log.assert_called_once_with(
+        log_called_with(
+            logger,
             logging.INFO,
             formatter.return_value,
             1, stacklevel=2, kw=2,
         )
-        formatter.assert_called_once_with(
-            logging.INFO, 'msg', 1, kw=2, stacklevel=2)
+        formatter_called_with(
+            formatter, logging.INFO, 'msg', 1, kw=2, stacklevel=2)
 
     def test_log__no_formatter(self, *, log, logger):
         log.formatter = None
         log.log(logging.INFO, 'msg', 1, kw=2)
-        logger.log.assert_called_once_with(
+        log_called_with(
+            logger,
             logging.INFO,
             'msg',
             1, kw=2, stacklevel=2,
@@ -83,14 +101,16 @@ class test_CompositeLogger:
     def test_severity_mixin(self, method, severity, extra, *, log, logger):
         log.formatter = None
         getattr(log, method)('msg', 'arg1', kw1=3, kw2=5)
-        logger.log.assert_called_once_with(
+        log_called_with(
+            logger,
             severity, 'msg', 'arg1', kw1=3, kw2=5, stacklevel=3, **extra)
 
     def test_dev__enabled(self, log):
         log.log = Mock()
         with patch('mode.utils.logging.DEVLOG', True):
             log.dev('msg', 1, k=2)
-            log.log.assert_called_once_with(
+            log_called_with(
+                log,
                 logging.INFO, 'msg', 1, k=2, stacklevel=3)
 
     def test_dev__disabled(self, log):
@@ -409,7 +429,8 @@ class test_flight_recorder:
         bb._fut = None
         bb._buffer_log = Mock()
         bb.log(logging.DEBUG, 'msg %r %(foo)s', 1, foo='bar')
-        logger.log.assert_called_once_with(
+        log_called_with(
+            logger,
             logging.DEBUG, 'msg %r %(foo)s', 1, foo='bar', stacklevel=2,
         )
 
@@ -609,7 +630,8 @@ def _assert_log_severities(logger):
 
 
 def _log_kwargs(kwargs):
-    kwargs.setdefault('stacklevel', 3)
+    if HAS_STACKLEVEL:
+        kwargs.setdefault('stacklevel', 3)
     return kwargs
 
 
