@@ -4,6 +4,23 @@
  Change history
 ================
 
+.. version-4.4.0:
+
+4.4.0
+=====
+:release-date: 2020-09-28 11:00 A.M PST
+:release-by: Ask Solem (:github_user:`ask`)
+
+- Supervisors now raises :exc:`SystemExit` on max restarts exceeded.
+
+- Queue: Now includes high pressure and pressure drop conditions.
+
+    This means you can now add callbacks when the queue is under high
+    pressure, and for when the pressure drops again.
+
+- Service: Added ``human_tracebacks()`` method.
+
+
 .. _version-4.3.2:
 
 4.3.2
