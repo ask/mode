@@ -107,15 +107,6 @@ matrix:
       os: linux
       dist: xenial
       stage: test
-    - python: 3.8.0
-      env: TOXENV=3.7 RUN_SUITE=y
-      os: windows
-      stage: test
-      language: sh
-      before_install:
-        - choco install python --version=3.7.5
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-        - python -m pip install --upgrade pip wheel
 
 before_install:
 install:
