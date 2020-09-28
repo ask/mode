@@ -67,6 +67,8 @@ __all__ = [
     'setup_logging',
 ]
 
+HAS_STACKLEVEL = sys.version_info >= (3, 8)
+
 DEVLOG: bool = bool(os.environ.get('DEVLOG', ''))
 DEFAULT_FORMAT: str = '''
 [%(asctime)s] [%(process)s] [%(levelname)s]: %(message)s %(extra)s
@@ -182,33 +184,38 @@ class LogSeverityMixin(LogSeverityMixinBase):
         ...            severity: int,
         ...            message: str,
         ...            *args: Any, **kwargs: Any) -> None:
-        ...        kwargs.setdefault('stacklevel', 2)
         ...        return self.logger.log(severity, message, *args, **kwargs)
     """
 
     def dev(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         if DEVLOG:
             self.log(logging.INFO, message, *args, **kwargs)
 
     def debug(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.DEBUG, message, *args, **kwargs)
 
     def info(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.INFO, message, *args, **kwargs)
 
     def warn(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.WARN, message, *args, **kwargs)
 
     def warning(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.WARN, message, *args, **kwargs)
 
     def error(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.ERROR, message, *args, **kwargs)
 
     def crit(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
@@ -217,12 +224,14 @@ class LogSeverityMixin(LogSeverityMixinBase):
 
     def critical(self: HasLog, message: str,
                  *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.CRITICAL, message, *args, **kwargs)
 
     def exception(self: HasLog, message: str,
                   *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 3)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 3)
         self.log(logging.ERROR, message, *args, exc_info=1, **kwargs)
 
 
@@ -272,7 +281,8 @@ class CompositeLogger(LogSeverityMixin):
 
     def log(self, severity: int, message: str,
             *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault('stacklevel', 2)
+        if HAS_STACKLEVEL:
+            kwargs.setdefault('stacklevel', 2)
         self.logger.log(severity,
                         self.format(severity, message, *args, **kwargs),
                         *args, **kwargs)
@@ -714,7 +724,8 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         if self._fut:
             self._buffer_log(severity, message, args, kwargs)
         else:
-            kwargs.setdefault('stacklevel', 2)
+            if HAS_STACKLEVEL:
+                kwargs.setdefault('stacklevel', 2)
             self.logger.log(severity, message, *args, **kwargs)
 
     def _buffer_log(self, severity: int, message: str,
