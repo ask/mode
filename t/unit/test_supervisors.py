@@ -99,7 +99,8 @@ class test_SupervisorStrategy:
         sup._bucket = AsyncContextManagerMock()
         service.restart = AsyncMock()
         service.restart.coro.side_effect = MaxRestartsExceeded()
-        await sup.restart_service(service)
+        with pytest.raises(SystemExit):
+            await sup.restart_service(service)
         service.restart.coro.assert_called_once_with()
         sup.log.warning.assert_called_once()
 
