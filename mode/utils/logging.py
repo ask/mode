@@ -962,16 +962,18 @@ def redirect_stdouts(logger: Logger = redirect_logger, *,
     """Redirect :data:`sys.stdout` and :data:`sys.stdout` to logger."""
     proxy = FileLogProxy(logger, severity=severity)
     if stdout:
+        _stdout = sys.stdout
         sys.stdout = proxy
     if stderr:
+        _stderr = sys.stderr
         sys.stderr = proxy
     try:
         yield proxy
     finally:
         if stdout:
-            sys.stdout = sys.__stdout__
+            sys.stdout = _stdout
         if stderr:
-            sys.stderr = sys.__stderr__
+            sys.stderr = _stderr
 
 
 on_timeout = _FlightRecorderProxy()
