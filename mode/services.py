@@ -5,6 +5,7 @@ import sys
 
 from functools import wraps
 from time import monotonic, perf_counter
+from datetime import tzinfo
 from types import TracebackType
 from typing import (
     Any,
@@ -36,6 +37,7 @@ from .utils.logging import CompositeLogger, get_logger, level_number
 from .utils.objects import iter_mro_reversed, qualname
 from .utils.text import maybecat
 from .utils.times import Seconds, want_seconds
+from .utils.cron import secs_for_next
 from .utils.tracebacks import format_task_stack
 from .utils.trees import Node
 from .utils.typing import AsyncContextManager
@@ -445,6 +447,34 @@ class Service(ServiceBase, ServiceCallbacks):
                         _interval, name=qualname(fun)):
                     await fun(self)
             return cls.task(_repeater)
+        return _decorate
+
+    @classmethod
+    def crontab(cls, cron_format: str, *,
+                timezone: tzinfo = None) -> Callable[[Callable], ServiceTask]:
+        """Background timer executing periodic task based on Crontab description.
+
+        Example:
+            >>> class S(Service):
+            ...
+            ...     @Service.crontab(cron_format='30 18 * * *',
+                                     timezone=pytz.timezone('US/Pacific'))
+            ...     async def every_6_30_pm_pacific(self):
+            ...         print('IT IS 6:30pm')
+            ...
+            ...     @Service.crontab(cron_format='30 18 * * *')
+            ...     async def every_6_30_pm(self):
+            ...         print('6:30pm UTC')
+        """
+        def _decorate(
+                fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
+            @wraps(fun)
+            async def _cron_starter(self: Service) -> None:
+                while not self.should_stop:
+                    await self.sleep(secs_for_next(cron_format, timezone))
+                    if not self.should_stop:
+                        await fun(self)
+            return cls.task(_cron_starter)
         return _decorate
 
     @classmethod
