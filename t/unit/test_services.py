@@ -1,4 +1,5 @@
 import asyncio
+from time import sleep
 from typing import ContextManager
 from mode import Service
 from mode.services import Diag, ServiceTask, WaitResult
@@ -217,6 +218,27 @@ class test_Service:
         async with foo:
             pass
         assert m.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_crontab(self):
+        m = Mock()
+
+        with patch('mode.services.secs_for_next') as secs_for_next:
+            secs_for_next.secs_for_next.return_value = 0.1
+
+            class Foo(Service):
+
+                @Service.crontab('* * * * *')
+                async def foo(self):
+                    m()
+                    self._stopped.set()
+
+            foo = Foo()
+            foo.sleep = AsyncMock()
+            async with foo:
+                await asyncio.sleep(0)
+
+            m.assert_called_once_with()
 
     @pytest.mark.asyncio
     async def test_transitions_to(self, *, service):
