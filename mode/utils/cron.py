@@ -1,6 +1,7 @@
 """Crontab Utilities."""
-from datetime import datetime, tzinfo
 import time
+from typing import cast
+from datetime import datetime, tzinfo
 from croniter.croniter import croniter
 
 
@@ -13,4 +14,4 @@ def secs_for_next(cron_format: str, tz: tzinfo = None) -> float:
     # If we have tz, now will be a datetime, if not an integer
     now = tz and datetime.now(tz) or now_ts
     cron_it = croniter(cron_format, start_time=now)
-    return cron_it.get_next(float) - now_ts
+    return cast(float, cron_it.get_next(float)) - now_ts
