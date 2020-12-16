@@ -4,7 +4,7 @@
 
 |build-status| |coverage| |license| |wheel| |pyversion| |pyimp|
 
-:Version: 4.3.2
+:Version: 0.1.0
 :Web: http://mode-streaming.readthedocs.org/
 :Download: http://pypi.org/project/mode-streaming
 :Source: http://github.com/faust-streaming/mode
@@ -251,8 +251,8 @@ http://pypi.org/project/mode-streaming
 
 You can install it by doing the following::
 
-    $ tar xvfz mode-streaming-0.0.0.tar.gz
-    $ cd mode-0.0.0
+    $ tar xvfz mode-streaming-0.1.0.tar.gz
+    $ cd mode-0.1.0
     $ python setup.py build
     # python setup.py install
 
@@ -447,9 +447,9 @@ reported by opening an issue or contacting one or more of the project maintainer
 This Code of Conduct is adapted from the Contributor Covenant,
 version 1.2.0 available at http://contributor-covenant.org/version/1/2/0/.
 
-.. |build-status| image:: https://secure.travis-ci.org/faust-streaming/mode.png?branch=master
+.. |build-status| image:: https://secure.travis-ci.com/faust-streaming/mode.png?branch=master
     :alt: Build status
-    :target: https://travis-ci.org/faust-streaming/mode
+    :target: https://travis-ci.com/faust-streaming/mode
 
 .. |coverage| image:: https://codecov.io/github/faust-streaming/mode/coverage.svg?branch=master
     :target: https://codecov.io/github/faust-streaming/mode?branch=master
