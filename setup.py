@@ -11,7 +11,7 @@ except (AttributeError, ImportError):
         return 'Python'
 from setuptools import find_packages, setup
 
-NAME = 'mode'
+NAME = 'mode-streaming'
 EXTENSIONS = {'eventlet', 'gevent', 'uvloop'}
 E_UNSUPPORTED_PYTHON = '%s 1.0 requires %%s %%s or later!' % (NAME,)
 
@@ -60,7 +60,7 @@ def add_doc(m):
 
 pats = {re_meta: add_default, re_doc: add_doc}
 here = Path(__file__).parent.absolute()
-with open(here / NAME / '__init__.py') as meta_fh:
+with open(here / 'mode' / '__init__.py') as meta_fh:
     meta = {}
     for line in meta_fh:
         if line.strip() == '# -eof meta-':
@@ -73,8 +73,8 @@ with open(here / NAME / '__init__.py') as meta_fh:
 # -*- Installation Requires -*-
 
 
-def strip_comments(l):
-    return l.split('#', 1)[0].strip()
+def strip_comments(line):
+    return line.split('#', 1)[0].strip()
 
 
 def _pip_requirement(req):
@@ -86,7 +86,10 @@ def _pip_requirement(req):
 
 def _reqs(*f):
     path = (Path.cwd() / 'requirements').joinpath(*f)
-    reqs = (strip_comments(l) for l in path.open().readlines())
+    reqs = (
+        strip_comments(line)
+        for line in path.open().readlines()
+    )
     return [_pip_requirement(r) for r in reqs if r]
 
 
