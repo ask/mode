@@ -254,7 +254,7 @@ class test_Worker:
                 worker.execute_from_commandline()
             assert excinfo.value.code == 0
             assert worker._starting_fut is ensure_future.return_value
-            ensure_future.assert_called_once_with(worker.start.return_value, worker.loop)
+            ensure_future.assert_called_once_with(worker.start.return_value, loop=worker.loop)
             worker.stop_and_shutdown.assert_called_once_with()
 
     def test_execute_from_commandline__MemoryError(self, worker):
