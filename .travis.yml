@@ -12,27 +12,27 @@ stages:
 
 matrix:
   include:
-    - python: 3.8.0
+    - python: 3.8.6
       env: TOXENV=flake8
       os: linux
       dist: xenial
       stage: lint
-    - python: 3.8.0
+    - python: 3.8.6
       env: TOXENV=typecheck
       os: linux
       dist: xenial
       stage: lint
-    - python: 3.8.0
+    - python: 3.8.6
       env: TOXENV=apicheck
       os: linux
       dist: xenial
       stage: lint
-    - python: 3.8.0
+    - python: 3.8.6
       env: TOXENV=docstyle
       os: linux
       dist: xenial
       stage: lint
-    - python: 3.8.0
+    - python: 3.8.6
       env: TOXENV=bandit
       os: linux
       dist: xenial
