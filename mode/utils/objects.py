@@ -488,8 +488,6 @@ def _remove_optional(typ: Type, *,
     if find_origin:
         if hasattr(typ, '__origin__'):
             # List[int] -> ((int,), list)
-            typ = typ.__origin__  # for List this is list, etc.
-        else:
             typ = _py36_maybe_unwrap_GenericMeta(typ)
 
     return args, typ
