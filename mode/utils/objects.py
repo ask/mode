@@ -446,61 +446,32 @@ def remove_optional(typ: Type) -> Type:
 
 def is_union(typ: Type) -> bool:
     name = typ.__class__.__name__
-    return (
-        (name == '_GenericAlias' and typ.__origin__ is typing.Union) or  # 3.7
-        name == '_Union'                                                 # 3.6
+    return any(
+        [
+            name == '_UnionGenericAlias',                                # 3.9
+            name == '_GenericAlias' and typ.__origin__ is typing.Union,  # 3.7
+            name == '_Union',                                            # 3.6
+        ]
     )
 
 
 def is_optional(typ: Type) -> bool:
-    args = getattr(typ, '__args__', ())
-    if typ.__class__.__name__ == '_GenericAlias':
-        # Py3.7
-        if typ.__origin__ is typing.Union:
-            for arg in args:
-                if arg is type(None):  # noqa
-                    return True
-    elif typ.__class__.__name__ == '_Union':  # pragma: no cover
-        # Py3.6
-        # Optional[x] actually returns Union[x, type(None)]
-        if args and type(None) in args:  # noqa
-            return True
+    if is_union(typ):
+        args = getattr(typ, '__args__', ())
+        return any([True for arg in args if arg is None or arg is type(None)])  # noqa
     return False
 
 
 def _remove_optional(typ: Type, *,
                      find_origin: bool = False) -> Tuple[List[Any], Type]:
     args = getattr(typ, '__args__', ())
-    if typ.__class__.__name__ == '_GenericAlias':
-        # 3.7
-        if typ.__origin__ is typing.Union:
-            # Optional[List[int]] -> Union[List[int], NoneType]
-            found_None = False
-            union_type_args: Optional[List] = None
-            union_type: Optional[Type] = None
-            for arg in args:
-                if arg is None or arg is type(None):  # noqa
-                    found_None = True
-                else:
-                    # returns ((int,), list)
-                    union_type_args = getattr(arg, '__args__', ())
-                    union_type = arg
-                    if find_origin:
-                        union_type = getattr(arg, '__origin__', arg)
-            if union_type is not None and found_None:
-                return cast(List, union_type_args), union_type
-        else:
-            if find_origin:
-                # List[int] -> ((int,), list)
-                typ = typ.__origin__  # for List this is list, etc.
-            return args, typ
-    elif typ.__class__.__name__ == '_Union':  # pragma: no cover
-        # Py3.6
-        # Optional[List[int]] gives Union[List[int], type(None)]
+    if is_union(typ):
+        # 3.7+: Optional[List[int]] -> Union[List[int], NoneType]
+        # 3.6:  Optional[List[int]] -> Union[List[int], type(None)]
         # returns: ((int,), list)
         found_None = False
-        union_type_args = None
-        union_type = None
+        union_type_args: Optional[List] = None
+        union_type: Optional[Type] = None
         for arg in args:
             if arg is None or arg is type(None):  # noqa
                 found_None = True
@@ -508,12 +479,18 @@ def _remove_optional(typ: Type, *,
                 union_type_args = getattr(arg, '__args__', ())
                 union_type = arg
                 if find_origin:
-                    if union_type is not None:
+                    if union_type is not None and sys.version_info.minor == 6:
                         union_type = _py36_maybe_unwrap_GenericMeta(union_type)
+                    else:
+                        union_type = getattr(arg, '__origin__', arg)
         if union_type is not None and found_None:
             return cast(List, union_type_args), union_type
     if find_origin:
-        typ = _py36_maybe_unwrap_GenericMeta(typ)
+        if hasattr(typ, '__origin__'):
+            # List[int] -> ((int,), list)
+            typ = typ.__origin__  # for List this is list, etc.
+        else:
+            typ = _py36_maybe_unwrap_GenericMeta(typ)
 
     return args, typ
 

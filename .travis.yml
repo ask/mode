@@ -137,16 +137,16 @@ matrix:
       os: linux
       dist: focal
       stage: test
-      #    - python: 3.9.0
-      #      env: TOXENV=3.9 IDENT="3.9.0" RUN_SUITE=y
-      #      os: linux
-      #      dist: focal
-      #      stage: test
-      #    - python: 3.9.1
-      #      env: TOXENV=3.9 IDENT="3.9.1" RUN_SUITE=y
-      #      os: linux
-      #      dist: xenial
-      #      stage: test
+    - python: 3.9.0
+      env: TOXENV=3.9 IDENT="3.9.0" RUN_SUITE=y
+      os: linux
+      dist: focal
+      stage: test
+    - python: 3.9.1
+      env: TOXENV=3.9 IDENT="3.9.1" RUN_SUITE=y
+      os: linux
+      dist: xenial
+      stage: test
 
 before_install:
 install:
