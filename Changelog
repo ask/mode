@@ -8,7 +8,7 @@
 
 0.1.0
 =====
-:release-date: 2020-12-16 06:00 P.M CET
+:release-date: 2020-12-17 14:00 P.M CET
 :release-by: Thomas Sarboni (:github_user:`max-k`)
 
 - Friendly fork of ask/mode : Initial release
@@ -18,3 +18,5 @@
 - Add tests on Python 3.8.1-3.8.6
 
 - Fix broken tests
+
+- Add Python 3.9 support
