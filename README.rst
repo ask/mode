@@ -10,6 +10,21 @@
 :Source: http://github.com/faust-streaming/mode
 :Keywords: async, service, framework, actors, bootsteps, graph
 
+
+Why the fork
+============
+
+We have decided to fork the original *Mode* project because there is a critical process of releasing new versions which causes uncertainty in the community. Everybody is welcome to contribute to this *fork*, and you can be added as a manitainer.
+
+We want to:
+
+- Ensure continues release
+- Code quality
+- Support latest Python versions
+- Update the documentation
+
+and more...
+
 What is Mode?
 =============
 
