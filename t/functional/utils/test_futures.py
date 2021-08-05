@@ -1,15 +1,11 @@
 import asyncio
 import inspect
+
 import pytest
-from mode.utils.futures import (
-    StampedeWrapper,
-    done_future,
-    maybe_async,
-    maybe_cancel,
-    maybe_set_exception,
-    maybe_set_result,
-    stampede,
-)
+
+from mode.utils.futures import (StampedeWrapper, done_future, maybe_async,
+                                maybe_cancel, maybe_set_exception,
+                                maybe_set_result, stampede)
 from mode.utils.mocks import Mock
 
 
@@ -30,11 +26,13 @@ async def call_commit(x):
 @pytest.mark.asyncio
 async def test_stampede():
     x = X()
-    assert all(r == 1 for r in await asyncio.gather(*[
-        call_commit(x) for _ in range(100)]))
+    assert all(
+        r == 1 for r in await asyncio.gather(*[call_commit(x) for _ in range(100)])
+    )
     assert x.commit_count == 1
-    assert all(r == 2 for r in await asyncio.gather(*[
-        call_commit(x) for _ in range(100)]))
+    assert all(
+        r == 2 for r in await asyncio.gather(*[call_commit(x) for _ in range(100)])
+    )
     assert x.commit_count == 2
     assert await x.commit() == 3
     assert x.commit_count == 3
@@ -45,7 +43,7 @@ async def test_stampede():
         X.commit()
 
     assert X.commit.__wrapped__
-    assert 'self' in inspect.signature(X.commit).parameters
+    assert "self" in inspect.signature(X.commit).parameters
 
 
 @pytest.mark.asyncio
@@ -55,18 +53,21 @@ async def test_done_future():
 
 
 def callable():
-    return 'sync'
+    return "sync"
 
 
 async def async_callable():
-    return 'async'
+    return "async"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('input,expected', [
-    (callable, 'sync'),
-    (async_callable, 'async'),
-])
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        (callable, "sync"),
+        (async_callable, "async"),
+    ],
+)
 async def test_maybe_async(input, expected):
     assert await maybe_async(input()) == expected
 
@@ -80,7 +81,6 @@ async def test_maybe_cancel(*, loop):
 
 
 class test_StampedeWrapper:
-
     @pytest.mark.asyncio
     async def test_concurrent(self):
         t = Mock()
@@ -96,7 +96,8 @@ class test_StampedeWrapper:
 
         assert all(
             ret is t.return_value
-            for ret in await asyncio.gather(*[caller() for i in range(10)]))
+            for ret in await asyncio.gather(*[caller() for i in range(10)])
+        )
 
         t.assert_called_once_with()
 
@@ -116,7 +117,6 @@ class test_StampedeWrapper:
 
     @pytest.mark.asyncio
     async def test_raises_cancel(self):
-
         async def wrapped():
             raise asyncio.CancelledError()
 
@@ -127,14 +127,13 @@ class test_StampedeWrapper:
 
     @pytest.mark.asyncio
     async def test_already_done(self):
-
         async def wrapped():
             pass
 
         x = StampedeWrapper(wrapped)
-        x.fut = done_future('foo')
+        x.fut = done_future("foo")
 
-        assert await x() == 'foo'
+        assert await x() == "foo"
 
 
 @pytest.mark.asyncio

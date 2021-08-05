@@ -11,32 +11,19 @@ import sys
 import threading
 import traceback
 from time import monotonic
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Type,
-)
+from typing import (Any, Awaitable, Callable, Dict, List, NamedTuple, Optional,
+                    Tuple, Type)
 
 from .services import Service
-from .utils.futures import (
-    maybe_async,
-    maybe_set_exception,
-    maybe_set_result,
-    notify,
-)
+from .utils.futures import (maybe_async, maybe_set_exception, maybe_set_result,
+                            notify)
 from .utils.locks import Event
 
 __all__ = [
-    'QueuedMethod',
-    'WorkerThread',
-    'ServiceThread',
-    'QueueServiceThread',
+    "QueuedMethod",
+    "WorkerThread",
+    "ServiceThread",
+    "QueueServiceThread",
 ]
 
 
@@ -52,10 +39,10 @@ class QueuedMethod(NamedTuple):
 class WorkerThread(threading.Thread):
     """Thread class used for services running in a dedicated thread."""
 
-    service: 'ServiceThread'
+    service: "ServiceThread"
     is_stopped: threading.Event
 
-    def __init__(self, service: 'ServiceThread', **kwargs: Any) -> None:
+    def __init__(self, service: "ServiceThread", **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.service = service
         self.daemon = False
@@ -93,23 +80,25 @@ class ServiceThread(Service):
     #: underlying thread to be fully started.
     wait_for_thread: bool = True
 
-    _thread: Optional['WorkerThread'] = None
+    _thread: Optional["WorkerThread"] = None
     _thread_started: Event
     _thread_running: Optional[asyncio.Future] = None
 
     last_wakeup_at: float = 0.0
 
-    def __init__(self,
-                 *,
-                 executor: Any = None,
-                 loop: asyncio.AbstractEventLoop = None,
-                 thread_loop: asyncio.AbstractEventLoop = None,
-                 Worker: Type[WorkerThread] = None,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *,
+        executor: Any = None,
+        loop: asyncio.AbstractEventLoop = None,
+        thread_loop: asyncio.AbstractEventLoop = None,
+        Worker: Type[WorkerThread] = None,
+        **kwargs: Any,
+    ) -> None:
         # cannot share loop between threads, so create a new one
         assert asyncio.get_event_loop()
         if executor is not None:
-            raise NotImplementedError('executor argument no longer supported')
+            raise NotImplementedError("executor argument no longer supported")
         self.parent_loop = loop or asyncio.get_event_loop()
         self.thread_loop = thread_loop or asyncio.new_event_loop()
         self._thread_started = Event(loop=self.parent_loop)
@@ -186,9 +175,10 @@ class ServiceThread(Service):
             await self.sleep(1.1)
             if self.last_wakeup_at:
                 if monotonic() - self.last_wakeup_at > 3.0:
-                    self.log.error('Thread keepalive is not responding...')
+                    self.log.error("Thread keepalive is not responding...")
             asyncio.run_coroutine_threadsafe(
-                self._wakeup_timer_in_thread(), self.thread_loop)
+                self._wakeup_timer_in_thread(), self.thread_loop
+            )
 
     async def _wakeup_timer_in_thread(self) -> None:
         self.last_wakeup_at = monotonic()
@@ -201,7 +191,8 @@ class ServiceThread(Service):
             maybe_set_exception(self._thread_running, exc)
         else:
             self.parent_loop.call_soon_threadsafe(
-                maybe_set_exception, self._thread_running, exc)
+                maybe_set_exception, self._thread_running, exc
+            )
         await super().crash(exc)
 
     def _start_thread(self) -> None:
@@ -228,13 +219,13 @@ class ServiceThread(Service):
         self.parent_loop.call_soon_threadsafe(self._shutdown.set)
 
     async def _stop_children(self) -> None:
-        ...   # called by thread instead of .stop()
+        ...  # called by thread instead of .stop()
 
     async def _stop_futures(self) -> None:
-        ...   # called by thread instead of .stop()
+        ...  # called by thread instead of .stop()
 
     async def _stop_exit_stacks(self) -> None:
-        ...   # called by thread instead of .stop()
+        ...  # called by thread instead of .stop()
 
     async def _shutdown_thread(self) -> None:
         await self.on_thread_stop()
@@ -255,7 +246,7 @@ class ServiceThread(Service):
         except asyncio.CancelledError:
             raise
         except BaseException as exc:  # pylint: disable=broad-except
-            self.on_crash('{0!r} crashed: {1!r}', self.label, exc)
+            self.on_crash("{0!r} crashed: {1!r}", self.label, exc)
             await self.crash(exc)
             if self.beacon.root is not None:
                 await self.beacon.root.data.crash(exc)
@@ -266,9 +257,8 @@ class ServiceThread(Service):
     @Service.task
     async def _thread_keepalive(self) -> None:
         async for sleep_time in self.itertimer(
-                1.0,
-                name=f'_thread_keepalive-{self.label}',
-                loop=self.thread_loop):  # pragma: no cover
+            1.0, name=f"_thread_keepalive-{self.label}", loop=self.thread_loop
+        ):  # pragma: no cover
             # The consumer thread will have a separate event loop,
             # and so we use this trick to make sure our loop is
             # being scheduled to run something at all times.
@@ -284,13 +274,12 @@ class ServiceThread(Service):
 
 class MethodQueueWorker(Service):
     index: int
-    method_queue: 'MethodQueue'
-    mundane_level = 'debug'
+    method_queue: "MethodQueue"
+    mundane_level = "debug"
 
-    def __init__(self, method_queue: 'MethodQueue',
-                 *,
-                 index: int,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self, method_queue: "MethodQueue", *, index: int, **kwargs: Any
+    ) -> None:
         self.method_queue = method_queue
         self.index = index
         super().__init__(**kwargs)
@@ -311,7 +300,7 @@ class MethodQueueWorker(Service):
 
     @property
     def label(self) -> str:
-        return f'{type(self).__name__}@{id(self):#x} index={self.index}'
+        return f"{type(self).__name__}@{id(self):#x} index={self.index}"
 
 
 class MethodQueue(Service):
@@ -321,12 +310,11 @@ class MethodQueue(Service):
     _queue_ready: Event
     _workers: List[MethodQueueWorker]
 
-    mundane_level = 'debug'
+    mundane_level = "debug"
 
-    def __init__(self,
-                 loop: asyncio.AbstractEventLoop,
-                 num_workers: int = 2,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self, loop: asyncio.AbstractEventLoop, num_workers: int = 2, **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
         self._queue = asyncio.Queue(loop=self.loop)
         self._queue_ready = Event(loop=self.loop)
@@ -345,11 +333,13 @@ class MethodQueue(Service):
         await self.flush()
         self._workers[:] = []
 
-    async def call(self,
-                   promise: asyncio.Future,
-                   fun: Callable[..., Awaitable],
-                   *args: Any,
-                   **kwargs: Any) -> asyncio.Future:
+    async def call(
+        self,
+        promise: asyncio.Future,
+        fun: Callable[..., Awaitable],
+        *args: Any,
+        **kwargs: Any,
+    ) -> asyncio.Future:
         method = QueuedMethod(promise, fun, args, kwargs)
         self.loop.call_soon_threadsafe(self._queue_put, method)
         return promise
@@ -358,10 +348,9 @@ class MethodQueue(Service):
         self._queue.put_nowait(method)
         self._queue_ready.set()
 
-    async def cast(self,
-                   fun: Callable[..., Awaitable],
-                   *args: Any,
-                   **kwargs: Any) -> None:
+    async def cast(
+        self, fun: Callable[..., Awaitable], *args: Any, **kwargs: Any
+    ) -> None:
         promise = self.loop.create_future()
         method = QueuedMethod(promise, fun, args, kwargs)
         self._queue.put_nowait(method)
@@ -382,16 +371,14 @@ class MethodQueue(Service):
             try:
                 result = await maybe_async(method(*args, **kwargs))
             except BaseException as exc:
-                promise._loop.call_soon_threadsafe(
-                    maybe_set_exception, promise, exc)
+                promise._loop.call_soon_threadsafe(maybe_set_exception, promise, exc)
             else:
-                promise._loop.call_soon_threadsafe(
-                    maybe_set_result, promise, result)
+                promise._loop.call_soon_threadsafe(maybe_set_result, promise, result)
         return promise
 
     @property
     def label(self) -> str:
-        return f'{type(self).__name__}@{id(self):#x}'
+        return f"{type(self).__name__}@{id(self):#x}"
 
 
 class QueueServiceThread(ServiceThread):
@@ -421,24 +408,23 @@ class QueueServiceThread(ServiceThread):
         if self._method_queue is not None:
             await self._method_queue.stop()
 
-    async def call_thread(self,
-                          fun: Callable[..., Awaitable],
-                          *args: Any,
-                          **kwargs: Any) -> Any:
+    async def call_thread(
+        self, fun: Callable[..., Awaitable], *args: Any, **kwargs: Any
+    ) -> Any:
         # Enqueue method to be called by thread (synchronous).
 
         # We pass a future to the thread, so that when the call is done
         # the thread will call `future.set_result(result)`.
         promise = await self.method_queue.call(
-            self.parent_loop.create_future(), fun, *args, **kwargs)
+            self.parent_loop.create_future(), fun, *args, **kwargs
+        )
 
         # wait for the promise to be fulfilled
         result = await promise
         return result
 
-    async def cast_thread(self,
-                          fun: Callable[..., Awaitable],
-                          *args: Any,
-                          **kwargs: Any) -> None:
+    async def cast_thread(
+        self, fun: Callable[..., Awaitable], *args: Any, **kwargs: Any
+    ) -> None:
         # Enqueue method to be called by thread (asynchronous).
         await self.method_queue.cast(fun, *args, **kwargs)

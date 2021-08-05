@@ -4,35 +4,30 @@ from types import TracebackType
 from typing import Any, Type
 
 if typing.TYPE_CHECKING:
-    from ._py37_contextlib import AbstractAsyncContextManager
-    from ._py37_contextlib import AsyncExitStack, ExitStack
-    from ._py37_contextlib import asynccontextmanager
-    from ._py37_contextlib import nullcontext
+    from ._py37_contextlib import (AbstractAsyncContextManager, AsyncExitStack,
+                                   ExitStack, asynccontextmanager, nullcontext)
 else:
     try:  # pragma: no cover
-        from contextlib import AbstractAsyncContextManager
-        from contextlib import AsyncExitStack, ExitStack
-        from contextlib import asynccontextmanager
-        from contextlib import nullcontext
+        from contextlib import (AbstractAsyncContextManager, AsyncExitStack,
+                                ExitStack, asynccontextmanager, nullcontext)
     except ImportError:  # pragma: no cover
-        from ._py37_contextlib import AbstractAsyncContextManager
-        from ._py37_contextlib import AsyncExitStack, ExitStack
-        from ._py37_contextlib import asynccontextmanager
-        from ._py37_contextlib import nullcontext
+        from ._py37_contextlib import (AbstractAsyncContextManager,
+                                       AsyncExitStack, ExitStack,
+                                       asynccontextmanager, nullcontext)
 
 __all__ = [
-    'AbstractAsyncContextManager',
-    'AsyncExitStack',
-    'ExitStack',
-    'asynccontextmanager',
-    'nullcontext',
-    'asyncnullcontext',
+    "AbstractAsyncContextManager",
+    "AsyncExitStack",
+    "ExitStack",
+    "asynccontextmanager",
+    "nullcontext",
+    "asyncnullcontext",
 ]
 
 
 # Sphinx complains that stdlib is badly formatted :P
 
-AsyncExitStack.__doc__ = '''
+AsyncExitStack.__doc__ = """
 Async context manager for dynamic management of a stack of exit
 callbacks.
 
@@ -43,9 +38,9 @@ Example:
     ...    # All opened connections will automatically be released at the
     ...    # end of the async with statement, even if attempts to open a
     ...    # connection later in the list raise an exception.
-'''
-asynccontextmanager.__doc__ = 'asynccontextmanager decorator.'
-nullcontext.__doc__ = 'Context that does nothing.'
+"""
+asynccontextmanager.__doc__ = "asynccontextmanager decorator."
+nullcontext.__doc__ = "Context that does nothing."
 
 
 class asyncnullcontext(AbstractAsyncContextManager):
@@ -59,8 +54,10 @@ class asyncnullcontext(AbstractAsyncContextManager):
     async def __aenter__(self) -> Any:
         return self.enter_result
 
-    async def __aexit__(self,
-                        exc_type: Type[BaseException] = None,
-                        exc_val: BaseException = None,
-                        exc_tb: TracebackType = None) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Type[BaseException] = None,
+        exc_val: BaseException = None,
+        exc_tb: TracebackType = None,
+    ) -> None:
         ...

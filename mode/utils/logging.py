@@ -15,28 +15,13 @@ from logging import Logger
 from pprint import pprint
 from time import asctime
 from types import TracebackType
-from typing import (
-    Any,
-    AnyStr,
-    BinaryIO,
-    Callable,
-    ClassVar,
-    ContextManager,
-    Dict,
-    IO,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    NamedTuple,
-    Optional,
-    Set,
-    TextIO,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import (IO, Any, AnyStr, BinaryIO, Callable, ClassVar,
+                    ContextManager, Dict, Iterable, Iterator, List, Mapping,
+                    NamedTuple, Optional, Set, TextIO, Tuple, Type, Union,
+                    cast)
+
+import colorlog
+
 from .contexts import ExitStack
 from .futures import all_tasks, current_task
 from .locals import LocalStack
@@ -45,90 +30,89 @@ from .times import Seconds, want_seconds
 from .tracebacks import format_task_stack, print_task_stack
 from .typing import Protocol
 
-import colorlog
-
 __all__ = [
-    'CompositeLogger',
-    'ExtensionFormatter',
-    'FileLogProxy',
-    'FormatterHandler',
-    'LogSeverityMixin',
-    'Logwrapped',
-    'Severity',
-    'cry',
-    'flight_recorder',
-    'formatter',
-    'formatter2',
-    'get_logger',
-    'level_name',
-    'level_number',
-    'redirect_logger',
-    'redirect_stdouts',
-    'setup_logging',
+    "CompositeLogger",
+    "ExtensionFormatter",
+    "FileLogProxy",
+    "FormatterHandler",
+    "LogSeverityMixin",
+    "Logwrapped",
+    "Severity",
+    "cry",
+    "flight_recorder",
+    "formatter",
+    "formatter2",
+    "get_logger",
+    "level_name",
+    "level_number",
+    "redirect_logger",
+    "redirect_stdouts",
+    "setup_logging",
 ]
 
 HAS_STACKLEVEL = sys.version_info >= (3, 8)
 
-DEVLOG: bool = bool(os.environ.get('DEVLOG', ''))
-DEFAULT_FORMAT: str = '''
+DEVLOG: bool = bool(os.environ.get("DEVLOG", ""))
+DEFAULT_FORMAT: str = """
 [%(asctime)s] [%(process)s] [%(levelname)s]: %(message)s %(extra)s
-'''.strip()
+""".strip()
 
-DEFAULT_COLOR_FORMAT = '''
+DEFAULT_COLOR_FORMAT = """
 [%(asctime)s] [%(process)s] [%(levelname)s] %(log_color)s%(message)s %(extra)s
-'''.strip()
+""".strip()
 
 
 DEFAULT_COLORS = {
     **colorlog.default_log_colors,
-    'INFO': 'white',
-    'DEBUG': 'blue',
+    "INFO": "white",
+    "DEBUG": "blue",
 }
 
 DEFAULT_FORMATTERS = {
-    'default': {
-        '()': 'mode.utils.logging.DefaultFormatter',
-        'format': DEFAULT_FORMAT,
+    "default": {
+        "()": "mode.utils.logging.DefaultFormatter",
+        "format": DEFAULT_FORMAT,
     },
-    'colored': {
-        '()': 'mode.utils.logging.ExtensionFormatter',
-        'format': DEFAULT_COLOR_FORMAT,
-        'log_colors': DEFAULT_COLORS,
-        'stream': sys.stdout,
+    "colored": {
+        "()": "mode.utils.logging.ExtensionFormatter",
+        "format": DEFAULT_COLOR_FORMAT,
+        "log_colors": DEFAULT_COLORS,
+        "stream": sys.stdout,
     },
 }
 
 
-current_flight_recorder_stack: LocalStack['flight_recorder']
+current_flight_recorder_stack: LocalStack["flight_recorder"]
 current_flight_recorder_stack = LocalStack()
 
 
-def current_flight_recorder() -> Optional['flight_recorder']:
+def current_flight_recorder() -> Optional["flight_recorder"]:
     return current_flight_recorder_stack.top
 
 
-def _logger_config(handlers: List[str],
-                   level: Union[str, int] = 'INFO') -> Dict:
+def _logger_config(handlers: List[str], level: Union[str, int] = "INFO") -> Dict:
     return {
-        'handlers': handlers,
-        'level': level,
+        "handlers": handlers,
+        "level": level,
     }
 
 
-def create_logconfig(version: int = 1,
-                     disable_existing_loggers: bool = False,
-                     formatters: Dict = DEFAULT_FORMATTERS,
-                     handlers: Dict = None,
-                     root: Dict = None) -> Dict:
+def create_logconfig(
+    version: int = 1,
+    disable_existing_loggers: bool = False,
+    formatters: Dict = DEFAULT_FORMATTERS,
+    handlers: Dict = None,
+    root: Dict = None,
+) -> Dict:
     return {
-        'version': version,
+        "version": version,
         # do not disable existing loggers from other modules.
         # see https://www.caktusgroup.com/blog/2015/01/27/
         #    Django-Logging-Configuration-logging_config-default-settings-logger/
-        'disable_existing_loggers': disable_existing_loggers,
-        'formatters': formatters,
-        'handlers': handlers,
-        'root': root,
+        "disable_existing_loggers": disable_existing_loggers,
+        "formatters": formatters,
+        "handlers": handlers,
+        "root": root,
     }
 
 
@@ -151,16 +135,12 @@ def get_logger(name: str) -> Logger:
     return logger
 
 
-redirect_logger = get_logger('mode.redirect')
+redirect_logger = get_logger("mode.redirect")
 
 
 class HasLog(Protocol):
-
     @abc.abstractmethod
-    def log(self,
-            severity: int,
-            message: str,
-            *args: Any, **kwargs: Any) -> None:
+    def log(self, severity: int, message: str, *args: Any, **kwargs: Any) -> None:
         ...
 
 
@@ -189,50 +169,48 @@ class LogSeverityMixin(LogSeverityMixinBase):
 
     def dev(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         if DEVLOG:
             self.log(logging.INFO, message, *args, **kwargs)
 
     def debug(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.DEBUG, message, *args, **kwargs)
 
     def info(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.INFO, message, *args, **kwargs)
 
     def warn(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.WARN, message, *args, **kwargs)
 
     def warning(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.WARN, message, *args, **kwargs)
 
     def error(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.ERROR, message, *args, **kwargs)
 
     def crit(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.CRITICAL, message, *args, **kwargs)
 
-    def critical(self: HasLog, message: str,
-                 *args: Any, **kwargs: Any) -> None:
+    def critical(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.CRITICAL, message, *args, **kwargs)
 
-    def exception(self: HasLog, message: str,
-                  *args: Any, **kwargs: Any) -> None:
+    def exception(self: HasLog, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 3)
+            kwargs.setdefault("stacklevel", 3)
         self.log(logging.ERROR, message, *args, exc_info=1, **kwargs)
 
 
@@ -274,22 +252,18 @@ class CompositeLogger(LogSeverityMixin):
 
     logger: Logger
 
-    def __init__(self,
-                 logger: Logger,
-                 formatter: Callable[..., str] = None) -> None:
+    def __init__(self, logger: Logger, formatter: Callable[..., str] = None) -> None:
         self.logger = logger
         self.formatter: Optional[Callable[..., str]] = formatter
 
-    def log(self, severity: int, message: str,
-            *args: Any, **kwargs: Any) -> None:
+    def log(self, severity: int, message: str, *args: Any, **kwargs: Any) -> None:
         if HAS_STACKLEVEL:
-            kwargs.setdefault('stacklevel', 2)
-        self.logger.log(severity,
-                        self.format(severity, message, *args, **kwargs),
-                        *args, **kwargs)
+            kwargs.setdefault("stacklevel", 2)
+        self.logger.log(
+            severity, self.format(severity, message, *args, **kwargs), *args, **kwargs
+        )
 
-    def format(self, severity: int, message: str,
-               *args: Any, **kwargs: Any) -> str:
+    def format(self, severity: int, message: str, *args: Any, **kwargs: Any) -> str:
         if self.formatter:
             return self.formatter(severity, message, *args, **kwargs)
         return message
@@ -316,9 +290,7 @@ def formatter2(fun: FormatterHandler2) -> FormatterHandler2:
 
 
 def _format_extra(record: logging.LogRecord) -> str:
-    return ', '.join(
-        f'{k}={v!r}' for k, v in record.__dict__.get('data', {}).items()
-    )
+    return ", ".join(f"{k}={v!r}" for k, v in record.__dict__.get("data", {}).items())
 
 
 class DefaultFormatter(logging.Formatter):
@@ -347,9 +319,7 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
         format_arg = self.format_arg
         if isinstance(record.args, Mapping):
             # logger.log(severity, "msg %(foo)s", foo=303)
-            record.args = {
-                k: format_arg(v, record) for k, v in record.args.items()
-            }
+            record.args = {k: format_arg(v, record) for k, v in record.args.items()}
         else:
             if not isinstance(record.args, tuple):
                 # logger.log(severity, "msg %s", foo)
@@ -357,9 +327,7 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
                 # always Tuple
                 record.args = (record.args,)  # type: ignore
             # logger.log(severity, "msg %s", ('foo',))
-            record.args = tuple(
-                format_arg(arg, record) for arg in record.args
-            )
+            record.args = tuple(format_arg(arg, record) for arg in record.args)
 
     def format_arg(self, arg: Any, record: logging.LogRecord) -> Any:
         return self._format_arg2(self._format_arg(arg), record)
@@ -403,11 +371,12 @@ def _(loglevel: str) -> int:
 
 
 def setup_logging(
-        *,
-        loglevel: Union[str, int] = None,
-        logfile: Union[str, IO] = None,
-        loghandlers: List[logging.Handler] = None,
-        logging_config: Dict = None) -> int:
+    *,
+    loglevel: Union[str, int] = None,
+    logfile: Union[str, IO] = None,
+    loghandlers: List[logging.Handler] = None,
+    logging_config: Dict = None,
+) -> int:
     """Configure logging subsystem."""
     stream: Optional[IO] = None
     _loglevel: int = level_number(loglevel)
@@ -433,42 +402,50 @@ def setup_logging(
     return _loglevel
 
 
-def _setup_logging(*,
-                   level: Union[int, str] = None,
-                   filename: str = None,
-                   stream: IO = None,
-                   loghandlers: List[logging.Handler] = None,
-                   logging_config: Dict = None) -> None:
+def _setup_logging(
+    *,
+    level: Union[int, str] = None,
+    filename: str = None,
+    stream: IO = None,
+    loghandlers: List[logging.Handler] = None,
+    logging_config: Dict = None,
+) -> None:
     handlers = {}
     if filename:
         assert stream is None
-        handlers.update({
-            'default': {
-                'level': level,
-                'class': 'logging.FileHandler',
-                'formatter': 'default',
-                'filename': filename,
-            },
-        })
+        handlers.update(
+            {
+                "default": {
+                    "level": level,
+                    "class": "logging.FileHandler",
+                    "formatter": "default",
+                    "filename": filename,
+                },
+            }
+        )
     elif stream:
-        handlers.update({
-            'default': {
-                'level': level,
-                'class': 'colorlog.StreamHandler',
-                'formatter': 'colored',
-            },
-        })
-    config = create_logconfig(handlers=handlers, root={
-        'level': level,
-        'handlers': ['default'],
-    })
+        handlers.update(
+            {
+                "default": {
+                    "level": level,
+                    "class": "colorlog.StreamHandler",
+                    "formatter": "colored",
+                },
+            }
+        )
+    config = create_logconfig(
+        handlers=handlers,
+        root={
+            "level": level,
+            "handlers": ["default"],
+        },
+    )
     if logging_config is None:
         logging_config = config
-    elif logging_config.pop('merge', False):
+    elif logging_config.pop("merge", False):
         logging_config = {**config, **logging_config}
-        for k in ('formatters', 'filters', 'handlers', 'loggers', 'root'):
-            logging_config[k] = {**config.get(k, {}),
-                                 **logging_config.get(k, {})}
+        for k in ("formatters", "filters", "handlers", "loggers", "root"):
+            logging_config[k] = {**config.get(k, {}), **logging_config.get(k, {})}
     logging.config.dictConfig(logging_config)
     if loghandlers is not None:
         logging.root.handlers.extend(loghandlers)
@@ -482,13 +459,11 @@ class Logwrapped(object):
     severity: int
     ident: str
 
-    _ignore: ClassVar[Set[str]] = {'__enter__', '__exit__'}
+    _ignore: ClassVar[Set[str]] = {"__enter__", "__exit__"}
 
-    def __init__(self,
-                 obj: Any,
-                 logger: Any = None,
-                 severity: Severity = None,
-                 ident: str = '') -> None:
+    def __init__(
+        self, obj: Any, logger: Any = None, severity: Severity = None, ident: str = ""
+    ) -> None:
         self.obj = obj
         self.logger = logger
         self.severity = level_number(severity) if severity else logging.WARN
@@ -497,25 +472,24 @@ class Logwrapped(object):
     def __getattr__(self, key: str) -> Any:
         meth = getattr(self.obj, key)
 
-        ignore = object.__getattribute__(self, '_ignore')
+        ignore = object.__getattribute__(self, "_ignore")
 
         if not callable(meth) or key in ignore:
             return meth
 
         @wraps(meth)
         def __wrapped(*args: Any, **kwargs: Any) -> Any:
-            info = ''
+            info = ""
             if self.ident:
                 info += self.ident.format(self.obj)
-            info += f'{meth.__name__}('
+            info += f"{meth.__name__}("
             if args:
-                info += ', '.join(map(repr, args))
+                info += ", ".join(map(repr, args))
             if kwargs:
                 if args:
-                    info += ', '
-                info += ', '.join(f'{key}={value!r}'
-                                  for key, value in kwargs.items())
-            info += ')'
+                    info += ", "
+                info += ", ".join(f"{key}={value!r}" for key, value in kwargs.items())
+            info += ")"
             self.logger.log(self.severity, info)
             return meth(*args, **kwargs)
 
@@ -528,12 +502,9 @@ class Logwrapped(object):
         return dir(self.obj)
 
 
-def cry(file: IO,
-        *,
-        sep1: str = '=',
-        sep2: str = '-',
-        sep3: str = '~',
-        seplen: int = 49) -> None:  # pragma: no cover
+def cry(
+    file: IO, *, sep1: str = "=", sep2: str = "-", sep3: str = "~", seplen: int = 49
+) -> None:  # pragma: no cover
     """Return stack-trace of all active threads.
 
     See Also:
@@ -554,37 +525,37 @@ def cry(file: IO,
             if thread.ident == current_thread.ident:
                 loop = asyncio.get_event_loop()
             else:
-                loop = getattr(thread, 'loop', None)
-            print(f'THREAD {thread.name}', file=file)            # noqa: T003
-            print(sep1, file=file)                               # noqa: T003
+                loop = getattr(thread, "loop", None)
+            print(f"THREAD {thread.name}", file=file)  # noqa: T003
+            print(sep1, file=file)  # noqa: T003
             traceback.print_stack(frame, file=file)
-            print(sep2, file=file)                               # noqa: T003
-            print('LOCAL VARIABLES', file=file)                  # noqa: T003
-            print(sep2, file=file)                               # noqa: T003
+            print(sep2, file=file)  # noqa: T003
+            print("LOCAL VARIABLES", file=file)  # noqa: T003
+            print(sep2, file=file)  # noqa: T003
             pprint(frame.f_locals, stream=file)
             if loop is not None:
-                print('TASKS', file=file)
+                print("TASKS", file=file)
                 print(sep2, file=file)
                 for task in all_tasks(loop=loop):
                     print_task_name(task, file=file)
-                    print(f'  {sep3}', file=file)
+                    print(f"  {sep3}", file=file)
                     print_task_stack(task, file=file, capture_locals=True)
-            print('\n', file=file)                               # noqa: T003
+            print("\n", file=file)  # noqa: T003
 
 
 def print_task_name(task: asyncio.Task, file: IO) -> None:
     """Print name of :class:`asyncio.Task` in tracebacks."""
     coro = task._coro  # type: ignore
-    wrapped = getattr(task, '__wrapped__', None)
-    coro_name = getattr(coro, '__name__', None)
+    wrapped = getattr(task, "__wrapped__", None)
+    coro_name = getattr(coro, "__name__", None)
     if coro_name is None:
         # some coroutines does not have a __name__ attribute
         # e.g. async_generator_asend
         coro_name = repr(coro)
-    print(f'  TASK {coro_name}', file=file)
+    print(f"  TASK {coro_name}", file=file)
     if wrapped:
-        print(f'   -> {wrapped}', file=file)
-    print(f'   {task!r}', file=file)
+        print(f"   -> {wrapped}", file=file)
+    print(f"   {task!r}", file=file)
 
 
 class LogMessage(NamedTuple):
@@ -674,9 +645,9 @@ class flight_recorder(ContextManager, LogSeverityMixin):
     _logs: List[LogMessage]
     _default_context: Dict[str, Any]
 
-    def __init__(self, logger: Any, *,
-                 timeout: Seconds,
-                 loop: asyncio.AbstractEventLoop = None) -> None:
+    def __init__(
+        self, logger: Any, *, timeout: Seconds, loop: asyncio.AbstractEventLoop = None
+    ) -> None:
         self.id = next(self._id_source)
         self.logger = logger
         self.timeout = want_seconds(timeout)
@@ -705,7 +676,7 @@ class flight_recorder(ContextManager, LogSeverityMixin):
 
     def activate(self) -> None:
         if self._fut:
-            raise RuntimeError('{type(self).__name__} already activated')
+            raise RuntimeError("{type(self).__name__} already activated")
         self.enabled_by = current_task()
         self.started_at_date = asctime()
         current_flight_recorder = current_flight_recorder_stack.top
@@ -720,17 +691,15 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         if fut is not None:
             fut.cancel()
 
-    def log(self, severity: int, message: str,
-            *args: Any, **kwargs: Any) -> None:
+    def log(self, severity: int, message: str, *args: Any, **kwargs: Any) -> None:
         if self._fut:
             self._buffer_log(severity, message, args, kwargs)
         else:
             if HAS_STACKLEVEL:
-                kwargs.setdefault('stacklevel', 2)
+                kwargs.setdefault("stacklevel", 2)
             self.logger.log(severity, message, *args, **kwargs)
 
-    def _buffer_log(self, severity: int, message: str,
-                    args: Any, kwargs: Any) -> None:
+    def _buffer_log(self, severity: int, message: str, args: Any, kwargs: Any) -> None:
         log = LogMessage(severity, message, asctime(), args, kwargs)
         self._logs.append(log)
 
@@ -746,20 +715,20 @@ class flight_recorder(ContextManager, LogSeverityMixin):
         try:
             logger = self.logger
             ident = self._ident()
-            logger.warning('Warning: Task timed out!')
-            logger.warning(
-                "Please make sure it's hanging before restart.")
-            logger.info('[%s] (started at %s) Replaying logs...',
-                        ident, self.started_at_date)
+            logger.warning("Warning: Task timed out!")
+            logger.warning("Please make sure it's hanging before restart.")
+            logger.info(
+                "[%s] (started at %s) Replaying logs...", ident, self.started_at_date
+            )
             self.flush_logs(ident=ident)
-            logger.info('[%s] -End of log-', ident)
-            logger.info('[%s] Task traceback', ident)
+            logger.info("[%s] -End of log-", ident)
+            logger.info("[%s] Task traceback", ident)
             if self.enabled_by is not None:
                 logger.info(format_task_stack(self.enabled_by))
             else:
-                logger.info('[%s] -missing-: not enabled by task')
+                logger.info("[%s] -missing-: not enabled by task")
         except Exception as exc:
-            logger.exception('Flight recorder internal error: %r', exc)
+            logger.exception("Flight recorder internal error: %r", exc)
             raise
 
     def flush_logs(self, ident: str = None) -> None:
@@ -771,47 +740,44 @@ class flight_recorder(ContextManager, LogSeverityMixin):
                 for sev, message, datestr, args, kwargs in logs:
                     self._fill_extra_context(kwargs)
                     logger.log(
-                        sev, f'[%s] (%s) {message}', ident, datestr,
-                        *args, **kwargs)
+                        sev, f"[%s] (%s) {message}", ident, datestr, *args, **kwargs
+                    )
             finally:
                 logs.clear()
 
     def _fill_extra_context(self, kwargs: Dict) -> None:
         if self.extra_context:
-            extra = kwargs['extra'] = kwargs.get('extra') or {}
-            extra['data'] = {
+            extra = kwargs["extra"] = kwargs.get("extra") or {}
+            extra["data"] = {
                 **self.extra_context,
-                **(extra.get('data') or {}),
+                **(extra.get("data") or {}),
             }
 
     def _ident(self) -> str:
-        return f'{title(type(self).__name__)}-{self.id}'
+        return f"{title(type(self).__name__)}-{self.id}"
 
     def __repr__(self) -> str:
-        return f'<{self._ident()} @{id(self):#x}>'
+        return f"<{self._ident()} @{id(self):#x}>"
 
-    def __enter__(self) -> 'flight_recorder':
+    def __enter__(self) -> "flight_recorder":
         self.activate()
-        self.exit_stack.enter_context(
-            current_flight_recorder_stack.push(self))
+        self.exit_stack.enter_context(current_flight_recorder_stack.push(self))
         self.exit_stack.__enter__()
         return self
 
-    def __exit__(self,
-                 exc_type: Type[BaseException] = None,
-                 exc_val: BaseException = None,
-                 exc_tb: TracebackType = None) -> Optional[bool]:
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] = None,
+        exc_val: BaseException = None,
+        exc_tb: TracebackType = None,
+    ) -> Optional[bool]:
         self.exit_stack.__exit__(exc_type, exc_val, exc_tb)
         self.cancel()
         return None
 
 
 class _FlightRecorderProxy(LogSeverityMixin):
-
-    def log(self,
-            severity: int,
-            message: str,
-            *args: Any, **kwargs: Any) -> None:
+    def log(self, severity: int, message: str, *args: Any, **kwargs: Any) -> None:
         fl = self.current_flight_recorder()
         if fl is not None:
             return fl.log(severity, message, *args, **kwargs)
@@ -844,17 +810,16 @@ class FileLogProxy(TextIO):
         # :data:`sys.__stderr__` instead of :data:`sys.stderr` to circumvent
         # infinite loops.
         class WithSafeHandleError(logging.Handler):
-
             def handleError(self, record: logging.LogRecord) -> None:
                 try:
                     traceback.print_exc(None, sys.__stderr__)
                 except IOError:
-                    pass    # see python issue 5971
+                    pass  # see python issue 5971
 
         handler.handleError = WithSafeHandleError().handleError  # type: ignore
 
     def write(self, s: AnyStr) -> int:
-        if not getattr(self._threadlocal, 'recurse_protection', False):
+        if not getattr(self._threadlocal, "recurse_protection", False):
             data = s.strip()
             if data and not self.closed:
                 self._threadlocal.recurse_protection = True
@@ -892,11 +857,11 @@ class FileLogProxy(TextIO):
 
     @property
     def mode(self) -> str:
-        return 'w'
+        return "w"
 
     @property
     def name(self) -> str:
-        return ''
+        return ""
 
     def close(self) -> None:
         self._closed = True
@@ -944,21 +909,26 @@ class FileLogProxy(TextIO):
     def __next__(self) -> str:
         raise NotImplementedError()
 
-    def __enter__(self) -> 'FileLogProxy':
+    def __enter__(self) -> "FileLogProxy":
         return self
 
-    def __exit__(self,
-                 exc_type: Type[BaseException] = None,
-                 exc_val: BaseException = None,
-                 exc_tb: TracebackType = None) -> Optional[bool]:
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] = None,
+        exc_val: BaseException = None,
+        exc_tb: TracebackType = None,
+    ) -> Optional[bool]:
         ...
 
 
 @contextmanager
-def redirect_stdouts(logger: Logger = redirect_logger, *,
-                     severity: Severity = None,
-                     stdout: bool = True,
-                     stderr: bool = True) -> Iterator[FileLogProxy]:
+def redirect_stdouts(
+    logger: Logger = redirect_logger,
+    *,
+    severity: Severity = None,
+    stdout: bool = True,
+    stderr: bool = True,
+) -> Iterator[FileLogProxy]:
     """Redirect :data:`sys.stdout` and :data:`sys.stdout` to logger."""
     proxy = FileLogProxy(logger, severity=severity)
     if stdout:

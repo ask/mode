@@ -1,12 +1,11 @@
 """Type classes for :mod:`mode.utils.graphs`."""
 import abc
-from typing import (
-    Any, Generic, IO, Iterable, Mapping, MutableMapping, Sequence, TypeVar,
-)
+from typing import (IO, Any, Generic, Iterable, Mapping, MutableMapping,
+                    Sequence, TypeVar)
 
-__all__ = ['GraphFormatterT', 'DependencyGraphT']
+__all__ = ["GraphFormatterT", "DependencyGraphT"]
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 
 class GraphFormatterT(Generic[_T]):
@@ -19,13 +18,15 @@ class GraphFormatterT(Generic[_T]):
     graph_scheme: Mapping[str, Any]
 
     @abc.abstractmethod
-    def __init__(self,
-                 root: Any = None,
-                 type: str = None,
-                 id: str = None,
-                 indent: int = 0,
-                 inw: str = ' ' * 4,
-                 **scheme: Any) -> None:
+    def __init__(
+        self,
+        root: Any = None,
+        type: str = None,
+        id: str = None,
+        indent: int = 0,
+        inw: str = " " * 4,
+        **scheme: Any
+    ) -> None:
         ...
 
     @abc.abstractmethod
@@ -65,15 +66,13 @@ class GraphFormatterT(Generic[_T]):
         ...
 
     @abc.abstractmethod
-    def draw_edge(self, a: _T, b: _T,
-                  scheme: Mapping = None,
-                  attrs: Mapping = None) -> str:
+    def draw_edge(
+        self, a: _T, b: _T, scheme: Mapping = None, attrs: Mapping = None
+    ) -> str:
         ...
 
     @abc.abstractmethod
-    def draw_node(self, obj: _T,
-                  scheme: Mapping = None,
-                  attrs: Mapping = None) -> str:
+    def draw_node(self, obj: _T, scheme: Mapping = None, attrs: Mapping = None) -> str:
         ...
 
 
@@ -83,9 +82,9 @@ class DependencyGraphT(Generic[_T], Mapping[_T, _T]):
     adjacent: MutableMapping[_T, _T]
 
     @abc.abstractmethod
-    def __init__(self,
-                 it: Iterable[_T] = None,
-                 formatter: GraphFormatterT[_T] = None) -> None:
+    def __init__(
+        self, it: Iterable[_T] = None, formatter: GraphFormatterT[_T] = None
+    ) -> None:
         ...
 
     @abc.abstractmethod
@@ -97,7 +96,7 @@ class DependencyGraphT(Generic[_T], Mapping[_T, _T]):
         ...
 
     @abc.abstractmethod
-    def connect(self, graph: 'DependencyGraphT') -> None:
+    def connect(self, graph: "DependencyGraphT") -> None:
         ...
 
     @abc.abstractmethod

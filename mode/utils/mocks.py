@@ -8,32 +8,23 @@ from asyncio import coroutine
 from contextlib import contextmanager
 from itertools import count
 from types import ModuleType
-from typing import (
-    Any,
-    Callable,
-    ContextManager,
-    Iterator,
-    List,
-    Optional,
-    Type,
-    Union,
-    cast,
-)
+from typing import (Any, Callable, ContextManager, Iterator, List, Optional,
+                    Type, Union, cast)
 
 __all__ = [
-    'ANY',
-    'IN',
-    'AsyncMagicMock',
-    'AsyncMock',
-    'AsyncContextMock',
-    'ContextMock',
-    'FutureMock',
-    'MagicMock',
-    'Mock',
-    'call',
-    'mask_module',
-    'patch',
-    'patch_module',
+    "ANY",
+    "IN",
+    "AsyncMagicMock",
+    "AsyncMock",
+    "AsyncContextMock",
+    "ContextMock",
+    "FutureMock",
+    "MagicMock",
+    "Mock",
+    "call",
+    "mask_module",
+    "patch",
+    "patch_module",
 ]
 
 MOCK_CALL_COUNT = count(0)
@@ -58,8 +49,8 @@ class IN:
         return other not in self.alternatives
 
     def __repr__(self) -> str:
-        sep = ' | '
-        return f'<IN: {sep.join(map(str, self.alternatives))}>'
+        sep = " | "
+        return f"<IN: {sep.join(map(str, self.alternatives))}>"
 
 
 class Mock(unittest.mock.Mock):
@@ -92,21 +83,23 @@ class _ContextMock(Mock, ContextManager):
     in the class, not just the instance.
     """
 
-    def __enter__(self) -> '_ContextMock':
+    def __enter__(self) -> "_ContextMock":
         return self
 
-    def __exit__(self,
-                 exc_type: Type[BaseException] = None,
-                 exc_val: BaseException = None,
-                 exc_tb: types.TracebackType = None) -> Optional[bool]:
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] = None,
+        exc_val: BaseException = None,
+        exc_tb: types.TracebackType = None,
+    ) -> Optional[bool]:
         pass
 
 
 def ContextMock(*args: Any, **kwargs: Any) -> _ContextMock:
     """Mock that mocks :keyword:`with` statement contexts."""
     obj = _ContextMock(*args, **kwargs)
-    obj.attach_mock(_ContextMock(), '__enter__')
-    obj.attach_mock(_ContextMock(), '__exit__')
+    obj.attach_mock(_ContextMock(), "__enter__")
+    obj.attach_mock(_ContextMock(), "__exit__")
     obj.__enter__.return_value = obj  # type: ignore
     # if __exit__ return a value the exception is ignored,
     # so it must return None here.
@@ -117,24 +110,20 @@ def ContextMock(*args: Any, **kwargs: Any) -> _ContextMock:
 class AsyncMock(unittest.mock.Mock):
     """Mock for ``async def`` function/method or anything awaitable."""
 
-    def __init__(self, *args: Any,
-                 name: str = None,
-                 **kwargs: Any) -> None:
+    def __init__(self, *args: Any, name: str = None, **kwargs: Any) -> None:
         super().__init__(name=name)
         coro = Mock(*args, **kwargs)
-        self.attach_mock(coro, 'coro')
+        self.attach_mock(coro, "coro")
         self.side_effect = coroutine(coro)
 
 
 class AsyncMagicMock(unittest.mock.MagicMock):
     """A magic mock type for ``async def`` functions/methods."""
 
-    def __init__(self, *args: Any,
-                 name: str = None,
-                 **kwargs: Any) -> None:
+    def __init__(self, *args: Any, name: str = None, **kwargs: Any) -> None:
         super().__init__(name=name)
         coro = MagicMock(*args, **kwargs)
-        self.attach_mock(coro, 'coro')
+        self.attach_mock(coro, "coro")
         self.side_effect = coroutine(coro)
 
 
@@ -183,11 +172,14 @@ class AsyncContextMock(unittest.mock.Mock):
                 assert await response.json() == {'hello': 'json'}
     """
 
-    def __init__(self, *args: Any,
-                 aenter_return: Any = None,
-                 aexit_return: Any = None,
-                 side_effect: Union[Callable, BaseException] = None,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *args: Any,
+        aenter_return: Any = None,
+        aexit_return: Any = None,
+        side_effect: Union[Callable, BaseException] = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.aenter_return = aenter_return
         self.aexit_return = aexit_return
@@ -237,7 +229,6 @@ def patch_module(*names: str, new_callable: Any = Mock) -> Iterator:
     prev = {}
 
     class MockModule(types.ModuleType):
-
         def __getattr__(self, attr: str) -> Any:
             setattr(self, attr, new_callable())
             return types.ModuleType.__getattribute__(self, attr)
@@ -258,7 +249,7 @@ def patch_module(*names: str, new_callable: Any = Mock) -> Iterator:
                 sys.modules[name] = prev[name]
             except KeyError:
                 try:
-                    del(sys.modules[name])
+                    del sys.modules[name]
                 except KeyError:
                     pass
 
@@ -288,7 +279,7 @@ def mask_module(*modnames: str) -> Iterator:
 
     def myimp(name: str, *args: Any, **kwargs: Any) -> ModuleType:
         if name in modnames:
-            raise ImportError(f'No module named {name}')
+            raise ImportError(f"No module named {name}")
         else:
             return cast(ModuleType, realimport(name, *args, **kwargs))
 
@@ -309,7 +300,7 @@ class _Call(unittest.mock._Call):
     # but call.__doc__ returns a mocked method and not the class attribute.
 
     def __getattr__(self, attr: str) -> Any:
-        if attr == '__doc__':
+        if attr == "__doc__":
             return unittest.mock._Call.__doc__
         return super().__getattr__(attr)
 

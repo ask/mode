@@ -1,12 +1,11 @@
 import asyncio
+
 import pytest
+
 from mode import Service
-from mode.supervisors import (
-    ForfeitOneForAllSupervisor,
-    ForfeitOneForOneSupervisor,
-    OneForAllSupervisor,
-    OneForOneSupervisor,
-)
+from mode.supervisors import (ForfeitOneForAllSupervisor,
+                              ForfeitOneForOneSupervisor, OneForAllSupervisor,
+                              OneForOneSupervisor)
 
 
 class StatService(Service):

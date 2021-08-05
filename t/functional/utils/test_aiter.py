@@ -1,18 +1,12 @@
 from typing import AsyncIterable
-from mode.utils.aiter import (
-    aenumerate,
-    aiter,
-    alist,
-    anext,
-    arange,
-    aslice,
-    chunks,
-)
+
 import pytest
+
+from mode.utils.aiter import (aenumerate, aiter, alist, anext, arange, aslice,
+                              chunks)
 
 
 class AIT(AsyncIterable):
-
     async def __aiter__(self):
         for i in range(10):
             yield i
@@ -53,11 +47,14 @@ async def test_aslice():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('range_n,n,expected', [
-    (11, 2, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10]]),
-    (11, 3, [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10]]),
-    (10, 2, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]),
-])
+@pytest.mark.parametrize(
+    "range_n,n,expected",
+    [
+        (11, 2, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10]]),
+        (11, 3, [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10]]),
+        (10, 2, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]),
+    ],
+)
 async def test_chunks(range_n, n, expected):
     _chunks = []
     async for chunk in chunks(aiter(arange(range_n)), n):

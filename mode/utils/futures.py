@@ -10,9 +10,10 @@ from .typing import NoReturn
 try:  # pragma: no cover
     from asyncio import all_tasks  # type: ignore
 except ImportError:  # pragma: no cover
-    def all_tasks(
-            loop: asyncio.AbstractEventLoop) -> Set[asyncio.Task]:  # noqa
+
+    def all_tasks(loop: asyncio.AbstractEventLoop) -> Set[asyncio.Task]:  # noqa
         return asyncio.Task.all_tasks(loop=loop)
+
 
 try:  # pragma: no cover
     from asyncio import current_task  # type: ignore
@@ -20,26 +21,28 @@ except ImportError:  # pragma: no cover
     current_task = asyncio.Task.current_task
 
 __all__ = [
-    'all_tasks',
-    'current_task',
-    'done_future',
-    'maybe_async',
-    'maybe_cancel',
-    'maybe_set_exception',
-    'maybe_set_result',
-    'stampede',
-    'notify',
+    "all_tasks",
+    "current_task",
+    "done_future",
+    "maybe_async",
+    "maybe_cancel",
+    "maybe_set_exception",
+    "maybe_set_result",
+    "stampede",
+    "notify",
 ]
 
 
 class StampedeWrapper:
     fut: Optional[asyncio.Future] = None
 
-    def __init__(self,
-                 fun: Callable,
-                 *args: Any,
-                 loop: asyncio.AbstractEventLoop = None,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        fun: Callable,
+        *args: Any,
+        loop: asyncio.AbstractEventLoop = None,
+        **kwargs: Any
+    ) -> None:
         self.fun = fun
         self.args = args
         self.kwargs = kwargs
@@ -115,8 +118,9 @@ class stampede:
         return w
 
 
-def done_future(result: Any = None, *,
-                loop: asyncio.AbstractEventLoop = None) -> asyncio.Future:
+def done_future(
+    result: Any = None, *, loop: asyncio.AbstractEventLoop = None
+) -> asyncio.Future:
     """Return :class:`asyncio.Future` that is already evaluated."""
     f = (loop or asyncio.get_event_loop()).create_future()
     f.set_result(result)
@@ -142,8 +146,7 @@ def maybe_cancel(fut: Optional[asyncio.Future]) -> bool:
     return False
 
 
-def maybe_set_exception(fut: Optional[asyncio.Future],
-                        exc: BaseException) -> bool:
+def maybe_set_exception(fut: Optional[asyncio.Future], exc: BaseException) -> bool:
     """Set future exception if not already done."""
     if fut is not None and not fut.done():
         fut.set_exception(exc)
@@ -151,8 +154,7 @@ def maybe_set_exception(fut: Optional[asyncio.Future],
     return False
 
 
-def maybe_set_result(fut: Optional[asyncio.Future],
-                     result: Any) -> bool:
+def maybe_set_result(fut: Optional[asyncio.Future], result: Any) -> bool:
     """Set future result if not already done."""
     if fut is not None and not fut.done():
         fut.set_result(result)

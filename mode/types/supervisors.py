@@ -2,14 +2,18 @@
 import abc
 import typing
 from typing import Any, Awaitable, Callable, Optional, Type
+
 from mode.utils.times import Seconds
 
 if typing.TYPE_CHECKING:
     from .services import ServiceT
 else:
-    class ServiceT: ...  # noqa: E701
 
-__all__ = ['SupervisorStrategyT']
+    class ServiceT:
+        ...  # noqa: E701
+
+
+__all__ = ["SupervisorStrategyT"]
 
 ReplacementT = Callable[[ServiceT, int], Awaitable[ServiceT]]
 
@@ -22,13 +26,15 @@ class SupervisorStrategyT(ServiceT):
     raises: Type[BaseException]
 
     @abc.abstractmethod
-    def __init__(self,
-                 *services: ServiceT,
-                 max_restarts: Seconds = 100.0,
-                 over: Seconds = 1.0,
-                 raises: Type[BaseException] = None,
-                 replacement: ReplacementT = None,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *services: ServiceT,
+        max_restarts: Seconds = 100.0,
+        over: Seconds = 1.0,
+        raises: Type[BaseException] = None,
+        replacement: ReplacementT = None,
+        **kwargs: Any
+    ) -> None:
         self.replacement: Optional[ReplacementT] = replacement
 
     @abc.abstractmethod

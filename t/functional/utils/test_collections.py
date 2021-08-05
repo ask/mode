@@ -1,79 +1,70 @@
 import pickle
+
 import pytest
-from mode.utils.collections import (
-    AttributeDictMixin,
-    DictAttribute,
-    FastUserDict,
-    FastUserSet,
-    Heap,
-    LRUCache,
-    ManagedUserDict,
-    ManagedUserSet,
-    force_mapping,
-)
+
+from mode.utils.collections import (AttributeDictMixin, DictAttribute,
+                                    FastUserDict, FastUserSet, Heap, LRUCache,
+                                    ManagedUserDict, ManagedUserSet,
+                                    force_mapping)
 from mode.utils.mocks import Mock, call, patch
 
 
 class test_FastUserDict:
-
     @pytest.fixture()
     def d(self):
         class X(FastUserDict):
-
             def __init__(self):
                 self.data = {}
 
         return X()
 
     def test_fromkeys(self, d):
-        x = d.fromkeys(['a', 'b', 'c'], value=3)
-        assert x == {'a': 3, 'b': 3, 'c': 3}
+        x = d.fromkeys(["a", "b", "c"], value=3)
+        assert x == {"a": 3, "b": 3, "c": 3}
         assert type(x) is type(d)
 
     def test__missing__(self, d):
         i = 0
 
         class X(type(d)):
-
             def __missing__(self, key):
                 nonlocal i
                 i += 1
-                return 'default', i
+                return "default", i
 
         x = X()
-        assert x['foo'] == ('default', 1)
-        assert x['foo'] == ('default', 2)
-        assert x['bar'] == ('default', 3)
-        x['foo'] = 'moo'
-        assert x['foo'] == 'moo'
+        assert x["foo"] == ("default", 1)
+        assert x["foo"] == ("default", 2)
+        assert x["bar"] == ("default", 3)
+        x["foo"] = "moo"
+        assert x["foo"] == "moo"
 
     def test_repr(self, d):
-        d.update({'foo': 'bar', 'baz': 300.33})
+        d.update({"foo": "bar", "baz": 300.33})
         assert repr(d) == repr(d.data)
 
     def test_copy(self, d):
-        d.update({'foo': [1, 2, 3], 'bar': 'baz'})
+        d.update({"foo": [1, 2, 3], "bar": "baz"})
         e = d.copy()
         assert e == d
         assert e is not d
-        assert e['foo'] is d['foo'], 'shallow copy'
+        assert e["foo"] is d["foo"], "shallow copy"
 
     def test_setgetdel(self, d):
         with pytest.raises(KeyError):
-            d['foo']
-        d['foo'] = 303
-        assert d['foo'] == 303
-        d['foo'] = 606
-        assert d['foo'] == 606
-        del(d['foo'])
+            d["foo"]
+        d["foo"] = 303
+        assert d["foo"] == 303
+        d["foo"] = 606
+        assert d["foo"] == 606
+        del d["foo"]
         with pytest.raises(KeyError):
-            d['foo']
+            d["foo"]
 
     def test_missing(self):
         m = Mock()
 
         class X(FastUserDict):
-
             def __init__(self):
                 self.data = {}
 
@@ -81,44 +72,44 @@ class test_FastUserDict:
                 return m(key)
 
         x = X()
-        assert x['foo'] is m.return_value
-        assert x['foo'] is m.return_value
+        assert x["foo"] is m.return_value
+        assert x["foo"] is m.return_value
         assert m.call_count == 2
 
     def test_get(self, d):
         sentinel = object()
-        assert d.get('foo', sentinel) is sentinel
-        d['foo'] = 303
-        assert d.get('foo') == 303
+        assert d.get("foo", sentinel) is sentinel
+        d["foo"] = 303
+        assert d.get("foo") == 303
 
     def test_len(self, d):
         assert not d
-        d['foo'] = 1
+        d["foo"] = 1
         assert len(d) == 1
 
     def test_iter(self, d):
         d.update(a=1, b=2, c=3)
-        assert list(iter(d)) == ['a', 'b', 'c']
+        assert list(iter(d)) == ["a", "b", "c"]
 
     def test_contains(self, d):
-        assert 'foo' not in d
-        d['foo'] = 1
-        assert 'foo' in d
+        assert "foo" not in d
+        d["foo"] = 1
+        assert "foo" in d
 
     def test_clear(self, d):
         d.update(a=1, b=2, c=3)
-        assert d['a'] == 1
-        assert d['b'] == 2
-        assert d['c'] == 3
+        assert d["a"] == 1
+        assert d["b"] == 2
+        assert d["c"] == 3
         assert len(d) == 3
         d.clear()
         assert not d
-        for k in 'a', 'b', 'c':
+        for k in "a", "b", "c":
             with pytest.raises(KeyError):
                 d[k]
 
     def test_keys_items_values(self, d):
-        src = {'a': 1, 'b': 2, 'c': 3}
+        src = {"a": 1, "b": 2, "c": 3}
         d.update(src)
         assert list(d.keys()) == list(src.keys())
         assert list(d.items()) == list(src.items())
@@ -126,9 +117,7 @@ class test_FastUserDict:
 
 
 class test_FastUserSet:
-
     class X(FastUserSet):
-
         def __init__(self):
             self.data = set()
 
@@ -145,27 +134,27 @@ class test_FastUserSet:
     def test_pickle(self, d):
         d.update({1, 2, 3, 4, 5})
         e = pickle.loads(pickle.dumps(d))
-        assert isinstance(e, set), 'default reduce to built-in set'
+        assert isinstance(e, set), "default reduce to built-in set"
         assert d == e
 
     def test_setgetdel(self, d):
-        assert 'foo' not in d
-        d.add('foo')
-        assert 'foo' in d
-        d.discard('foo')
-        assert 'foo' not in d
+        assert "foo" not in d
+        d.add("foo")
+        assert "foo" in d
+        d.discard("foo")
+        assert "foo" not in d
 
     def test_len(self, d):
         assert not d
-        d.add('foo')
+        d.add("foo")
         assert len(d) == 1
-        d.add('bar')
+        d.add("bar")
         assert len(d) == 2
 
     def test_contains(self, d):
-        assert 'foo' not in d
-        d.add('foo')
-        assert 'foo' in d
+        assert "foo" not in d
+        d.add("foo")
+        assert "foo" in d
 
     def test_clear(self, d):
         d.update({1, 2, 3})
@@ -173,7 +162,7 @@ class test_FastUserSet:
         assert len(d) == 3
         d.clear()
         assert not d
-        for k in 'a', 'b', 'c':
+        for k in "a", "b", "c":
             assert k not in d
 
     def test_and(self, d):
@@ -267,8 +256,8 @@ class test_FastUserSet:
         assert d.union({3, 4, 5}) == {1, 2, 3, 4, 5}
 
     def test_pop(self, d):
-        d.add('foo')
-        assert d.pop() == 'foo'
+        d.add("foo")
+        assert d.pop() == "foo"
         assert d == set()
         with pytest.raises(KeyError):
             d.pop()
@@ -324,15 +313,14 @@ class test_FastUserSet:
 
 
 class test_ManagedUserDict:
-
     def test_interface_on_key_get(self):
-        ManagedUserDict().on_key_get('k')
+        ManagedUserDict().on_key_get("k")
 
     def test_interface_on_key_set(self):
-        ManagedUserDict().on_key_set('k', 'v')
+        ManagedUserDict().on_key_set("k", "v")
 
     def test_interface_on_key_del(self):
-        ManagedUserDict().on_key_del('k')
+        ManagedUserDict().on_key_del("k")
 
     def test_interface_on_clear(self):
         ManagedUserDict().on_clear()
@@ -340,7 +328,6 @@ class test_ManagedUserDict:
     @pytest.fixture
     def d(self):
         class X(ManagedUserDict):
-
             def __init__(self):
                 self.key_get = Mock()
                 self.key_set = Mock()
@@ -364,34 +351,38 @@ class test_ManagedUserDict:
 
     def test_get_set_del(self, d):
         with pytest.raises(KeyError):
-            d['foo']
-        d.key_get.assert_called_once_with('foo')
-        d['foo'] = 303
-        d.key_set.assert_called_once_with('foo', 303)
-        assert d['foo'] == 303
+            d["foo"]
+        d.key_get.assert_called_once_with("foo")
+        d["foo"] = 303
+        d.key_set.assert_called_once_with("foo", 303)
+        assert d["foo"] == 303
         assert d.key_get.call_count == 2
 
-        del d['foo']
-        d.key_del.assert_called_once_with('foo')
+        del d["foo"]
+        d.key_del.assert_called_once_with("foo")
         with pytest.raises(KeyError):
-            d['foo']
+            d["foo"]
         assert d.key_get.call_count == 3
 
     def test_update__args(self, d):
-        d.update({'a': 1, 'b': 2, 'c': 3})
-        d.key_set.assert_has_calls([
-            call('a', 1),
-            call('b', 2),
-            call('c', 3),
-        ])
+        d.update({"a": 1, "b": 2, "c": 3})
+        d.key_set.assert_has_calls(
+            [
+                call("a", 1),
+                call("b", 2),
+                call("c", 3),
+            ]
+        )
 
     def test_update__kwargs(self, d):
         d.update(a=1, b=2, c=3)
-        d.key_set.assert_has_calls([
-            call('a', 1),
-            call('b', 2),
-            call('c', 3),
-        ])
+        d.key_set.assert_has_calls(
+            [
+                call("a", 1),
+                call("b", 2),
+                call("c", 3),
+            ]
+        )
 
     def test_clear(self, d):
         d.update(a=1, b=2, c=3)
@@ -402,16 +393,15 @@ class test_ManagedUserDict:
 
     def test_raw_update(self, d):
         d.raw_update(a=1, b=2)
-        assert d == {'a': 1, 'b': 2}
+        assert d == {"a": 1, "b": 2}
 
 
 class test_ManagedUserSet:
-
     def test_interface_on_add(self):
-        ManagedUserSet().on_add('val')
+        ManagedUserSet().on_add("val")
 
     def test_interface_on_discard(self):
-        ManagedUserSet().on_discard('val')
+        ManagedUserSet().on_discard("val")
 
     def test_interface_on_clear(self):
         ManagedUserSet().on_clear()
@@ -420,13 +410,12 @@ class test_ManagedUserSet:
         ManagedUserSet().on_change({1, 2}, {3, 4})
 
     class ManagedSet(ManagedUserSet):
-
         def __init__(self):
             self.data = set()
-            self.on_add_mock = Mock(name='on_add_mock')
-            self.on_discard_mock = Mock(name='on_discard_mock')
-            self.on_change_mock = Mock(name='on_change_mock')
-            self.on_clear_mock = Mock(name='on_clear')
+            self.on_add_mock = Mock(name="on_add_mock")
+            self.on_discard_mock = Mock(name="on_discard_mock")
+            self.on_change_mock = Mock(name="on_change_mock")
+            self.on_clear_mock = Mock(name="on_clear")
 
         def on_add(self, element):
             self.on_add_mock(element)
@@ -445,30 +434,30 @@ class test_ManagedUserSet:
         return self.ManagedSet()
 
     def test_add(self, *, s):
-        s.add('foo')
-        s.on_add_mock.assert_called_once_with('foo')
-        assert s == {'foo'}
-        s.add('foo')
+        s.add("foo")
+        s.on_add_mock.assert_called_once_with("foo")
+        assert s == {"foo"}
+        s.add("foo")
         assert s.on_add_mock.call_count == 1
 
     def test_discard(self, *, s):
-        s.add('foo')
-        s.discard('foo')
-        s.on_discard_mock.assert_called_once_with('foo')
-        s.discard('foo')
+        s.add("foo")
+        s.discard("foo")
+        s.on_discard_mock.assert_called_once_with("foo")
+        s.discard("foo")
         assert s.on_discard_mock.call_count == 1
         assert s == set()
 
     def test_clear(self, *, s):
-        s.raw_update({'foo', 'bar', 'baz'})
+        s.raw_update({"foo", "bar", "baz"})
         s.clear()
         s.on_clear_mock.assert_called_once_with()
         assert s == set()
 
     def test_pop(self, *, s):
-        s.add('foo')
-        assert s.pop() == 'foo'
-        s.on_discard_mock.assert_called_once_with('foo')
+        s.add("foo")
+        assert s.pop() == "foo"
+        s.on_discard_mock.assert_called_once_with("foo")
         assert s == set()
         with pytest.raises(KeyError):
             s.pop()
@@ -536,7 +525,6 @@ class test_ManagedUserSet:
 
 
 class test_LRUCache:
-
     @pytest.fixture()
     def d(self):
         return LRUCache(limit=10)
@@ -561,35 +549,35 @@ class test_LRUCache:
         assert d.popitem() == (199, 199)
 
     def test_iter_keys_items_values(self, d):
-        d.update({'a': 1, 'b': 2, 'c': 3})
-        assert list(iter(d)) == ['a', 'b', 'c']
+        d.update({"a": 1, "b": 2, "c": 3})
+        assert list(iter(d)) == ["a", "b", "c"]
         assert list(iter(d)) == list(d.keys())
         assert list(d.values()) == [1, 2, 3]
-        assert list(d.items()) == [('a', 1), ('b', 2), ('c', 3)]
+        assert list(d.items()) == [("a", 1), ("b", 2), ("c", 3)]
 
     def test_incr(self, d):
-        d['a'] = '0'
-        assert d.incr('a') == 1
-        assert d.incr('a') == 2
+        d["a"] = "0"
+        assert d.incr("a") == 1
+        assert d.incr("a") == 2
 
     def test__new_lock(self, d):
         d.thread_safety = True
-        with patch('threading.RLock') as RLock:
+        with patch("threading.RLock") as RLock:
             res = d._new_lock()
             assert res is RLock.return_value
 
     def test_pickle(self, d):
-        d.update({'a': 1, 'b': 2, 'c': 3})
+        d.update({"a": 1, "b": 2, "c": 3})
         e = pickle.loads(pickle.dumps(d))
         assert e == d
 
 
 class test_AttributeDictMixin:
-
     @pytest.fixture()
     def d(self):
         class X(dict, AttributeDictMixin):
             ...
+
         return X()
 
     def test_set_get(self, *, d):
@@ -597,36 +585,33 @@ class test_AttributeDictMixin:
             d.foo
         d.foo = 1
         assert d.foo == 1
-        assert d['foo'] == 1
+        assert d["foo"] == 1
 
 
 class test_DictAttribute:
-
     @pytest.fixture()
     def d(self):
-
         class Object:
-
             def __init__(self, name):
                 self.name = name
 
-        return DictAttribute(Object('foo'))
+        return DictAttribute(Object("foo"))
 
     def test_get_set(self, *, d):
-        assert d['name'] == 'foo'
-        assert d.name == 'foo'
+        assert d["name"] == "foo"
+        assert d.name == "foo"
         assert len(d) == 1
-        d.name = 'bar'
-        d.setdefault('name', 'baz')
-        assert d.get('name') == 'bar'
-        assert d.get('foo') is None
+        d.name = "bar"
+        d.setdefault("name", "baz")
+        assert d.get("name") == "bar"
+        assert d.get("foo") is None
 
-        d.setdefault('foo', 'moo')
-        assert d.foo == 'moo'
+        d.setdefault("foo", "moo")
+        assert d.foo == "moo"
         assert len(d) == 2
 
         with pytest.raises(NotImplementedError):
-            del d['foo']
+            del d["foo"]
 
         assert list(d) == dir(d.obj)
         assert list(d._keys()) == dir(d.obj)
@@ -635,22 +620,19 @@ class test_DictAttribute:
 
 
 def test_force_mapping():
-
     class Object:
-
         def __init__(self, name):
             self.name = name
 
-    obj = Object('foo')
-    obj._wrapped = Object('bar')
-    assert force_mapping(obj)['name'] == 'foo'
+    obj = Object("foo")
+    obj._wrapped = Object("bar")
+    assert force_mapping(obj)["name"] == "foo"
 
-    with patch('mode.utils.collections.LazyObject', Object):
-        assert force_mapping(obj)['name'] == 'bar'
+    with patch("mode.utils.collections.LazyObject", Object):
+        assert force_mapping(obj)["name"] == "bar"
 
 
 class test_Heap:
-
     def test_type_generic(self):
         class H(Heap[int]):
             pass
@@ -661,46 +643,46 @@ class test_Heap:
 
     def test_heap(self):
         h = Heap()
-        h.push((300, 'foo'))
+        h.push((300, "foo"))
         assert len(h) == 1
-        assert h[0] == (300, 'foo')
-        h.push((800, 'bar'))
+        assert h[0] == (300, "foo")
+        h.push((800, "bar"))
         assert len(h) == 2
-        assert h[0] == (300, 'foo')
-        assert h.pop() == (300, 'foo')
+        assert h[0] == (300, "foo")
+        assert h.pop() == (300, "foo")
         assert len(h) == 1
-        assert h[0] == (800, 'bar')
-        assert h.pushpop((100, 'baz')) == (100, 'baz')
+        assert h[0] == (800, "bar")
+        assert h.pushpop((100, "baz")) == (100, "baz")
         assert len(h) == 1
-        assert h[0] == (800, 'bar')
-        h.push((300, 'foo'))
+        assert h[0] == (800, "bar")
+        h.push((300, "foo"))
         assert len(h) == 2
-        assert h.replace((400, 'xuzzy')) == (300, 'foo')
+        assert h.replace((400, "xuzzy")) == (300, "foo")
         assert len(h) == 2
-        assert h[0] == (400, 'xuzzy')
-        h.push((300, 'foo'))
+        assert h[0] == (400, "xuzzy")
+        h.push((300, "foo"))
         assert len(h) == 3
-        assert h[0] == (300, 'foo')
+        assert h[0] == (300, "foo")
 
-        assert h.nsmallest(2) == [(300, 'foo'), (400, 'xuzzy')]
-        assert h.nlargest(2) == [(800, 'bar'), (400, 'xuzzy')]
+        assert h.nsmallest(2) == [(300, "foo"), (400, "xuzzy")]
+        assert h.nlargest(2) == [(800, "bar"), (400, "xuzzy")]
 
         assert str(h)
         assert repr(h)
-        h.insert(0, (999, 'misplaced'))
-        assert h[0] == (999, 'misplaced')
+        h.insert(0, (999, "misplaced"))
+        assert h[0] == (999, "misplaced")
 
-        h[0] = (888, 'misplaced')
-        assert h[0] == (888, 'misplaced')
-        del(h[0])
-        assert h[0] == (300, 'foo')
+        h[0] = (888, "misplaced")
+        assert h[0] == (888, "misplaced")
+        del h[0]
+        assert h[0] == (300, "foo")
 
-        assert h.pop() == (300, 'foo')
+        assert h.pop() == (300, "foo")
         assert len(h) == 2
         assert h
-        assert h.pop() == (400, 'xuzzy')
+        assert h.pop() == (400, "xuzzy")
         assert len(h) == 1
-        assert h.pop() == (800, 'bar')
+        assert h.pop() == (800, "bar")
         assert not len(h)
         assert not h
 

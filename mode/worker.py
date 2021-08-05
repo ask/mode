@@ -13,20 +13,8 @@ import traceback
 import typing
 from contextlib import contextmanager, suppress
 from logging import Handler, Logger
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    IO,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import (IO, Any, Callable, ClassVar, Dict, Iterable, Iterator,
+                    List, Optional, Tuple, Union, cast)
 
 from .services import Service
 from .types import ServiceT
@@ -39,38 +27,40 @@ from .utils.typing import NoReturn
 if typing.TYPE_CHECKING:
     from .debug import BlockingDetector
 else:
-    class BlockingDetector: ...  # noqa
 
-__all__ = ['Worker']
+    class BlockingDetector:
+        ...  # noqa
+
+
+__all__ = ["Worker"]
 
 logger = logging.get_logger(__name__)
 
-EX_OK = getattr(os, 'EX_OK', 0)
+EX_OK = getattr(os, "EX_OK", 0)
 EX_FAILURE = 1
-EX_OSERR = getattr(os, 'EX_OSERR', 71)
-BLOCK_DETECTOR = 'mode.debug:BlockingDetector'
+EX_OSERR = getattr(os, "EX_OSERR", 71)
+BLOCK_DETECTOR = "mode.debug:BlockingDetector"
 
 
 class _TupleAsListRepr(reprlib.Repr):
-
     def repr_tuple(self, x: Tuple, level: int) -> str:
         return self.repr_list(cast(list, x), level)
+
+
 # this repr formats tuples as if they are lists.
 _repr = _TupleAsListRepr().repr  # noqa: E305
 
 
 @contextmanager
-def exiting(*,
-            print_exception: bool = False,
-            file: IO = sys.stderr) -> Iterator[None]:
+def exiting(*, print_exception: bool = False, file: IO = sys.stderr) -> Iterator[None]:
     try:
         yield
     except MemoryError:
-        sys.stderr.write('Out of memory!')
+        sys.stderr.write("Out of memory!")
         sys.exit(EX_OSERR)
     except Exception as exc:
         if print_exception:
-            print(f'Command raised exception: {exc!r}', file=file)
+            print(f"Command raised exception: {exc!r}", file=file)
             traceback.print_tb(exc.__traceback__, file=file)
         sys.exit(EX_FAILURE)
     sys.exit(EX_OK)
@@ -106,23 +96,25 @@ class Worker(Service):
     _signal_stop_future: Optional[asyncio.Future] = None
 
     def __init__(
-            self, *services: ServiceT,
-            debug: bool = False,
-            quiet: bool = False,
-            logging_config: Dict = None,
-            loglevel: Union[str, int] = None,
-            logfile: Union[str, IO] = None,
-            redirect_stdouts: bool = True,
-            redirect_stdouts_level: logging.Severity = None,
-            stdout: Optional[IO] = sys.stdout,
-            stderr: Optional[IO] = sys.stderr,
-            console_port: int = 50101,
-            loghandlers: List[Handler] = None,
-            blocking_timeout: Seconds = 10.0,
-            loop: asyncio.AbstractEventLoop = None,
-            override_logging: bool = True,
-            daemon: bool = True,
-            **kwargs: Any) -> None:
+        self,
+        *services: ServiceT,
+        debug: bool = False,
+        quiet: bool = False,
+        logging_config: Dict = None,
+        loglevel: Union[str, int] = None,
+        logfile: Union[str, IO] = None,
+        redirect_stdouts: bool = True,
+        redirect_stdouts_level: logging.Severity = None,
+        stdout: Optional[IO] = sys.stdout,
+        stderr: Optional[IO] = sys.stderr,
+        console_port: int = 50101,
+        loghandlers: List[Handler] = None,
+        blocking_timeout: Seconds = 10.0,
+        loop: asyncio.AbstractEventLoop = None,
+        override_logging: bool = True,
+        daemon: bool = True,
+        **kwargs: Any,
+    ) -> None:
         self.services = services
         self.debug = debug
         self.quiet = quiet
@@ -132,7 +124,8 @@ class Worker(Service):
         self.loghandlers = loghandlers or []
         self.redirect_stdouts = redirect_stdouts
         self.redirect_stdouts_level = logging.level_number(
-            redirect_stdouts_level or 'WARN')
+            redirect_stdouts_level or "WARN"
+        )
         self.override_logging = override_logging
         self.stdout = sys.stdout if stdout is None else stdout
         self.stderr = sys.stderr if stderr is None else stderr
@@ -154,11 +147,9 @@ class Worker(Service):
         """Write warning to standard err."""
         self._say(msg, file=self.stderr)
 
-    def _say(self,
-             msg: str,
-             file: Optional[IO] = None,
-             end: str = '\n',
-             **kwargs: Any) -> None:
+    def _say(
+        self, msg: str, file: Optional[IO] = None, end: str = "\n", **kwargs: Any
+    ) -> None:
         if file is None:
             file = self.stdout
         if not self.quiet:
@@ -192,8 +183,9 @@ class Worker(Service):
             )
         except Exception as exc:
             try:
-                self.stderr.write(f'CANNOT SETUP LOGGING: {exc!r} from ')
+                self.stderr.write(f"CANNOT SETUP LOGGING: {exc!r} from ")
                 import traceback
+
                 traceback.print_stack(file=self.stderr)
             except Exception:
                 pass
@@ -203,12 +195,9 @@ class Worker(Service):
             self._redirect_stdouts()
 
     def _redirect_stdouts(self) -> None:
-        self.add_context(
-            logging.redirect_stdouts(severity=self.redirect_stdouts_level))
+        self.add_context(logging.redirect_stdouts(severity=self.redirect_stdouts_level))
 
-    def on_setup_root_logger(self,
-                             logger: Logger,
-                             level: int) -> None:
+    def on_setup_root_logger(self, logger: Logger, level: int) -> None:
         ...
 
     async def maybe_start_blockdetection(self) -> None:
@@ -216,7 +205,7 @@ class Worker(Service):
             await self.blocking_detector.maybe_start()
 
     def install_signal_handlers(self) -> None:
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             self._install_signal_handlers_windows()
         else:
             self._install_signal_handlers_unix()
@@ -231,7 +220,7 @@ class Worker(Service):
         self.loop.add_signal_handler(signal.SIGUSR2, self._on_sigusr2)
 
     def _on_sigint(self) -> None:
-        self.carp('-INT- -INT- -INT- -INT- -INT- -INT-')
+        self.carp("-INT- -INT- -INT- -INT- -INT- -INT-")
         self._schedule_shutdown(signal.SIGINT)
 
     def _on_sigterm(self) -> None:
@@ -250,18 +239,20 @@ class Worker(Service):
         logging.cry(file=self.stderr)
 
     def _enter_debugger(self) -> None:
-        self.carp('Starting debugger...')
-        import pdb          # noqa: T100
-        pdb.set_trace()     # noqa: T100
+        self.carp("Starting debugger...")
+        import pdb  # noqa: T100
+
+        pdb.set_trace()  # noqa: T100
 
     def _schedule_shutdown(self, signal: signal.Signals) -> None:
         if not self._signal_stop_time:
             self._signal_stop_time = self.loop.time()
             self._signal_stop_future = asyncio.ensure_future(
-                self._stop_on_signal(signal), loop=self.loop)
+                self._stop_on_signal(signal), loop=self.loop
+            )
 
     async def _stop_on_signal(self, signal: signal.Signals) -> None:
-        self.log.info('Signal received: %s (%s)', signal, signal.value)
+        self.log.info("Signal received: %s (%s)", signal, signal.value)
         await self.stop()
         maybe_cancel(self._starting_fut)
 
@@ -279,7 +270,7 @@ class Worker(Service):
             except MemoryError:
                 raise
             except Exception as exc:
-                self.log.exception('Error: %r', exc)
+                self.log.exception("Error: %r", exc)
                 raise
             finally:
                 maybe_cancel(self._starting_fut)
@@ -300,30 +291,31 @@ class Worker(Service):
 
     def _shutdown_loop(self) -> None:
         # Gather futures created by us.
-        self.log.info('Gathering service tasks...')
+        self.log.info("Gathering service tasks...")
         with suppress(asyncio.CancelledError):
             self.loop.run_until_complete(self._gather_futures())
         # Gather absolutely all asyncio futures.
-        self.log.info('Gathering all futures...')
+        self.log.info("Gathering all futures...")
         self._gather_all()
         try:
             # Wait until loop is fully stopped.
             while self.loop.is_running():
-                self.log.info('Waiting for event loop to shutdown...')
+                self.log.info("Waiting for event loop to shutdown...")
                 self.loop.stop()
                 self.loop.run_until_complete(asyncio.sleep(1.0))
         except BaseException as exc:
-            self.log.exception('Got exception while waiting: %r', exc)
+            self.log.exception("Got exception while waiting: %r", exc)
         finally:
             # Then close the loop.
             fut = asyncio.ensure_future(self._sentinel_task(), loop=self.loop)
             self.loop.run_until_complete(fut)
             self.loop.stop()
-            self.log.info('Closing event loop')
+            self.log.info("Closing event loop")
             self.loop.close()
             if self.crash_reason:
                 self.log.critical(
-                    'We experienced a crash! Reraising original exception...')
+                    "We experienced a crash! Reraising original exception..."
+                )
                 raise self.crash_reason from self.crash_reason
 
     async def _sentinel_task(self) -> None:
@@ -346,8 +338,7 @@ class Worker(Service):
         try:
             import aiomonitor
         except ImportError:
-            self.log.warning(
-                'Cannot start console: aiomonitor is not installed')
+            self.log.warning("Cannot start console: aiomonitor is not installed")
         else:
             monitor = aiomonitor.start_monitor(
                 port=self.console_port,

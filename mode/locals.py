@@ -74,41 +74,16 @@ when first needed), you can pass the `cache=True` argument to :class:`Proxy`:
 """
 import sys
 import typing
-
 from collections import deque
 from functools import wraps
 from types import GetSetDescriptorType, TracebackType
-from typing import (
-    AbstractSet,
-    Any,
-    AsyncIterable,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    ClassVar,
-    ContextManager,
-    Coroutine,
-    Dict,
-    Generator,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    MutableSet,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    ValuesView,
-    cast,
-    no_type_check,
-    overload,
-)
+from typing import (AbstractSet, Any, AsyncIterable, AsyncIterator, Awaitable,
+                    Callable, ClassVar, ContextManager, Coroutine, Dict,
+                    Generator, Generic, Iterable, Iterator, List, Mapping,
+                    MutableMapping, MutableSequence, MutableSet, Optional,
+                    Sequence, Tuple, Type, TypeVar, Union, ValuesView, cast,
+                    no_type_check, overload)
+
 from .utils.locals import LocalStack  # XXX compat
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -117,57 +92,56 @@ else:
     from .utils.typing import AsyncContextManager, AsyncGenerator  # noqa
 
 __all__ = [
-    'LocalStack',
-    'Proxy',
-    'AwaitableRole',
-    'AwaitableProxy',
-    'CoroutineRole',
-    'CoroutineProxy',
-    'AsyncIterableRole',
-    'AsyncIterableProxy',
-    'AsyncIteratorRole',
-    'AsyncIteratorProxy',
-    'AsyncGeneratorRole',
-    'AsyncGeneratorProxy',
-    'SequenceRole',
-    'SequenceProxy',
-    'MutableSequenceRole',
-    'MutableSequenceProxy',
-    'SetRole',
-    'SetProxy',
-    'MutableSetRole',
-    'MutableSetProxy',
-    'ContextManagerRole',
-    'ContextManagerProxy',
-    'AsyncContextManagerRole',
-    'AsyncContextManagerProxy',
-    'MappingRole',
-    'MappingProxy',
-    'MutableMappingRole',
-    'MutableMappingProxy',
-    'CallableRole',
-    'CallableProxy',
-    'maybe_evaluate',
+    "LocalStack",
+    "Proxy",
+    "AwaitableRole",
+    "AwaitableProxy",
+    "CoroutineRole",
+    "CoroutineProxy",
+    "AsyncIterableRole",
+    "AsyncIterableProxy",
+    "AsyncIteratorRole",
+    "AsyncIteratorProxy",
+    "AsyncGeneratorRole",
+    "AsyncGeneratorProxy",
+    "SequenceRole",
+    "SequenceProxy",
+    "MutableSequenceRole",
+    "MutableSequenceProxy",
+    "SetRole",
+    "SetProxy",
+    "MutableSetRole",
+    "MutableSetProxy",
+    "ContextManagerRole",
+    "ContextManagerProxy",
+    "AsyncContextManagerRole",
+    "AsyncContextManagerProxy",
+    "MappingRole",
+    "MappingProxy",
+    "MutableMappingRole",
+    "MutableMappingProxy",
+    "CallableRole",
+    "CallableProxy",
+    "maybe_evaluate",
 ]
 
-PYPY = hasattr(sys, 'pypy_version_info')
+PYPY = hasattr(sys, "pypy_version_info")
 SLOTS_ISSUE_PRESENT = sys.version_info < (3, 7)
 
-T = TypeVar('T')
-S = TypeVar('S')
-T_co = TypeVar('T_co', covariant=True)
-V_co = TypeVar('V_co', covariant=True)
-VT_co = TypeVar('VT_co', covariant=True)
-T_contra = TypeVar('T_contra', contravariant=True)
+T = TypeVar("T")
+S = TypeVar("S")
+T_co = TypeVar("T_co", covariant=True)
+V_co = TypeVar("V_co", covariant=True)
+VT_co = TypeVar("VT_co", covariant=True)
+T_contra = TypeVar("T_contra", contravariant=True)
 
-KT = TypeVar('KT')
-VT = TypeVar('VT')
+KT = TypeVar("KT")
+VT = TypeVar("VT")
 
 
 def _default_cls_attr(
-        name: str,
-        type_: Type,
-        cls_value: Any) -> Callable[[Type], GetSetDescriptorType]:
+    name: str, type_: Type, cls_value: Any
+) -> Callable[[Type], GetSetDescriptorType]:
     # Proxy uses properties to forward the standard
     # class attributes __module__, __name__ and __doc__ to the real
     # object, but these needs to be a string when accessed from
@@ -182,10 +156,14 @@ def _default_cls_attr(
     def __get__(self: Type, obj: Any, cls: Type = None) -> Any:
         return self.__getter(obj) if obj is not None else self
 
-    return type(name, (type_,), {
-        '__new__': __new__,
-        '__get__': __get__,
-    })
+    return type(
+        name,
+        (type_,),
+        {
+            "__new__": __new__,
+            "__get__": __get__,
+        },
+    )
 
 
 class Proxy(Generic[T]):
@@ -196,11 +174,11 @@ class Proxy(Generic[T]):
     # Code initially stolen from werkzeug.local.Proxy.
     if not SLOTS_ISSUE_PRESENT and not PYPY:  # pragma: no cover
         __slots__ = (
-            '__local',
-            '__args',
-            '__kwargs',
-            '__finalizers',
-            '__dict__',
+            "__local",
+            "__args",
+            "__kwargs",
+            "__finalizers",
+            "__dict__",
         )
 
     def __init_subclass__(self, source: Type[T] = None) -> None:
@@ -215,53 +193,53 @@ class Proxy(Generic[T]):
     @classmethod
     def _init_from_source(cls, source: Type[T]) -> None:
         # source must have metaclass ABCMeta
-        abstractmethods = getattr(source, '__abstractmethods__', None)
+        abstractmethods = getattr(source, "__abstractmethods__", None)
         if abstractmethods is None:
-            raise TypeError('class is not using metaclass ABCMeta')
+            raise TypeError("class is not using metaclass ABCMeta")
         for method_name in abstractmethods:
-            setattr(cls, method_name,
-                    cls._generate_proxy_method(source, method_name))
+            setattr(cls, method_name, cls._generate_proxy_method(source, method_name))
 
     @classmethod
-    def _generate_proxy_method(
-            cls, source: Type[T], method_name: str) -> Callable:
-
+    def _generate_proxy_method(cls, source: Type[T], method_name: str) -> Callable:
         @wraps(getattr(source, method_name))
         def _classmethod(self: Proxy[T], *args: Any, **kwargs: Any) -> Any:
             obj = self._get_current_object()
             return getattr(obj, method_name)(*args, **kwargs)
+
         _classmethod.__isabstractmethod__ = False  # type: ignore
 
         return _classmethod
 
-    def __init__(self,
-                 local: Callable[..., T],
-                 args: Tuple = None,
-                 kwargs: Dict = None,
-                 name: str = None,
-                 cache: bool = False,
-                 __doc__: str = None) -> None:
-        object.__setattr__(self, '_Proxy__local', local)
-        object.__setattr__(self, '_Proxy__args', args or ())
-        object.__setattr__(self, '_Proxy__kwargs', kwargs or {})
-        object.__setattr__(self, '_Proxy__cached', cache)
-        object.__setattr__(self, '_Proxy__finalizers', deque())
+    def __init__(
+        self,
+        local: Callable[..., T],
+        args: Tuple = None,
+        kwargs: Dict = None,
+        name: str = None,
+        cache: bool = False,
+        __doc__: str = None,
+    ) -> None:
+        object.__setattr__(self, "_Proxy__local", local)
+        object.__setattr__(self, "_Proxy__args", args or ())
+        object.__setattr__(self, "_Proxy__kwargs", kwargs or {})
+        object.__setattr__(self, "_Proxy__cached", cache)
+        object.__setattr__(self, "_Proxy__finalizers", deque())
         if name is not None:
-            object.__setattr__(self, '__custom_name__', name)
+            object.__setattr__(self, "__custom_name__", name)
         if __doc__ is not None:
-            object.__setattr__(self, '__doc__', __doc__)
+            object.__setattr__(self, "__doc__", __doc__)
 
-    def _add_proxy_finalizer(self, fun: 'Proxy') -> None:
-        finalizers = object.__getattribute__(self, '_Proxy__finalizers')
+    def _add_proxy_finalizer(self, fun: "Proxy") -> None:
+        finalizers = object.__getattribute__(self, "_Proxy__finalizers")
         finalizers.append(fun)
 
     def _call_proxy_finalizers(self) -> None:
-        finalizers = object.__getattribute__(self, '_Proxy__finalizers')
+        finalizers = object.__getattribute__(self, "_Proxy__finalizers")
         while finalizers:
             finalizer = finalizers.popleft()
             finalizer._get_current_object()  # evaluate
 
-    @_default_cls_attr('name', str, __name__)
+    @_default_cls_attr("name", str, __name__)
     @no_type_check
     def __name__(self) -> str:
         try:
@@ -269,12 +247,12 @@ class Proxy(Generic[T]):
         except AttributeError:
             return self._get_current_object().__name__
 
-    @_default_cls_attr('module', str, __name__)
+    @_default_cls_attr("module", str, __name__)
     @no_type_check
     def __module__(self) -> str:
         return self._get_current_object().__module__
 
-    @_default_cls_attr('doc', str, __doc__)
+    @_default_cls_attr("doc", str, __doc__)
     @no_type_check
     def __doc__(self) -> Optional[str]:
         return cast(str, self._get_current_object().__doc__)
@@ -298,18 +276,18 @@ class Proxy(Generic[T]):
         you want to pass the object into a different context.
         """
         try:
-            return cast(T, object.__getattribute__(self, '__cache'))
+            return cast(T, object.__getattribute__(self, "__cache"))
         except AttributeError:
             return self.__evaluate__()
 
-    def __evaluate__(self,
-                     _clean: Tuple[str, ...] = ('_Proxy__local',
-                                                '_Proxy__args',
-                                                '_Proxy__kwargs')) -> T:
+    def __evaluate__(
+        self,
+        _clean: Tuple[str, ...] = ("_Proxy__local", "_Proxy__args", "_Proxy__kwargs"),
+    ) -> T:
         thing = self._evaluate_proxy()
-        cached = object.__getattribute__(self, '_Proxy__cached')
+        cached = object.__getattribute__(self, "_Proxy__cached")
         if cached:
-            object.__setattr__(self, '__cache', thing)
+            object.__setattr__(self, "__cache", thing)
             for attr in _clean:
                 try:
                     object.__delattr__(self, attr)
@@ -320,18 +298,18 @@ class Proxy(Generic[T]):
 
     def _evaluate_proxy(self) -> T:
         self._call_proxy_finalizers()
-        loc = object.__getattribute__(self, '_Proxy__local')
-        if not hasattr(loc, '__release_local__'):
+        loc = object.__getattribute__(self, "_Proxy__local")
+        if not hasattr(loc, "__release_local__"):
             return cast(T, loc(*self.__args, **self.__kwargs))
         try:  # pragma: no cover
             # not sure what this is about
             return cast(T, getattr(loc, self.__name__))
         except AttributeError:  # pragma: no cover
-            raise RuntimeError('no object bound to {0.__name__}'.format(self))
+            raise RuntimeError("no object bound to {0.__name__}".format(self))
 
     def __evaluated__(self) -> bool:
         try:
-            object.__getattribute__(self, '__cache')
+            object.__getattribute__(self, "__cache")
         except AttributeError:
             return False
         return True
@@ -344,13 +322,13 @@ class Proxy(Generic[T]):
         try:
             return self._get_current_object().__dict__
         except RuntimeError:  # pragma: no cover
-            raise AttributeError('__dict__')
+            raise AttributeError("__dict__")
 
     def __repr__(self) -> str:
         try:
             obj = self._get_current_object()
         except RuntimeError:  # pragma: no cover
-            return '<{0} unbound>'.format(self.__class__.__name__)
+            return "<{0} unbound>".format(self.__class__.__name__)
         return repr(obj)
 
     def __bool__(self) -> bool:
@@ -358,6 +336,7 @@ class Proxy(Generic[T]):
             return bool(self._get_current_object())
         except RuntimeError:  # pragma: no cover
             return False
+
     __nonzero__ = __bool__  # Py2
 
     def __dir__(self) -> List[str]:
@@ -367,7 +346,7 @@ class Proxy(Generic[T]):
             return []
 
     def __getattr__(self, name: str) -> Any:
-        if name == '__members__':
+        if name == "__members__":
             return dir(self._get_current_object())
         return getattr(self._get_current_object(), name)
 
@@ -421,18 +400,21 @@ class CoroutineRole(Coroutine[T_co, T_contra, V_co]):
     def send(self, value: T_contra) -> T_co:
         return self._get_coroutine().send(value)
 
-    def throw(self,
-              typ: Type[BaseException],
-              val: Optional[BaseException] = None,
-              tb: TracebackType = None) -> T_co:
+    def throw(
+        self,
+        typ: Type[BaseException],
+        val: Optional[BaseException] = None,
+        tb: TracebackType = None,
+    ) -> T_co:
         return self._get_coroutine().throw(typ, val, tb)
 
     def close(self) -> None:
         return self._get_coroutine().close()
 
 
-class CoroutineProxy(Proxy[Coroutine[T_co, T_contra, V_co]],
-                     CoroutineRole[T_co, T_contra, V_co]):
+class CoroutineProxy(
+    Proxy[Coroutine[T_co, T_contra, V_co]], CoroutineRole[T_co, T_contra, V_co]
+):
     """Proxy to :class:`typing.Coroutine` object."""
 
 
@@ -447,8 +429,7 @@ class AsyncIterableRole(AsyncIterable[T_co]):
         return self._get_iterable().__aiter__()
 
 
-class AsyncIterableProxy(Proxy[AsyncIterable[T_co]],
-                         AsyncIterableRole[T_co]):
+class AsyncIterableProxy(Proxy[AsyncIterable[T_co]], AsyncIterableRole[T_co]):
     """Proxy to :class:`typing.AsyncIterable` object."""
 
 
@@ -466,8 +447,7 @@ class AsyncIteratorRole(AsyncIterator[T_co]):
         return self._get_iterator().__anext__()
 
 
-class AsyncIteratorProxy(Proxy[AsyncIterator[T_co]],
-                         AsyncIteratorRole[T_co]):
+class AsyncIteratorProxy(Proxy[AsyncIterator[T_co]], AsyncIteratorRole[T_co]):
     """Proxy to :class:`typing.AsyncIterator` object."""
 
 
@@ -484,10 +464,12 @@ class AsyncGeneratorRole(AsyncGenerator[T_co, T_contra]):
     def asend(self, value: T_contra) -> Awaitable[T_co]:
         return self._get_generator().asend(value)
 
-    def athrow(self,
-               typ: Type[BaseException],
-               val: Optional[BaseException] = None,
-               tb: TracebackType = None) -> Awaitable[T_co]:
+    def athrow(
+        self,
+        typ: Type[BaseException],
+        val: Optional[BaseException] = None,
+        tb: TracebackType = None,
+    ) -> Awaitable[T_co]:
         return self._get_generator().athrow(typ, val, tb)
 
     def aclose(self) -> Awaitable[None]:
@@ -497,8 +479,9 @@ class AsyncGeneratorRole(AsyncGenerator[T_co, T_contra]):
         return self._get_generator().__aiter__()
 
 
-class AsyncGeneratorProxy(Proxy[AsyncGenerator[T_co, T_contra]],
-                          AsyncGeneratorRole[T_co, T_contra]):
+class AsyncGeneratorProxy(
+    Proxy[AsyncGenerator[T_co, T_contra]], AsyncGeneratorRole[T_co, T_contra]
+):
     """Proxy to :class:`typing.AsyncGenerator` object."""
 
 
@@ -539,8 +522,7 @@ class SequenceRole(Sequence[T_co]):
         return self._get_sequence().__len__()
 
 
-class SequenceProxy(Proxy[Sequence[T_co]],
-                    SequenceRole[T_co]):
+class SequenceProxy(Proxy[Sequence[T_co]], SequenceRole[T_co]):
     """Proxy to :class:`typing.Sequence` object."""
 
 
@@ -595,8 +577,7 @@ class MutableSequenceRole(SequenceRole[T], MutableSequence[T]):
         return self._get_sequence().__iadd__(x)
 
 
-class MutableSequenceProxy(Proxy[MutableSequence[T_co]],
-                           MutableSequenceRole[T_co]):
+class MutableSequenceProxy(Proxy[MutableSequence[T_co]], MutableSequenceRole[T_co]):
     """Proxy to :class:`typing.MutableSequence` object."""
 
 
@@ -644,8 +625,7 @@ class SetRole(AbstractSet[T_co]):
         return self._get_set().__len__()
 
 
-class SetProxy(Proxy[AbstractSet[T_co]],
-               SetRole[T_co]):
+class SetProxy(Proxy[AbstractSet[T_co]], SetRole[T_co]):
     """Proxy to :class:`typing.AbstractSet` object."""
 
 
@@ -684,8 +664,7 @@ class MutableSetRole(SetRole[T], MutableSet[T]):
         return self._get_set().__isub__(s)
 
 
-class MutableSetProxy(Proxy[MutableSet[T_co]],
-                      MutableSetRole[T_co]):
+class MutableSetProxy(Proxy[MutableSet[T_co]], MutableSetRole[T_co]):
     """Proxy to :class:`typing.MutableSet` object."""
 
 
@@ -703,8 +682,7 @@ class ContextManagerRole(ContextManager[T]):
         return self._get_context().__exit__(*exc_info)
 
 
-class ContextManagerProxy(Proxy[ContextManager[T]],
-                          ContextManagerRole[T]):
+class ContextManagerProxy(Proxy[ContextManager[T]], ContextManagerRole[T]):
     """Proxy to :class:`typing.ContextManager` object."""
 
 
@@ -716,17 +694,19 @@ class AsyncContextManagerRole(AsyncContextManager[T_co]):
         return cast(Awaitable[T_co], obj.__aenter__())
 
     def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType]) -> Awaitable[Optional[bool]]:
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> Awaitable[Optional[bool]]:
         obj = self._get_current_object()  # type: ignore
         val = obj.__aexit__(exc_type, exc_value, traceback)
         return cast(Awaitable[Optional[bool]], val)
 
 
-class AsyncContextManagerProxy(Proxy[AsyncContextManager[T_co]],
-                               AsyncContextManagerRole[T_co]):
+class AsyncContextManagerProxy(
+    Proxy[AsyncContextManager[T_co]], AsyncContextManagerRole[T_co]
+):
     """Proxy to :class:`typing.AsyncContextManager` object."""
 
 
@@ -745,8 +725,7 @@ class MappingRole(Mapping[KT, VT_co]):
         ...
 
     @overload  # noqa: F811
-    def get(self, k: KT,  # noqa: F811
-            default: Union[VT_co, T]) -> Union[VT_co, T]:
+    def get(self, k: KT, default: Union[VT_co, T]) -> Union[VT_co, T]:  # noqa: F811
         ...
 
     def get(self, *args: Any, **kwargs: Any) -> Any:  # noqa: F811
@@ -771,8 +750,7 @@ class MappingRole(Mapping[KT, VT_co]):
         return self._get_mapping().__len__()
 
 
-class MappingProxy(Proxy[Mapping[KT, VT_co]],
-                   MappingRole[KT, VT_co]):
+class MappingProxy(Proxy[Mapping[KT, VT_co]], MappingRole[KT, VT_co]):
     """Proxy to :class:`typing.Mapping` object."""
 
 
@@ -797,8 +775,7 @@ class MutableMappingRole(MappingRole[KT, VT], MutableMapping[KT, VT]):
         ...
 
     @overload  # noqa: F811
-    def pop(self, k: KT,  # noqa: F811
-            default: Union[VT, T] = ...) -> Union[VT, T]:
+    def pop(self, k: KT, default: Union[VT, T] = ...) -> Union[VT, T]:  # noqa: F811
         ...
 
     def pop(self, *args: Any, **kwargs: Any) -> Any:  # noqa: F811
@@ -815,8 +792,7 @@ class MutableMappingRole(MappingRole[KT, VT], MutableMapping[KT, VT]):
         ...
 
     @overload  # noqa: F811
-    def update(self, __m: Iterable[Tuple[KT, VT]],  # noqa: F811
-               **kwargs: VT) -> None:
+    def update(self, __m: Iterable[Tuple[KT, VT]], **kwargs: VT) -> None:  # noqa: F811
         ...
 
     @overload  # noqa: F811
@@ -827,8 +803,7 @@ class MutableMappingRole(MappingRole[KT, VT], MutableMapping[KT, VT]):
         self._get_mapping().update(*args, **kwargs)
 
 
-class MutableMappingProxy(Proxy[MutableMapping[KT, VT]],
-                          MutableMappingRole[KT, VT]):
+class MutableMappingProxy(Proxy[MutableMapping[KT, VT]], MutableMappingRole[KT, VT]):
     """Proxy to :class:`typing.MutableMapping` object."""
 
 

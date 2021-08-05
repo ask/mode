@@ -1,13 +1,14 @@
 import signal
 import sys
+
 import pytest
+
 from mode.debug import Blocking, BlockingDetector
 from mode.utils.mocks import AsyncMock, Mock, patch
 
 
-@pytest.mark.skipif(sys.platform == 'win32', reason='win32: no SIGALRM')
+@pytest.mark.skipif(sys.platform == "win32", reason="win32: no SIGALRM")
 class test_BlockingDetector:
-
     @pytest.fixture()
     def block(self):
         return BlockingDetector(timeout=10.0)
@@ -24,7 +25,7 @@ class test_BlockingDetector:
         await block._deadman_switch(block)
 
     def test_reset_signal(self, block):
-        with patch('signal.signal') as sig:
+        with patch("signal.signal") as sig:
             block._arm = Mock()
             block._reset_signal()
 
@@ -37,12 +38,12 @@ class test_BlockingDetector:
         block._arm.asssert_called_once_with(0)
 
     def test__arm(self, block):
-        with patch('mode.debug.arm_alarm') as arm_alarm:
+        with patch("mode.debug.arm_alarm") as arm_alarm:
             block._arm(1.11)
             arm_alarm.assert_called_once_with(1.11)
 
     def test__on_alarm(self, block):
-        with patch('traceback.format_stack'):
+        with patch("traceback.format_stack"):
             block._reset_signal = Mock()
             with pytest.raises(Blocking):
                 block._on_alarm(30, Mock())

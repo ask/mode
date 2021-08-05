@@ -5,11 +5,12 @@ import typing
 from collections import deque
 from typing import Any, Callable, List, Set, TypeVar, cast, no_type_check
 from weakref import WeakSet
+
 from .locks import Event
 from .objects import cached_property
 from .typing import Deque
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 
 class FlowControlEvent:
@@ -49,12 +50,15 @@ class FlowControlEvent:
     """
 
     if typing.TYPE_CHECKING:
-        _queues: WeakSet['FlowControlQueue']
+        _queues: WeakSet["FlowControlQueue"]
     _queues = None
 
-    def __init__(self, *,
-                 initially_suspended: bool = True,
-                 loop: asyncio.AbstractEventLoop = None) -> None:
+    def __init__(
+        self,
+        *,
+        initially_suspended: bool = True,
+        loop: asyncio.AbstractEventLoop = None
+    ) -> None:
         self.loop = loop
         self._resume = Event(loop=self.loop)
         self._suspend = Event(loop=self.loop)
@@ -62,7 +66,7 @@ class FlowControlEvent:
             self._suspend.set()
         self._queues = WeakSet()
 
-    def manage_queue(self, queue: 'FlowControlQueue') -> None:
+    def manage_queue(self, queue: "FlowControlQueue") -> None:
         """Add :class:`FlowControlQueue` to be cleared on resume."""
         self._queues.add(queue)
 
@@ -97,16 +101,19 @@ class FlowControlQueue(asyncio.Queue):
         :class:`FlowControlEvent`.
     """
 
-    pressure_high_ratio = 1.25   # divided by
-    pressure_drop_ratio = 0.40   # multiplied by
+    pressure_high_ratio = 1.25  # divided by
+    pressure_drop_ratio = 0.40  # multiplied by
 
     _pending_pressure_drop_callbacks: Set[Callable]
 
-    def __init__(self, maxsize: int = 0,
-                 *,
-                 flow_control: FlowControlEvent,
-                 clear_on_resume: bool = False,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        maxsize: int = 0,
+        *,
+        flow_control: FlowControlEvent,
+        clear_on_resume: bool = False,
+        **kwargs: Any
+    ) -> None:
         self._flow_control: FlowControlEvent = flow_control
         self._clear_on_resume: bool = clear_on_resume
         if self._clear_on_resume:
@@ -117,9 +124,9 @@ class FlowControlQueue(asyncio.Queue):
     def clear(self) -> None:
         self._queue.clear()  # type: ignore
 
-    def put_nowait_enhanced(self, value: _T, *,
-                            on_pressure_high: Callable,
-                            on_pressure_drop: Callable) -> bool:
+    def put_nowait_enhanced(
+        self, value: _T, *, on_pressure_high: Callable, on_pressure_drop: Callable
+    ) -> bool:
         in_pressure_high_state = self.in_pressure_high_state(on_pressure_drop)
         if in_pressure_high_state:
             on_pressure_high()

@@ -2,52 +2,43 @@
 import abc
 import asyncio
 import typing
+from typing import (Any, Awaitable, Callable, Generic, MutableMapping,
+                    MutableSet, Optional, Type, TypeVar, Union)
 from weakref import ReferenceType
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Generic,
-    MutableMapping,
-    MutableSet,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+
 from mypy_extensions import KwArg, NamedArg, VarArg
 
 __all__ = [
-    'BaseSignalT',
-    'FilterReceiverMapping',
-    'SignalHandlerT',
-    'SignalHandlerRefT',
-    'SignalT',
-    'SyncSignalT',
-    'T',
-    'T_contra',
+    "BaseSignalT",
+    "FilterReceiverMapping",
+    "SignalHandlerT",
+    "SignalHandlerRefT",
+    "SignalT",
+    "SyncSignalT",
+    "T",
+    "T_contra",
 ]
 
-T = TypeVar('T')
-T_contra = TypeVar('T_contra', contravariant=True)
+T = TypeVar("T")
+T_contra = TypeVar("T_contra", contravariant=True)
 
-signal = None   # just here to fix flake8 bug
+signal = None  # just here to fix flake8 bug
 
 SignalHandlerT = Union[
     Callable[
-        [T, VarArg(), NamedArg('BaseSignalT', name='signal'), KwArg()],
+        [T, VarArg(), NamedArg("BaseSignalT", name="signal"), KwArg()],
         None,
     ],
     Callable[
-        [T, VarArg(), NamedArg('BaseSignalT', name='signal'), KwArg()],
+        [T, VarArg(), NamedArg("BaseSignalT", name="signal"), KwArg()],
         Awaitable[None],
     ],
 ]
 
 if typing.TYPE_CHECKING:
     SignalHandlerRefT = Union[
-        Callable[[], SignalHandlerT],
-        ReferenceType[SignalHandlerT]]
+        Callable[[], SignalHandlerT], ReferenceType[SignalHandlerT]
+    ]
 else:
     SignalHandlerRefT = Any
 
@@ -61,21 +52,24 @@ class BaseSignalT(Generic[T]):
     owner: Optional[Type]
 
     @abc.abstractmethod
-    def __init__(self, *,
-                 name: str = None,
-                 owner: Type = None,
-                 loop: asyncio.AbstractEventLoop = None,
-                 default_sender: Any = None,
-                 receivers: MutableSet[SignalHandlerRefT] = None,
-                 filter_receivers: FilterReceiverMapping = None) -> None:
+    def __init__(
+        self,
+        *,
+        name: str = None,
+        owner: Type = None,
+        loop: asyncio.AbstractEventLoop = None,
+        default_sender: Any = None,
+        receivers: MutableSet[SignalHandlerRefT] = None,
+        filter_receivers: FilterReceiverMapping = None
+    ) -> None:
         ...
 
     @abc.abstractmethod
-    def clone(self, **kwargs: Any) -> 'BaseSignalT':
+    def clone(self, **kwargs: Any) -> "BaseSignalT":
         ...
 
     @abc.abstractmethod
-    def with_default_sender(self, sender: Any = None) -> 'BaseSignalT':
+    def with_default_sender(self, sender: Any = None) -> "BaseSignalT":
         ...
 
     @abc.abstractmethod
@@ -83,10 +77,9 @@ class BaseSignalT(Generic[T]):
         ...
 
     @abc.abstractmethod
-    def disconnect(self, fun: SignalHandlerT,
-                   *,
-                   sender: Any = None,
-                   weak: bool = True) -> None:
+    def disconnect(
+        self, fun: SignalHandlerT, *, sender: Any = None, weak: bool = True
+    ) -> None:
         ...
 
 
@@ -94,8 +87,7 @@ class SignalT(BaseSignalT[T]):
     """Base class for all async signals (using ``async def``)."""
 
     @abc.abstractmethod
-    async def __call__(self, sender: T_contra,
-                       *args: Any, **kwargs: Any) -> None:
+    async def __call__(self, sender: T_contra, *args: Any, **kwargs: Any) -> None:
         ...
 
     @abc.abstractmethod
@@ -104,12 +96,12 @@ class SignalT(BaseSignalT[T]):
 
     @typing.no_type_check
     @abc.abstractmethod
-    def clone(self, **kwargs: Any) -> 'SignalT':
+    def clone(self, **kwargs: Any) -> "SignalT":
         ...
 
     @typing.no_type_check
     @abc.abstractmethod
-    def with_default_sender(self, sender: Any = None) -> 'SignalT':
+    def with_default_sender(self, sender: Any = None) -> "SignalT":
         ...
 
 
@@ -126,10 +118,10 @@ class SyncSignalT(BaseSignalT[T]):
 
     @typing.no_type_check
     @abc.abstractmethod
-    def clone(self, **kwargs: Any) -> 'SyncSignalT':
+    def clone(self, **kwargs: Any) -> "SyncSignalT":
         ...
 
     @typing.no_type_check
     @abc.abstractmethod
-    def with_default_sender(self, sender: Any = None) -> 'SyncSignalT':
+    def with_default_sender(self, sender: Any = None) -> "SyncSignalT":
         ...

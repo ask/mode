@@ -1,7 +1,8 @@
 """Crontab Utilities."""
 import time
-from typing import cast
 from datetime import datetime, tzinfo
+from typing import cast
+
 from croniter.croniter import croniter
 
 

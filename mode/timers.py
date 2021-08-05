@@ -3,10 +3,11 @@ import asyncio
 from itertools import count
 from time import perf_counter
 from typing import AsyncIterator, Awaitable, Callable, Iterator
+
 from .utils.logging import get_logger
 from .utils.times import Seconds, want_seconds
 
-__all__ = ['Timer']
+__all__ = ["Timer"]
 
 MAX_DRIFT_PERCENT: float = 0.30
 MAX_DRIFT_CEILING: float = 1.2
@@ -31,11 +32,15 @@ class Timer:
     last_yield_at: float
     iteration: int
 
-    def __init__(self, interval: Seconds, *,
-                 max_drift_correction: float = 0.1,
-                 name: str = '',
-                 clock: ClockArg = perf_counter,
-                 sleep: SleepArg = asyncio.sleep) -> None:
+    def __init__(
+        self,
+        interval: Seconds,
+        *,
+        max_drift_correction: float = 0.1,
+        name: str = "",
+        clock: ClockArg = perf_counter,
+        sleep: SleepArg = asyncio.sleep
+    ) -> None:
         self.interval = interval
         self.max_drift_correction = max_drift_correction
         self.name = name
@@ -112,30 +117,44 @@ class Timer:
             if drift < 0:
                 self.drifting_late += 1
                 logger.info(
-                    'Timer %s woke up too late, with a drift of +%r '
-                    'runtime=%r sleeptime=%r',
-                    self.name, abs(drift),
-                    time_spent_yielding, time_spent_sleeping)
+                    "Timer %s woke up too late, with a drift of +%r "
+                    "runtime=%r sleeptime=%r",
+                    self.name,
+                    abs(drift),
+                    time_spent_yielding,
+                    time_spent_sleeping,
+                )
             else:
                 self.drifting_early += 1
                 logger.info(
-                    'Timer %s woke up too early, with a drift of -%r '
-                    'runtime=%r sleeptime=%r',
-                    self.name, abs(drift),
-                    time_spent_yielding, time_spent_sleeping)
+                    "Timer %s woke up too early, with a drift of -%r "
+                    "runtime=%r sleeptime=%r",
+                    self.name,
+                    abs(drift),
+                    time_spent_yielding,
+                    time_spent_sleeping,
+                )
         else:
             logger.debug(
-                'Timer %s woke up - iteration=%r '
-                'time_spent_sleeping=%r drift=%r '
-                'new_interval=%r since_epoch=%r',
-                self.name, self.iteration,
-                time_spent_sleeping, drift, new_interval, since_epoch)
+                "Timer %s woke up - iteration=%r "
+                "time_spent_sleeping=%r drift=%r "
+                "new_interval=%r since_epoch=%r",
+                self.name,
+                self.iteration,
+                time_spent_sleeping,
+                drift,
+                new_interval,
+                since_epoch,
+            )
 
         if time_spent_yielding > interval_s:
             self.overlaps += 1
             logger.warning(
-                'Timer %s is overlapping (interval=%r runtime=%r)',
-                self.name, self.interval, time_spent_yielding)
+                "Timer %s is overlapping (interval=%r runtime=%r)",
+                self.name,
+                self.interval,
+                time_spent_yielding,
+            )
 
         self.iteration += 1
         self.last_wakeup_at = now
@@ -147,20 +166,20 @@ class Timer:
 
 
 def timer_intervals(  # XXX deprecated
-        interval: Seconds,
-        max_drift_correction: float = 0.1,
-        name: str = '',
-        clock: ClockArg = perf_counter) -> Iterator[float]:
+    interval: Seconds,
+    max_drift_correction: float = 0.1,
+    name: str = "",
+    clock: ClockArg = perf_counter,
+) -> Iterator[float]:
     """Generate timer sleep times.
 
     Note: This function is deprecated, please use :func:`itertimer`
     instead (this function also sleeps and calculates sleep time correctly.)
 
     """
-    state = Timer(interval,
-                  max_drift_correction=max_drift_correction,
-                  name=name,
-                  clock=clock)
+    state = Timer(
+        interval, max_drift_correction=max_drift_correction, name=name, clock=clock
+    )
     for _ in count():
         sleep_time = state.tick()
         state.on_before_yield()  # includes callback time.

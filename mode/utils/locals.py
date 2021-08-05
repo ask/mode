@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Generator, Generic, List, Optional, Sequence, TypeVar
 
-__all__ = ['LocalStack']
+__all__ = ["LocalStack"]
 
 # LocalStack is a generic type,
 # so for a stack keeping track of web requests you may define:
@@ -23,7 +23,7 @@ __all__ = ['LocalStack']
 #
 # If the stack is a ``List[T]``, then the type variable T denotes the
 # type this stack contains.
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class LocalStack(Generic[T]):
@@ -38,7 +38,7 @@ class LocalStack(Generic[T]):
     _stack: ContextVar[Optional[List[T]]]
 
     def __init__(self) -> None:
-        self._stack = ContextVar('_stack')
+        self._stack = ContextVar("_stack")
 
     # XXX mypy bug; when fixed type Generator, should be ContextManager.
     @contextmanager
