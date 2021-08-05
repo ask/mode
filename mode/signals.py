@@ -3,13 +3,31 @@ import asyncio
 from collections import defaultdict
 from functools import partial
 from types import MethodType
-from typing import (Any, Callable, Iterable, Mapping, MutableSet, Optional,
-                    Set, Tuple, Type, cast, no_type_check)
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    MutableSet,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    cast,
+    no_type_check,
+)
 from weakref import ReferenceType, WeakMethod, ref
 
-from .types.signals import (BaseSignalT, FilterReceiverMapping,
-                            SignalHandlerRefT, SignalHandlerT, SignalT,
-                            SyncSignalT, T, T_contra)
+from .types.signals import (
+    BaseSignalT,
+    FilterReceiverMapping,
+    SignalHandlerRefT,
+    SignalHandlerT,
+    SignalT,
+    SyncSignalT,
+    T,
+    T_contra,
+)
 from .utils.futures import maybe_async
 
 __all__ = ["BaseSignal", "Signal", "SyncSignal"]

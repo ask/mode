@@ -5,8 +5,18 @@ import types
 from collections import deque
 from contextlib import AbstractContextManager
 from functools import wraps
-from typing import (Any, Awaitable, Callable, ContextManager, Dict, Optional,
-                    Tuple, Type, Union, cast)
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    ContextManager,
+    Dict,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import _collections_abc
 

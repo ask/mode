@@ -4,8 +4,15 @@ from time import monotonic
 
 import pytest
 
-from mode.utils.times import (TIME_MONOTONIC, Bucket, TokenBucket,
-                              humanize_seconds, rate, rate_limit, want_seconds)
+from mode.utils.times import (
+    TIME_MONOTONIC,
+    Bucket,
+    TokenBucket,
+    humanize_seconds,
+    rate,
+    rate_limit,
+    want_seconds,
+)
 
 
 @pytest.mark.parametrize(

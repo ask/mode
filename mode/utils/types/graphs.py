@@ -1,7 +1,15 @@
 """Type classes for :mod:`mode.utils.graphs`."""
 import abc
-from typing import (IO, Any, Generic, Iterable, Mapping, MutableMapping,
-                    Sequence, TypeVar)
+from typing import (
+    IO,
+    Any,
+    Generic,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    TypeVar,
+)
 
 __all__ = ["GraphFormatterT", "DependencyGraphT"]
 

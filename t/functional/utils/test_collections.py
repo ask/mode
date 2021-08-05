@@ -2,10 +2,17 @@ import pickle
 
 import pytest
 
-from mode.utils.collections import (AttributeDictMixin, DictAttribute,
-                                    FastUserDict, FastUserSet, Heap, LRUCache,
-                                    ManagedUserDict, ManagedUserSet,
-                                    force_mapping)
+from mode.utils.collections import (
+    AttributeDictMixin,
+    DictAttribute,
+    FastUserDict,
+    FastUserSet,
+    Heap,
+    LRUCache,
+    ManagedUserDict,
+    ManagedUserSet,
+    force_mapping,
+)
 from mode.utils.mocks import Mock, call, patch
 
 

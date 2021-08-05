@@ -6,10 +6,27 @@ from datetime import tzinfo
 from functools import wraps
 from time import monotonic, perf_counter
 from types import TracebackType
-from typing import (Any, AsyncIterator, Awaitable, Callable, ClassVar,
-                    ContextManager, Dict, Generator, Iterable, List, Mapping,
-                    MutableSequence, NamedTuple, Optional, Sequence, Set, Type,
-                    Union, cast)
+from typing import (
+    Any,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    ClassVar,
+    ContextManager,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Mapping,
+    MutableSequence,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Set,
+    Type,
+    Union,
+    cast,
+)
 
 from .timers import Timer
 from .types import DiagT, ServiceT

@@ -4,12 +4,18 @@ from contextlib import contextmanager
 
 import pytest
 
-from mode.utils.imports import (EntrypointExtension, FactoryMapping,
-                                RawEntrypointExtension, _ensure_identifier,
-                                cwd_in_path, import_from_cwd,
-                                load_extension_class_names,
-                                load_extension_classes, smart_import,
-                                symbol_by_name)
+from mode.utils.imports import (
+    EntrypointExtension,
+    FactoryMapping,
+    RawEntrypointExtension,
+    _ensure_identifier,
+    cwd_in_path,
+    import_from_cwd,
+    load_extension_class_names,
+    load_extension_classes,
+    smart_import,
+    symbol_by_name,
+)
 from mode.utils.mocks import Mock, call, mask_module, patch
 
 

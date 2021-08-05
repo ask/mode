@@ -6,15 +6,28 @@ from copy import deepcopy
 
 import pytest
 
-from mode.utils.logging import (HAS_STACKLEVEL, CompositeLogger,
-                                DefaultFormatter, FileLogProxy, LogMessage,
-                                Logwrapped, _FlightRecorderProxy,
-                                _formatter_registry, _logger_config,
-                                _setup_logging, current_flight_recorder,
-                                flight_recorder, formatter, get_logger,
-                                level_name, level_number, on_timeout,
-                                print_task_name, redirect_stdouts,
-                                setup_logging)
+from mode.utils.logging import (
+    HAS_STACKLEVEL,
+    CompositeLogger,
+    DefaultFormatter,
+    FileLogProxy,
+    LogMessage,
+    Logwrapped,
+    _FlightRecorderProxy,
+    _formatter_registry,
+    _logger_config,
+    _setup_logging,
+    current_flight_recorder,
+    flight_recorder,
+    formatter,
+    get_logger,
+    level_name,
+    level_number,
+    on_timeout,
+    print_task_name,
+    redirect_stdouts,
+    setup_logging,
+)
 from mode.utils.mocks import ANY, AsyncMock, Mock, call, patch
 
 

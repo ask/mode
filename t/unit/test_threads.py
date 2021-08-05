@@ -3,8 +3,7 @@ import threading
 
 import pytest
 
-from mode.threads import (MethodQueue, QueueServiceThread, ServiceThread,
-                          WorkerThread)
+from mode.threads import MethodQueue, QueueServiceThread, ServiceThread, WorkerThread
 from mode.utils.futures import done_future
 from mode.utils.locks import Event
 from mode.utils.mocks import ANY, AsyncMock, Mock, patch

@@ -7,8 +7,15 @@ import pytest
 from mode import Service
 from mode.services import Diag, ServiceTask, WaitResult
 from mode.utils.logging import get_logger
-from mode.utils.mocks import (ANY, AsyncContextManagerMock, AsyncMock,
-                              ContextMock, Mock, call, patch)
+from mode.utils.mocks import (
+    ANY,
+    AsyncContextManagerMock,
+    AsyncMock,
+    ContextMock,
+    Mock,
+    call,
+    patch,
+)
 from mode.utils.typing import AsyncContextManager
 
 

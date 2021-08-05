@@ -3,22 +3,49 @@ import collections.abc
 import pickle
 import sys
 import typing
-from typing import (AbstractSet, ClassVar, Dict, FrozenSet, Generic, List,
-                    Mapping, MutableMapping, MutableSet, Optional, Sequence,
-                    Set, Tuple, Union)
+from typing import (
+    AbstractSet,
+    ClassVar,
+    Dict,
+    FrozenSet,
+    Generic,
+    List,
+    Mapping,
+    MutableMapping,
+    MutableSet,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import pytest
 
 from mode import Service, ServiceT
 from mode.services import ServiceBase, ServiceCallbacks
 from mode.utils.mocks import ANY, IN, Mock
-from mode.utils.objects import (ForwardRef, InvalidAnnotation, KeywordReduce,
-                                Unordered, _ForwardRef_safe_eval,
-                                _remove_optional, _restore_from_keywords,
-                                annotations, cached_property, canoname,
-                                canonshortname, guess_polymorphic_type,
-                                is_optional, is_union, iter_mro_reversed,
-                                label, qualname, remove_optional, shortname)
+from mode.utils.objects import (
+    ForwardRef,
+    InvalidAnnotation,
+    KeywordReduce,
+    Unordered,
+    _ForwardRef_safe_eval,
+    _remove_optional,
+    _restore_from_keywords,
+    annotations,
+    cached_property,
+    canoname,
+    canonshortname,
+    guess_polymorphic_type,
+    is_optional,
+    is_union,
+    iter_mro_reversed,
+    label,
+    qualname,
+    remove_optional,
+    shortname,
+)
 
 PY37 = sys.version_info >= (3, 7)
 

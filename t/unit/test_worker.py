@@ -8,8 +8,7 @@ import pytest
 
 from mode import Service
 from mode.debug import BlockingDetector
-from mode.utils.mocks import (AsyncMock, Mock, call, mask_module, patch,
-                              patch_module)
+from mode.utils.mocks import AsyncMock, Mock, call, mask_module, patch, patch_module
 from mode.worker import Worker, exiting
 
 

@@ -7,11 +7,30 @@ from contextlib import suppress
 from decimal import Decimal
 from functools import total_ordering
 from pathlib import Path
-from typing import (AbstractSet, Any, Callable, ClassVar, Dict,  # type: ignore
-                    FrozenSet, Generic, Iterable, List, Mapping,
-                    MutableMapping, MutableSequence, MutableSet, Optional,
-                    Sequence, Set, Tuple, Type, TypeVar, _eval_type,
-                    _type_check, cast)
+from typing import Dict  # type: ignore
+from typing import (
+    AbstractSet,
+    Any,
+    Callable,
+    ClassVar,
+    FrozenSet,
+    Generic,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    _eval_type,
+    _type_check,
+    cast,
+)
 
 try:
     from typing import _ClassVar  # type: ignore

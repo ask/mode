@@ -4,13 +4,41 @@ import collections.abc
 import threading
 import typing
 from collections import OrderedDict, UserList
-from heapq import (heapify, heappop, heappush, heappushpop, heapreplace,
-                   nlargest, nsmallest)
-from typing import (AbstractSet, Any, Callable, ContextManager, Dict, Generic,
-                    ItemsView, Iterable, Iterator, KeysView, List, Mapping,
-                    MutableMapping, MutableSequence, MutableSet, Optional,
-                    Sequence, Set, Tuple, TypeVar, Union, ValuesView, cast,
-                    overload)
+from heapq import (
+    heapify,
+    heappop,
+    heappush,
+    heappushpop,
+    heapreplace,
+    nlargest,
+    nsmallest,
+)
+from typing import (
+    AbstractSet,
+    Any,
+    Callable,
+    ContextManager,
+    Dict,
+    Generic,
+    ItemsView,
+    Iterable,
+    Iterator,
+    KeysView,
+    List,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+    ValuesView,
+    cast,
+    overload,
+)
 
 from .contexts import nullcontext
 

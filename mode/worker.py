@@ -13,8 +13,20 @@ import traceback
 import typing
 from contextlib import contextmanager, suppress
 from logging import Handler, Logger
-from typing import (IO, Any, Callable, ClassVar, Dict, Iterable, Iterator,
-                    List, Optional, Tuple, Union, cast)
+from typing import (
+    IO,
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .services import Service
 from .types import ServiceT

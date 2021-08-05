@@ -15,10 +15,28 @@ from logging import Logger
 from pprint import pprint
 from time import asctime
 from types import TracebackType
-from typing import (IO, Any, AnyStr, BinaryIO, Callable, ClassVar,
-                    ContextManager, Dict, Iterable, Iterator, List, Mapping,
-                    NamedTuple, Optional, Set, TextIO, Tuple, Type, Union,
-                    cast)
+from typing import (
+    IO,
+    Any,
+    AnyStr,
+    BinaryIO,
+    Callable,
+    ClassVar,
+    ContextManager,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Set,
+    TextIO,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import colorlog
 

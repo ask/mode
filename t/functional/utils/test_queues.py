@@ -5,8 +5,7 @@ import pytest
 
 from mode.utils.futures import done_future
 from mode.utils.mocks import Mock
-from mode.utils.queues import (FlowControlEvent, FlowControlQueue,
-                               ThrowableQueue)
+from mode.utils.queues import FlowControlEvent, FlowControlQueue, ThrowableQueue
 
 
 class test_FlowControlEvent:

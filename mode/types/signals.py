@@ -2,8 +2,18 @@
 import abc
 import asyncio
 import typing
-from typing import (Any, Awaitable, Callable, Generic, MutableMapping,
-                    MutableSet, Optional, Type, TypeVar, Union)
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    MutableMapping,
+    MutableSet,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 from weakref import ReferenceType
 
 from mypy_extensions import KwArg, NamedArg, VarArg

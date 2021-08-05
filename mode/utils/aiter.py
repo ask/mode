@@ -2,8 +2,18 @@
 import collections.abc
 import sys
 from functools import singledispatch
-from typing import (Any, AsyncIterable, AsyncIterator, Iterable, Iterator,
-                    List, Optional, Tuple, TypeVar, cast)
+from typing import (
+    Any,
+    AsyncIterable,
+    AsyncIterator,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 __all__ = [
     "aenumerate",

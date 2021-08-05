@@ -3,9 +3,13 @@ import asyncio
 import pytest
 
 from mode.exceptions import MaxRestartsExceeded
-from mode.supervisors import (CrashingSupervisor, ForfeitOneForAllSupervisor,
-                              ForfeitOneForOneSupervisor, OneForAllSupervisor,
-                              SupervisorStrategy)
+from mode.supervisors import (
+    CrashingSupervisor,
+    ForfeitOneForAllSupervisor,
+    ForfeitOneForOneSupervisor,
+    OneForAllSupervisor,
+    SupervisorStrategy,
+)
 from mode.utils.mocks import AsyncContextManagerMock, AsyncMock, Mock, patch
 
 

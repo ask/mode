@@ -1,7 +1,18 @@
 """Data structure: Dependency graph."""
 from functools import partial
-from typing import (IO, Any, Callable, ItemsView, Iterable, Iterator, List,
-                    MutableMapping, Sequence, Set, cast)
+from typing import (
+    IO,
+    Any,
+    Callable,
+    ItemsView,
+    Iterable,
+    Iterator,
+    List,
+    MutableMapping,
+    Sequence,
+    Set,
+    cast,
+)
 
 from mode.utils.types.graphs import _T, DependencyGraphT, GraphFormatterT
 from mode.utils.typing import Counter

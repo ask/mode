@@ -1,17 +1,37 @@
 import abc
 import sys
-from typing import (AbstractSet, AsyncIterable, AsyncIterator, Awaitable,
-                    Mapping, MutableMapping, MutableSequence, MutableSet,
-                    Sequence)
+from typing import (
+    AbstractSet,
+    AsyncIterable,
+    AsyncIterator,
+    Awaitable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Sequence,
+)
 
 import pytest
 
-from mode.locals import (AsyncContextManagerProxy, AsyncGeneratorProxy,
-                         AsyncIterableProxy, AsyncIteratorProxy,
-                         AwaitableProxy, CallableProxy, ContextManagerProxy,
-                         CoroutineProxy, MappingProxy, MutableMappingProxy,
-                         MutableSequenceProxy, MutableSetProxy, Proxy,
-                         SequenceProxy, SetProxy, maybe_evaluate)
+from mode.locals import (
+    AsyncContextManagerProxy,
+    AsyncGeneratorProxy,
+    AsyncIterableProxy,
+    AsyncIteratorProxy,
+    AwaitableProxy,
+    CallableProxy,
+    ContextManagerProxy,
+    CoroutineProxy,
+    MappingProxy,
+    MutableMappingProxy,
+    MutableSequenceProxy,
+    MutableSetProxy,
+    Proxy,
+    SequenceProxy,
+    SetProxy,
+    maybe_evaluate,
+)
 from mode.utils.mocks import MagicMock, Mock
 from mode.utils.typing import AsyncGenerator
 

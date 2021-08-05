@@ -44,15 +44,18 @@ if sys.version_info <= (3, 7):  # pragma: no cover
 if typing.TYPE_CHECKING:  # pragma: no cover
     from .services import Service, task, timer  # noqa: E402
     from .signals import BaseSignal, Signal, SyncSignal  # noqa: E402
-    from .supervisors import (CrashingSupervisor,  # noqa: E402
-                              ForfeitOneForAllSupervisor,
-                              ForfeitOneForOneSupervisor, OneForAllSupervisor,
-                              OneForOneSupervisor, SupervisorStrategy)
+    from .supervisors import CrashingSupervisor  # noqa: E402
+    from .supervisors import (
+        ForfeitOneForAllSupervisor,
+        ForfeitOneForOneSupervisor,
+        OneForAllSupervisor,
+        OneForOneSupervisor,
+        SupervisorStrategy,
+    )
     from .types.services import ServiceT  # noqa: E402
     from .types.signals import BaseSignalT, SignalT, SyncSignalT  # noqa: E402
     from .types.supervisors import SupervisorStrategyT  # noqa: E402
-    from .utils.logging import (flight_recorder, get_logger,  # noqa: E402
-                                setup_logging)
+    from .utils.logging import flight_recorder, get_logger, setup_logging  # noqa: E402
     from .utils.objects import label, shortlabel  # noqa: E402
     from .utils.times import Seconds, want_seconds  # noqa: E402
     from .worker import Worker  # noqa: E402

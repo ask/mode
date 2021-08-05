@@ -4,16 +4,30 @@ from types import TracebackType
 from typing import Any, Type
 
 if typing.TYPE_CHECKING:
-    from ._py37_contextlib import (AbstractAsyncContextManager, AsyncExitStack,
-                                   ExitStack, asynccontextmanager, nullcontext)
+    from ._py37_contextlib import (
+        AbstractAsyncContextManager,
+        AsyncExitStack,
+        ExitStack,
+        asynccontextmanager,
+        nullcontext,
+    )
 else:
     try:  # pragma: no cover
-        from contextlib import (AbstractAsyncContextManager, AsyncExitStack,
-                                ExitStack, asynccontextmanager, nullcontext)
+        from contextlib import (
+            AbstractAsyncContextManager,
+            AsyncExitStack,
+            ExitStack,
+            asynccontextmanager,
+            nullcontext,
+        )
     except ImportError:  # pragma: no cover
-        from ._py37_contextlib import (AbstractAsyncContextManager,
-                                       AsyncExitStack, ExitStack,
-                                       asynccontextmanager, nullcontext)
+        from ._py37_contextlib import (
+            AbstractAsyncContextManager,
+            AsyncExitStack,
+            ExitStack,
+            asynccontextmanager,
+            nullcontext,
+        )
 
 __all__ = [
     "AbstractAsyncContextManager",

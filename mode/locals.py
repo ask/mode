@@ -77,12 +77,37 @@ import typing
 from collections import deque
 from functools import wraps
 from types import GetSetDescriptorType, TracebackType
-from typing import (AbstractSet, Any, AsyncIterable, AsyncIterator, Awaitable,
-                    Callable, ClassVar, ContextManager, Coroutine, Dict,
-                    Generator, Generic, Iterable, Iterator, List, Mapping,
-                    MutableMapping, MutableSequence, MutableSet, Optional,
-                    Sequence, Tuple, Type, TypeVar, Union, ValuesView, cast,
-                    no_type_check, overload)
+from typing import (
+    AbstractSet,
+    Any,
+    AsyncIterable,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    ClassVar,
+    ContextManager,
+    Coroutine,
+    Dict,
+    Generator,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    ValuesView,
+    cast,
+    no_type_check,
+    overload,
+)
 
 from .utils.locals import LocalStack  # XXX compat
 

@@ -2,8 +2,7 @@ from typing import AsyncIterable
 
 import pytest
 
-from mode.utils.aiter import (aenumerate, aiter, alist, anext, arange, aslice,
-                              chunks)
+from mode.utils.aiter import aenumerate, aiter, alist, anext, arange, aslice, chunks
 
 
 class AIT(AsyncIterable):

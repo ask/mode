@@ -6,9 +6,23 @@ import typing
 import warnings
 from contextlib import contextmanager, suppress
 from types import ModuleType
-from typing import (Any, Callable, Generator, Generic, Iterable, Iterator,
-                    Mapping, MutableMapping, NamedTuple, Optional, Set, Type,
-                    TypeVar, Union, cast)
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Generic,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Set,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from .collections import FastUserDict
 from .objects import cached_property

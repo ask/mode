@@ -3,9 +3,15 @@ import inspect
 
 import pytest
 
-from mode.utils.futures import (StampedeWrapper, done_future, maybe_async,
-                                maybe_cancel, maybe_set_exception,
-                                maybe_set_result, stampede)
+from mode.utils.futures import (
+    StampedeWrapper,
+    done_future,
+    maybe_async,
+    maybe_cancel,
+    maybe_set_exception,
+    maybe_set_result,
+    stampede,
+)
 from mode.utils.mocks import Mock
 
 

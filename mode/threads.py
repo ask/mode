@@ -11,12 +11,20 @@ import sys
 import threading
 import traceback
 from time import monotonic
-from typing import (Any, Awaitable, Callable, Dict, List, NamedTuple, Optional,
-                    Tuple, Type)
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Type,
+)
 
 from .services import Service
-from .utils.futures import (maybe_async, maybe_set_exception, maybe_set_result,
-                            notify)
+from .utils.futures import maybe_async, maybe_set_exception, maybe_set_result, notify
 from .utils.locks import Event
 
 __all__ = [
