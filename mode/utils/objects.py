@@ -421,7 +421,7 @@ def _ForwardRef_safe_eval(
             globalns = localns
         elif localns is None:
             localns = globalns
-        val = eval(ref.__forward_code__, globalns, localns)
+        val = eval(ref.__forward_code__, globalns, localns)  # noqa: S307
         if not _is_class_var(val):
             val = _type_check(val, "Forward references must evaluate to types.")
         ref.__forward_value__ = val

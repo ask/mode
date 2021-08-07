@@ -199,7 +199,7 @@ class Worker(Service):
                 import traceback
 
                 traceback.print_stack(file=self.stderr)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
             raise
         self.on_setup_root_logger(_logging.root, _loglevel)
