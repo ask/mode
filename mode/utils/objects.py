@@ -27,10 +27,24 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
-    _eval_type,
-    _type_check,
     cast,
 )
+
+try:
+    from typing import _eval_type  # type: ignore
+except ImportError:
+
+    def _eval_type(t, globalns, localns, recursive_guard=frozenset()):  # type: ignore
+        return t
+
+
+try:
+    from typing import _type_check  # type: ignore
+except ImportError:
+
+    def _type_check(arg, msg, is_argument=True, module=None):  # type: ignore
+        return arg
+
 
 try:
     from typing import _ClassVar  # type: ignore
