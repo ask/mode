@@ -1,11 +1,12 @@
 """Type classes for :mod:`mode.utils.trees`."""
 import abc
 from typing import Any, Generic, Iterator, List, Optional, TypeVar, Union
+
 from .graphs import DependencyGraphT
 
-__all__ = ['NodeT']
+__all__ = ["NodeT"]
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 
 class NodeT(Generic[_T]):
@@ -16,19 +17,19 @@ class NodeT(Generic[_T]):
 
     @classmethod
     @abc.abstractmethod
-    def _new_node(cls, data: _T, **kwargs: Any) -> 'NodeT':
+    def _new_node(cls, data: _T, **kwargs: Any) -> "NodeT":
         ...
 
     @abc.abstractmethod
-    def new(self, data: _T) -> 'NodeT':
+    def new(self, data: _T) -> "NodeT":
         ...
 
     @abc.abstractmethod
-    def add(self, data: Union[_T, 'NodeT[_T]']) -> None:
+    def add(self, data: Union[_T, "NodeT[_T]"]) -> None:
         ...
 
     @abc.abstractmethod
-    def add_deduplicate(self, data: Union[_T, 'NodeT[_T]']) -> None:
+    def add_deduplicate(self, data: Union[_T, "NodeT[_T]"]) -> None:
         ...
 
     @abc.abstractmethod
@@ -36,15 +37,15 @@ class NodeT(Generic[_T]):
         ...
 
     @abc.abstractmethod
-    def reattach(self, parent: 'NodeT') -> 'NodeT':
+    def reattach(self, parent: "NodeT") -> "NodeT":
         ...
 
     @abc.abstractmethod
-    def traverse(self) -> Iterator['NodeT']:
+    def traverse(self) -> Iterator["NodeT"]:
         ...
 
     @abc.abstractmethod
-    def walk(self) -> Iterator['NodeT']:
+    def walk(self) -> Iterator["NodeT"]:
         ...
 
     @abc.abstractmethod
@@ -52,25 +53,25 @@ class NodeT(Generic[_T]):
         ...
 
     @abc.abstractmethod
-    def detach(self, parent: 'NodeT') -> 'NodeT':
+    def detach(self, parent: "NodeT") -> "NodeT":
         ...
 
     @property
     @abc.abstractmethod
-    def parent(self) -> Optional['NodeT']:
+    def parent(self) -> Optional["NodeT"]:
         ...
 
     @parent.setter
-    def parent(self, node: 'NodeT') -> None:
+    def parent(self, node: "NodeT") -> None:
         ...
 
     @property
     @abc.abstractmethod
-    def root(self) -> Optional['NodeT']:
+    def root(self) -> Optional["NodeT"]:
         ...
 
     @root.setter
-    def root(self, node: 'NodeT') -> None:
+    def root(self, node: "NodeT") -> None:
         ...
 
     @property

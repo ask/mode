@@ -1,8 +1,10 @@
 import asyncio
-import pytest
 from functools import reduce
 from itertools import chain
 from typing import List, NamedTuple, Tuple
+
+import pytest
+
 from mode.timers import Timer
 from mode.utils.aiter import aslice
 from mode.utils.contexts import asynccontextmanager
@@ -59,7 +61,7 @@ class test_Timer:
     def timer(self, *, clock, sleep) -> Timer:
         return Timer(
             self.interval,
-            name='test',
+            name="test",
             clock=clock,
             sleep=sleep,
         )
@@ -73,18 +75,22 @@ class test_Timer:
         interval = self.interval
         skew = self.skew
         intervals = [
-            first_interval,             # 1st interval
-            (None, None),               # 2nd interval
-            (None, None),               # 3rd interval
-            (interval - skew, None),    # 4th interval: sleep too short
-            (None, interval + skew),    # 5th interval: overlaps
-            (None, None),               # 6th interval
+            first_interval,  # 1st interval
+            (None, None),  # 2nd interval
+            (None, None),  # 3rd interval
+            (interval - skew, None),  # 4th interval: sleep too short
+            (None, interval + skew),  # 5th interval: overlaps
+            (None, None),  # 6th interval
         ]
         async with self.assert_timer(timer, clock, intervals) as logger:
             logger.info.assert_called_once_with(
-                'Timer %s woke up too early, with a drift '
-                'of -%r runtime=%r sleeptime=%r',
-                'test', ANY, ANY, ANY)
+                "Timer %s woke up too early, with a drift "
+                "of -%r runtime=%r sleeptime=%r",
+                "test",
+                ANY,
+                ANY,
+                ANY,
+            )
             assert timer.drifting == 1
             assert timer.drifting_early == 1
             assert not timer.drifting_late
@@ -94,42 +100,45 @@ class test_Timer:
         interval = self.interval
         skew = self.skew
         intervals = [
-            first_interval,                # 1st interval
-            (None, None),                  # 2nd interval
-            (None, None),                  # 3rd interval
-            (interval + skew, None),       # 4th interval: sleep too long
-            (None, interval + skew),       # 5th interval: overlaps
-            (None, None),                  # 6th interval
+            first_interval,  # 1st interval
+            (None, None),  # 2nd interval
+            (None, None),  # 3rd interval
+            (interval + skew, None),  # 4th interval: sleep too long
+            (None, interval + skew),  # 5th interval: overlaps
+            (None, None),  # 6th interval
         ]
         async with self.assert_timer(timer, clock, intervals) as logger:
             logger.info.assert_called_once_with(
-                'Timer %s woke up too late, with a drift '
-                'of +%r runtime=%r sleeptime=%r',
-                'test', ANY, ANY, ANY)
+                "Timer %s woke up too late, with a drift "
+                "of +%r runtime=%r sleeptime=%r",
+                "test",
+                ANY,
+                ANY,
+                ANY,
+            )
             assert timer.drifting == 1
             assert timer.drifting_late == 1
             assert not timer.drifting_early
 
     @asynccontextmanager
-    async def assert_timer(self,
-                           timer,
-                           clock,
-                           interval_tuples):
+    async def assert_timer(self, timer, clock, interval_tuples):
         intervals = self.build_intervals(timer, *interval_tuples)
         print(intervals)
         clock_values = self.to_clock_values(*intervals)
         assert len(clock_values) == len(intervals) * 2
         clock.side_effect = clock_values
 
-        with patch('mode.timers.logger') as logger:
+        with patch("mode.timers.logger") as logger:
             await self.assert_intervals(timer, intervals)
             yield logger
 
-    def new_interval(self,
-                     interval: float = None,
-                     wakeup_time: float = None,
-                     yield_time: float = None,
-                     expected_new_interval: float = None) -> Interval:
+    def new_interval(
+        self,
+        interval: float = None,
+        wakeup_time: float = None,
+        yield_time: float = None,
+        expected_new_interval: float = None,
+    ) -> Interval:
         if interval is None:
             interval = self.interval
         if wakeup_time is None:
@@ -145,12 +154,14 @@ class test_Timer:
             expected_new_interval,
         )
 
-    def to_next_interval(self,
-                         timer: Timer,
-                         interval: Interval,
-                         sleep_time: float = None,
-                         yield_time: float = 0.1,
-                         expected_new_interval: float = None) -> Interval:
+    def to_next_interval(
+        self,
+        timer: Timer,
+        interval: Interval,
+        sleep_time: float = None,
+        yield_time: float = 0.1,
+        expected_new_interval: float = None,
+    ) -> Interval:
         if sleep_time is None:
             sleep_time = interval.interval + 0.001
         if yield_time is None:
@@ -168,22 +179,18 @@ class test_Timer:
             expected_new_interval=expected_new_interval,
         )
 
-    def interval_to_clock_sequence(self,
-                                   interval: Interval) -> List[float]:
+    def interval_to_clock_sequence(self, interval: Interval) -> List[float]:
         # Timer calls clock() twice per iteration,
         # so in an interval this provides the clock for wakeup time
         # and the yield time.
         return [interval.wakeup_time, interval.yield_time]
 
     def to_clock_values(self, *intervals: Interval) -> List[float]:
-        return list(chain(*map(
-            self.interval_to_clock_sequence, intervals)))
+        return list(chain(*map(self.interval_to_clock_sequence, intervals)))
 
     def build_intervals(
-            self,
-            timer: Timer,
-            first_interval: Interval,
-            *values: Tuple[float, float]) -> List[Interval]:
+        self, timer: Timer, first_interval: Interval, *values: Tuple[float, float]
+    ) -> List[Interval]:
         """Build intervals from tuples of ``(sleep_time, yield_time)``.
 
         If a tuple is missing (is None), then default values
@@ -192,8 +199,9 @@ class test_Timer:
 
         intervals = [first_interval]
 
-        def on_reduce(previous_interval: Interval,
-                      tup: Tuple[float, float]) -> Interval:
+        def on_reduce(
+            previous_interval: Interval, tup: Tuple[float, float]
+        ) -> Interval:
             sleep_time, yield_time = tup
             next_interval = self.to_next_interval(
                 timer,
@@ -207,12 +215,9 @@ class test_Timer:
         reduce(on_reduce, values, first_interval)
         return intervals
 
-    async def assert_intervals(self,
-                               timer: Timer,
-                               intervals: List[Interval]) -> None:
+    async def assert_intervals(self, timer: Timer, intervals: List[Interval]) -> None:
         assert await self.consume_timer(timer, limit=len(intervals)) == [
-            interval.expected_new_interval
-            for interval in intervals
+            interval.expected_new_interval for interval in intervals
         ]
 
     async def consume_timer(self, timer: Timer, limit: int) -> List[float]:

@@ -1,11 +1,11 @@
 import pytest
+
 from mode import Service, label, shortlabel
 from mode.proxy import ServiceProxy
 from mode.utils.mocks import AsyncMock, MagicMock, Mock
 
 
 class Proxy(ServiceProxy):
-
     def __init__(self, service, *args, **kwargs):
         self._proxied_service = service
         super().__init__(*args, **kwargs)
@@ -16,11 +16,10 @@ class Proxy(ServiceProxy):
 
 
 class test_Proxy:
-
     @pytest.fixture
     def service(self):
         s = Mock(
-            name='service',
+            name="service",
             autospec=Service,
             add_runtime_dependency=AsyncMock(),
             add_async_context=AsyncMock(),
@@ -35,7 +34,7 @@ class test_Proxy:
 
     @pytest.fixture
     def subservice(self):
-        return Mock(name='subservice')
+        return Mock(name="subservice")
 
     @pytest.fixture
     def proxy(self, *, service):
@@ -130,12 +129,12 @@ class test_Proxy:
         assert proxy.state is service.state
 
     def test_label(self, *, proxy):
-        assert label(proxy) == 'Proxy'
+        assert label(proxy) == "Proxy"
 
     def test_shortlabel(self, *, proxy):
-        assert shortlabel(proxy) == 'Proxy'
+        assert shortlabel(proxy) == "Proxy"
 
     def test_beacon(self, *, proxy, service):
         assert proxy.beacon is service.beacon
-        new_beacon = proxy.beacon = Mock(name='new_beacon')
+        new_beacon = proxy.beacon = Mock(name="new_beacon")
         assert service.beacon is new_beacon

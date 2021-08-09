@@ -1,7 +1,5 @@
 import abc
 import sys
-import pytest
-
 from typing import (
     AbstractSet,
     AsyncIterable,
@@ -13,6 +11,8 @@ from typing import (
     MutableSet,
     Sequence,
 )
+
+import pytest
 
 from mode.locals import (
     AsyncContextManagerProxy,
@@ -37,31 +37,30 @@ from mode.utils.typing import AsyncGenerator
 
 
 class test_Proxy:
-
     def test_std_class_attributes(self):
-        assert Proxy.__name__ == 'Proxy'
-        assert Proxy.__module__ == 'mode.locals'
+        assert Proxy.__name__ == "Proxy"
+        assert Proxy.__module__ == "mode.locals"
         assert isinstance(Proxy.__doc__, str)
 
     def test_doc(self):
         def real():
             pass
-        x = Proxy(real, __doc__='foo')
-        assert x.__doc__ == 'foo'
+
+        x = Proxy(real, __doc__="foo")
+        assert x.__doc__ == "foo"
 
     def test_name(self):
-
         def real():
             """real function"""
-            return 'REAL'
+            return "REAL"
 
-        x = Proxy(lambda: real, name='xyz')
-        assert x.__name__ == 'xyz'
+        x = Proxy(lambda: real, name="xyz")
+        assert x.__name__ == "xyz"
 
         y = Proxy(lambda: real)
-        assert y.__name__ == 'real'
+        assert y.__name__ == "real"
 
-        assert x.__doc__ == 'real function'
+        assert x.__doc__ == "real function"
 
         assert x.__class__ == type(real)
         assert x.__dict__ == real.__dict__
@@ -70,22 +69,20 @@ class test_Proxy:
 
     def test_get_current_local(self):
         x = Proxy(lambda: 10)
-        object.__setattr__(x, '_Proxy_local', Mock())
+        object.__setattr__(x, "_Proxy_local", Mock())
         assert x._get_current_object()
 
     def test_bool(self):
-
         class X(object):
-
             def __bool__(self):
                 return False
+
             __nonzero__ = __bool__
 
         x = Proxy(lambda: X())
         assert not x
 
     def test_slots(self):
-
         class X(object):
             __slots__ = ()
 
@@ -94,24 +91,21 @@ class test_Proxy:
             x.__dict__
 
     def test_dir(self):
-
         class X(object):
-
             def __dir__(self):
-                return ['a', 'b', 'c']
+                return ["a", "b", "c"]
 
         x = Proxy(lambda: X())
-        assert dir(x) == ['a', 'b', 'c']
+        assert dir(x) == ["a", "b", "c"]
 
         class Y(object):
-
             def __dir__(self):
                 raise RuntimeError()
+
         y = Proxy(lambda: Y())
         assert dir(y) == []
 
     def test_qualname(self):
-
         class X:
             ...
 
@@ -119,45 +113,42 @@ class test_Proxy:
         assert x.__qualname__ == X.__qualname__
 
     def test_getsetdel_attr(self):
-
         class X(object):
             a = 1
             b = 2
             c = 3
 
             def __dir__(self):
-                return ['a', 'b', 'c']
+                return ["a", "b", "c"]
 
         v = X()
 
         x = Proxy(lambda: v)
-        assert x.__members__ == ['a', 'b', 'c']
+        assert x.__members__ == ["a", "b", "c"]
         assert x.a == 1
         assert x.b == 2
         assert x.c == 3
 
-        setattr(x, 'a', 10)  # noqa: B010
+        setattr(x, "a", 10)  # noqa: B010
         assert x.a == 10
 
-        del(x.a)
+        del x.a
         assert x.a == 1
 
     def test_dictproxy(self):
         v = {}
         x = MutableMappingProxy(lambda: v)
-        x['foo'] = 42
-        assert x['foo'] == 42
+        x["foo"] = 42
+        assert x["foo"] == 42
         assert len(x) == 1
-        assert 'foo' in x
-        del(x['foo'])
+        assert "foo" in x
+        del x["foo"]
         with pytest.raises(KeyError):
-            x['foo']
+            x["foo"]
         assert iter(x)
 
     def test_complex_cast(self):
-
         class Object(object):
-
             def __complex__(self):
                 return complex(10.333)
 
@@ -165,9 +156,7 @@ class test_Proxy:
         assert o.__complex__() == complex(10.333)
 
     def test_index(self):
-
         class Object(object):
-
             def __index__(self):
                 return 1
 
@@ -175,9 +164,7 @@ class test_Proxy:
         assert o.__index__() == 1
 
     def test_coerce(self):
-
         class Object(object):
-
             def __coerce__(self, other):
                 return self, other
 
@@ -185,25 +172,20 @@ class test_Proxy:
         assert o.__coerce__(3)
 
     def test_hash(self):
-
         class X(object):
-
             def __hash__(self):
                 return 1234
 
         assert hash(Proxy(lambda: X())) == 1234
 
     def test_call(self):
-
         class X(object):
-
             def __call__(self):
                 return 1234
 
         assert CallableProxy(lambda: X())() == 1234
 
     def test_context(self):
-
         class X(object):
             entered = exited = False
 
@@ -223,7 +205,6 @@ class test_Proxy:
 
     @pytest.mark.asyncio
     async def test_async_context(self):
-
         class X(object):
             entered = exited = False
 
@@ -242,9 +223,7 @@ class test_Proxy:
         assert x.exited
 
     def test_reduce(self):
-
         class X(object):
-
             def __reduce__(self):
                 return 123
 
@@ -253,9 +232,7 @@ class test_Proxy:
 
 
 class test_Proxy__cached:
-
     def test_only_evaluated_once(self):
-
         class X(object):
             attr = 123
             evals = 0
@@ -279,7 +256,6 @@ class test_Proxy__cached:
 
 
 class test_MappingProxy:
-
     @pytest.fixture()
     def orig(self):
         return {0: 1, 2: 3, 4: 5, 6: 7, 8: 9}
@@ -333,9 +309,9 @@ class test_MutableMappingProxy(test_MappingProxy):
         assert isinstance(s, MutableMapping)
 
     def test_setitem(self, *, s, orig):
-        s[0] = 'foo'
-        assert s[0] == 'foo'
-        assert orig[0] == 'foo'
+        s[0] = "foo"
+        assert s[0] == "foo"
+        assert orig[0] == "foo"
 
     def test_delitem(self, *, s, orig):
         del s[0]
@@ -371,23 +347,22 @@ class test_MutableMappingProxy(test_MappingProxy):
         assert orig[1] == 2
 
     def test_update__kwargs(self, *, s, orig):
-        s.update(foo='foo')
-        assert s['foo'] == 'foo'
-        assert orig['foo'] == 'foo'
+        s.update(foo="foo")
+        assert s["foo"] == "foo"
+        assert orig["foo"] == "foo"
 
     def test_update__dict(self, *, s, orig):
-        s.update({'foo': 'foo'})
-        assert s['foo'] == 'foo'
-        assert orig['foo'] == 'foo'
+        s.update({"foo": "foo"})
+        assert s["foo"] == "foo"
+        assert orig["foo"] == "foo"
 
     def test_update__iterable(self, *, s, orig):
-        s.update([('foo', 'foo')])
-        assert s['foo'] == 'foo'
-        assert orig['foo'] == 'foo'
+        s.update([("foo", "foo")])
+        assert s["foo"] == "foo"
+        assert orig["foo"] == "foo"
 
 
 class test_SequenceProxy:
-
     @pytest.fixture()
     def orig(self):
         return [1, 2, 3, 4, 5, 6, 7]
@@ -485,7 +460,6 @@ class test_MutableSequenceProxy(test_SequenceProxy):
 
 
 class test_SetProxy:
-
     @pytest.fixture()
     def orig(self):
         return {1, 2, 3, 4, 5, 6, 7}
@@ -587,7 +561,6 @@ class test_MutableSetProxy(test_SetProxy):
 
 
 class test_AwaitableProxy:
-
     async def asynfun(self):
         return 10
 
@@ -606,7 +579,6 @@ class test_AwaitableProxy:
 
 
 class test_AsyncIterableProxy:
-
     async def aiter(self):
         for i in range(10):
             yield i
@@ -665,7 +637,7 @@ class test_AsyncGeneratorProxy(test_AsyncIteratorProxy):
         multiplier = 2
         while 1:
             try:
-                val = (yield)
+                val = yield
                 yield val * multiplier
             except self.Double:
                 multiplier *= 2
@@ -702,7 +674,7 @@ class test_CoroutineProxy:
         multiplier = 2
         while 1:
             try:
-                val = (yield)
+                val = yield
                 yield val * multiplier
             except self.Double:
                 multiplier *= 2
@@ -735,9 +707,7 @@ class test_CoroutineProxy:
 
 
 def test_Proxy_from_source():
-
     class AbstractSource(abc.ABC):
-
         @abc.abstractmethod
         def add(self, arg):
             ...
@@ -747,7 +717,6 @@ def test_Proxy_from_source():
             ...
 
     class ConcreteSource(AbstractSource):
-
         def __init__(self, value):
             self.value = value
 
@@ -771,11 +740,9 @@ def test_Proxy_from_source():
     on_final_mock.assert_called_once_with()
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7), reason='Requires Python 3.7')
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="Requires Python 3.7")
 def test_Proxy_from_source__py37_class_argument():
-
     class AbstractSource(abc.ABC):
-
         @abc.abstractmethod
         def add(self, arg):
             ...
@@ -785,7 +752,6 @@ def test_Proxy_from_source__py37_class_argument():
             ...
 
     class ConcreteSource(AbstractSource):
-
         def __init__(self, value):
             self.value = value
 
@@ -810,17 +776,16 @@ def test_Proxy_from_source__py37_class_argument():
 
 
 def test_Proxy_from_source__no_ABCMeta():
-
     class Source:
         ...
 
     with pytest.raises(TypeError):
+
         class ProxySource(Proxy[Source]):
             __proxy_source__ = Source
 
 
 def test_Proxy_from_source__no_abstractmethods():
-
     class Source(abc.ABC):
         ...
 

@@ -7,6 +7,7 @@ want to pass the loop around.
 import asyncio
 from collections import deque
 from typing import Optional
+
 from .typing import Deque
 
 
@@ -30,10 +31,10 @@ class Event:
 
     def __repr__(self) -> str:
         res = super().__repr__()
-        extra = 'set' if self._value else 'unset'
+        extra = "set" if self._value else "unset"
         if self._waiters:
-            extra = f'{extra}, waiters:{len(self._waiters)}'
-        return f'<{res[1:-1]} [{extra}]>'
+            extra = f"{extra}, waiters:{len(self._waiters)}"
+        return f"<{res[1:-1]} [{extra}]>"
 
     def is_set(self) -> bool:
         """Return True if and only if the internal flag is true."""

@@ -1,6 +1,6 @@
 """Custom exceptions."""
 
-__all__ = ['MaxRestartsExceeded']
+__all__ = ["MaxRestartsExceeded"]
 
 
 class MaxRestartsExceeded(Exception):

@@ -21,11 +21,11 @@ from mode.utils.typing import AsyncContextManager
 from .supervisors import SupervisorStrategyT
 
 __all__ = [
-    'DiagT',
-    'ServiceT',
+    "DiagT",
+    "ServiceT",
 ]
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 AsyncFun = Union[Awaitable[T], Coroutine[Any, Any, T]]
 
@@ -37,7 +37,7 @@ class DiagT(abc.ABC):
     last_transition: MutableMapping[str, float]
 
     @abc.abstractmethod
-    def __init__(self, service: 'ServiceT') -> None:
+    def __init__(self, service: "ServiceT") -> None:
         ...
 
     @abc.abstractmethod
@@ -68,17 +68,17 @@ class ServiceT(AsyncContextManager):
     supervisor: Optional[SupervisorStrategyT] = None
 
     @abc.abstractmethod
-    def __init__(self, *,
-                 beacon: NodeT = None,
-                 loop: asyncio.AbstractEventLoop = None) -> None:
+    def __init__(
+        self, *, beacon: NodeT = None, loop: asyncio.AbstractEventLoop = None
+    ) -> None:
         ...
 
     @abc.abstractmethod
-    def add_dependency(self, service: 'ServiceT') -> 'ServiceT':
+    def add_dependency(self, service: "ServiceT") -> "ServiceT":
         ...
 
     @abc.abstractmethod
-    async def add_runtime_dependency(self, service: 'ServiceT') -> 'ServiceT':
+    async def add_runtime_dependency(self, service: "ServiceT") -> "ServiceT":
         ...
 
     @abc.abstractmethod

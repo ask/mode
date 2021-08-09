@@ -3,13 +3,13 @@
 import typing
 
 __all__ = [
-    'AsyncContextManager',
-    'AsyncGenerator',
-    'ChainMap',
-    'Counter',
-    'Deque',
-    'NoReturn',
-    'Protocol',
+    "AsyncContextManager",
+    "AsyncGenerator",
+    "ChainMap",
+    "Counter",
+    "Deque",
+    "NoReturn",
+    "Protocol",
 ]
 
 if typing.TYPE_CHECKING:

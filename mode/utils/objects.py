@@ -29,7 +29,22 @@ from typing import (
     TypeVar,
     cast,
 )
-from typing import _eval_type, _type_check  # type: ignore
+
+try:
+    from typing import _eval_type  # type: ignore
+except ImportError:
+
+    def _eval_type(t, globalns, localns, recursive_guard=frozenset()):  # type: ignore
+        return t
+
+
+try:
+    from typing import _type_check  # type: ignore
+except ImportError:
+
+    def _type_check(arg, msg, is_argument=True, module=None):  # type: ignore
+        return arg
+
 
 try:
     from typing import _ClassVar  # type: ignore
@@ -39,12 +54,16 @@ except ImportError:  # pragma: no cover
 
     def _is_class_var(x: Any) -> bool:  # noqa
         return isinstance(x, _GenericAlias) and x.__origin__ is ClassVar
+
+
 else:  # pragma: no cover
     # CPython 3.6
     def _is_class_var(x: Any) -> bool:
         return type(x) is _ClassVar
 
+
 if typing.TYPE_CHECKING:
+
     class ForwardRef:  # noqa
         __forward_arg__: str
         __forward_evaluated__: bool
@@ -53,6 +72,8 @@ if typing.TYPE_CHECKING:
 
         def __init__(self, arg: str, is_argument: bool = True) -> None:
             ...
+
+
 else:
     try:
         # CPython 3.7
@@ -62,48 +83,50 @@ else:
         from typing import _ForwardRef as ForwardRef
 
 __all__ = [
-    'FieldMapping',
-    'DefaultsMapping',
-    'Unordered',
-    'KeywordReduce',
-    'InvalidAnnotation',
-    'abc_compatible_with_init_subclass',
-    'qualname',
-    'shortname',
-    'canoname',
-    'canonshortname',
-    'annotations',
-    'eval_type',
-    'iter_mro_reversed',
-    'guess_polymorphic_type',
-    'cached_property',
-    'label',
-    'shortlabel',
+    "FieldMapping",
+    "DefaultsMapping",
+    "Unordered",
+    "KeywordReduce",
+    "InvalidAnnotation",
+    "abc_compatible_with_init_subclass",
+    "qualname",
+    "shortname",
+    "canoname",
+    "canonshortname",
+    "annotations",
+    "eval_type",
+    "iter_mro_reversed",
+    "guess_polymorphic_type",
+    "cached_property",
+    "label",
+    "shortlabel",
 ]
 
 # Workaround for https://bugs.python.org/issue29581
 try:
+
     @typing.no_type_check  # type: ignore
     class _InitSubclassCheck(metaclass=abc.ABCMeta):
         ident: int
 
-        def __init_subclass__(self,
-                              *args: Any,
-                              ident: int = 808,
-                              **kwargs: Any) -> None:
+        def __init_subclass__(
+            self, *args: Any, ident: int = 808, **kwargs: Any
+        ) -> None:
             self.ident = ident
             super().__init__(*args, **kwargs)
 
     @typing.no_type_check  # type: ignore
     class _UsingKwargsInNew(_InitSubclassCheck, ident=909):
         ...
+
+
 except TypeError:
     abc_compatible_with_init_subclass = False
 else:
     abc_compatible_with_init_subclass = True
 
-_T = TypeVar('_T')
-RT = TypeVar('RT')
+_T = TypeVar("_T")
+RT = TypeVar("RT")
 
 #: Mapping of attribute name to attribute type.
 FieldMapping = Mapping[str, Type]
@@ -153,7 +176,7 @@ class Unordered(Generic[_T]):
         return True
 
     def __repr__(self) -> str:
-        return f'<{type(self).__name__}: {self.value!r}>'
+        return f"<{type(self).__name__}: {self.value!r}>"
 
 
 def _restore_from_keywords(typ: Type, kwargs: Dict) -> Any:
@@ -206,64 +229,65 @@ class KeywordReduce:
 
 def qualname(obj: Any) -> str:
     """Get object qualified name."""
-    if not hasattr(obj, '__name__') and hasattr(obj, '__class__'):
+    if not hasattr(obj, "__name__") and hasattr(obj, "__class__"):
         obj = obj.__class__
-    name = getattr(obj, '__qualname__', obj.__name__)
-    return '.'.join((obj.__module__, name))
+    name = getattr(obj, "__qualname__", obj.__name__)
+    return ".".join((obj.__module__, name))
 
 
 def shortname(obj: Any) -> str:
     """Get object name (non-qualified)."""
-    if not hasattr(obj, '__name__') and hasattr(obj, '__class__'):
+    if not hasattr(obj, "__name__") and hasattr(obj, "__class__"):
         obj = obj.__class__
-    return '.'.join((obj.__module__, obj.__name__))
+    return ".".join((obj.__module__, obj.__name__))
 
 
 def canoname(obj: Any, *, main_name: str = None) -> str:
     """Get qualname of obj, trying to resolve the real name of ``__main__``."""
     name = qualname(obj)
-    parts = name.split('.')
-    if parts[0] == '__main__':
-        return '.'.join([main_name or _detect_main_name()] + parts[1:])
+    parts = name.split(".")
+    if parts[0] == "__main__":
+        return ".".join([main_name or _detect_main_name()] + parts[1:])
     return name
 
 
 def canonshortname(obj: Any, *, main_name: str = None) -> str:
     """Get non-qualified name of obj, resolve real name of ``__main__``."""
     name = shortname(obj)
-    parts = name.split('.')
-    if parts[0] == '__main__':
-        return '.'.join([main_name or _detect_main_name()] + parts[1:])
+    parts = name.split(".")
+    if parts[0] == "__main__":
+        return ".".join([main_name or _detect_main_name()] + parts[1:])
     return name
 
 
 def _detect_main_name() -> str:  # pragma: no cover
     try:
-        filename = sys.modules['__main__'].__file__
+        filename = sys.modules["__main__"].__file__
     except (AttributeError, KeyError):  # ipython/REPL
-        return '__main__'
+        return "__main__"
     else:
         path = Path(filename).absolute()
         node = path.parent
         seen = []
         while node:
-            if (node / '__init__.py').exists():
+            if (node / "__init__.py").exists():
                 seen.append(node.stem)
                 node = node.parent
             else:
                 break
-        return '.'.join(seen + [path.stem])
+        return ".".join(seen + [path.stem])
 
 
-def annotations(cls: Type,
-                *,
-                stop: Type = object,
-                invalid_types: Set = None,
-                alias_types: Mapping = None,
-                skip_classvar: bool = False,
-                globalns: Dict[str, Any] = None,
-                localns: Dict[str, Any] = None) -> Tuple[
-                    FieldMapping, DefaultsMapping]:
+def annotations(
+    cls: Type,
+    *,
+    stop: Type = object,
+    invalid_types: Set = None,
+    alias_types: Mapping = None,
+    skip_classvar: bool = False,
+    globalns: Dict[str, Any] = None,
+    localns: Dict[str, Any] = None,
+) -> Tuple[FieldMapping, DefaultsMapping]:
     """Get class field definition in MRO order.
 
     Arguments:
@@ -311,25 +335,28 @@ def annotations(cls: Type,
     for subcls in iter_mro_reversed(cls, stop=stop):
         defaults.update(subcls.__dict__)
         with suppress(AttributeError):
-            fields.update(local_annotations(
-                subcls,
-                invalid_types=invalid_types,
-                alias_types=alias_types,
-                skip_classvar=skip_classvar,
-                globalns=globalns,
-                localns=localns,
-            ))
+            fields.update(
+                local_annotations(
+                    subcls,
+                    invalid_types=invalid_types,
+                    alias_types=alias_types,
+                    skip_classvar=skip_classvar,
+                    globalns=globalns,
+                    localns=localns,
+                )
+            )
     return fields, defaults
 
 
 def local_annotations(
-        cls: Type,
-        *,
-        invalid_types: Set = None,
-        alias_types: Mapping = None,
-        skip_classvar: bool = False,
-        globalns: Dict[str, Any] = None,
-        localns: Dict[str, Any] = None) -> Iterable[Tuple[str, Type]]:
+    cls: Type,
+    *,
+    invalid_types: Set = None,
+    alias_types: Mapping = None,
+    skip_classvar: bool = False,
+    globalns: Dict[str, Any] = None,
+    localns: Dict[str, Any] = None,
+) -> Iterable[Tuple[str, Type]]:
     return _resolve_refs(
         cls.__annotations__,
         globalns if globalns is not None else _get_globalns(cls),
@@ -340,12 +367,14 @@ def local_annotations(
     )
 
 
-def _resolve_refs(d: Dict[str, Any],
-                  globalns: Dict[str, Any] = None,
-                  localns: Dict[str, Any] = None,
-                  invalid_types: Set = None,
-                  alias_types: Mapping = None,
-                  skip_classvar: bool = False) -> Iterable[Tuple[str, Type]]:
+def _resolve_refs(
+    d: Dict[str, Any],
+    globalns: Dict[str, Any] = None,
+    localns: Dict[str, Any] = None,
+    invalid_types: Set = None,
+    alias_types: Mapping = None,
+    skip_classvar: bool = False,
+) -> Iterable[Tuple[str, Type]]:
     invalid_types = invalid_types or set()
     alias_types = alias_types or {}
     for k, v in d.items():
@@ -356,11 +385,13 @@ def _resolve_refs(d: Dict[str, Any],
             yield k, v
 
 
-def eval_type(typ: Any,
-              globalns: Dict[str, Any] = None,
-              localns: Dict[str, Any] = None,
-              invalid_types: Set = None,
-              alias_types: Mapping = None) -> Type:
+def eval_type(
+    typ: Any,
+    globalns: Dict[str, Any] = None,
+    localns: Dict[str, Any] = None,
+    invalid_types: Set = None,
+    alias_types: Mapping = None,
+) -> Type:
     """Convert (possible) string annotation to actual type.
 
     Examples:
@@ -379,9 +410,9 @@ def eval_type(typ: Any,
     return alias_types.get(typ, typ)
 
 
-def _ForwardRef_safe_eval(ref: ForwardRef,
-                          globalns: Dict[str, Any] = None,
-                          localns: Dict[str, Any] = None) -> Type:
+def _ForwardRef_safe_eval(
+    ref: ForwardRef, globalns: Dict[str, Any] = None, localns: Dict[str, Any] = None
+) -> Type:
     # On 3.6/3.7 ForwardRef._evaluate crashes if str references ClassVar
     if not ref.__forward_evaluated__:
         if globalns is None and localns is None:
@@ -390,10 +421,9 @@ def _ForwardRef_safe_eval(ref: ForwardRef,
             globalns = localns
         elif localns is None:
             localns = globalns
-        val = eval(ref.__forward_code__, globalns, localns)
+        val = eval(ref.__forward_code__, globalns, localns)  # noqa: S307
         if not _is_class_var(val):
-            val = _type_check(val,
-                              'Forward references must evaluate to types.')
+            val = _type_check(val, "Forward references must evaluate to types.")
         ref.__forward_value__ = val
         ref.__forward_evaluated__ = True
     return ref.__forward_value__
@@ -448,23 +478,22 @@ def is_union(typ: Type) -> bool:
     name = typ.__class__.__name__
     return any(
         [
-            name == '_UnionGenericAlias',                                # 3.9
-            name == '_GenericAlias' and typ.__origin__ is typing.Union,  # 3.7
-            name == '_Union',                                            # 3.6
+            name == "_UnionGenericAlias",  # 3.9
+            name == "_GenericAlias" and typ.__origin__ is typing.Union,  # 3.7
+            name == "_Union",  # 3.6
         ],
     )
 
 
 def is_optional(typ: Type) -> bool:
     if is_union(typ):
-        args = getattr(typ, '__args__', ())
+        args = getattr(typ, "__args__", ())
         return any([True for arg in args if arg is None or arg is type(None)])  # noqa
     return False
 
 
-def _remove_optional(typ: Type, *,
-                     find_origin: bool = False) -> Tuple[List[Any], Type]:
-    args = getattr(typ, '__args__', ())
+def _remove_optional(typ: Type, *, find_origin: bool = False) -> Tuple[List[Any], Type]:
+    args = getattr(typ, "__args__", ())
     if is_union(typ):
         # 3.7+: Optional[List[int]] -> Union[List[int], NoneType]
         # 3.6:  Optional[List[int]] -> Union[List[int], type(None)]
@@ -476,17 +505,17 @@ def _remove_optional(typ: Type, *,
             if arg is None or arg is type(None):  # noqa
                 found_None = True
             else:
-                union_type_args = getattr(arg, '__args__', ())
+                union_type_args = getattr(arg, "__args__", ())
                 union_type = arg
                 if find_origin:
                     if union_type is not None and sys.version_info.minor == 6:
                         union_type = _py36_maybe_unwrap_GenericMeta(union_type)
                     else:
-                        union_type = getattr(arg, '__origin__', arg)
+                        union_type = getattr(arg, "__origin__", arg)
         if union_type is not None and found_None:
             return cast(List, union_type_args), union_type
     if find_origin:
-        if hasattr(typ, '__origin__'):
+        if hasattr(typ, "__origin__"):
             # List[int] -> ((int,), list)
             typ = _py36_maybe_unwrap_GenericMeta(typ)
 
@@ -494,20 +523,21 @@ def _remove_optional(typ: Type, *,
 
 
 def _py36_maybe_unwrap_GenericMeta(typ: Type) -> Type:
-    if typ.__class__.__name__ == 'GenericMeta':  # Py3.6
+    if typ.__class__.__name__ == "GenericMeta":  # Py3.6
         orig_bases = typ.__orig_bases__
         if orig_bases and orig_bases[0] in (list, tuple, dict, set):
             return cast(Type, orig_bases[0])
-    return cast(Type, getattr(typ, '__origin__', typ))
+    return cast(Type, getattr(typ, "__origin__", typ))
 
 
 def guess_polymorphic_type(
-        typ: Type,
-        *,
-        set_types: Tuple[Type, ...] = SET_TYPES,
-        list_types: Tuple[Type, ...] = LIST_TYPES,
-        tuple_types: Tuple[Type, ...] = TUPLE_TYPES,
-        dict_types: Tuple[Type, ...] = DICT_TYPES) -> Tuple[Type, Type]:
+    typ: Type,
+    *,
+    set_types: Tuple[Type, ...] = SET_TYPES,
+    list_types: Tuple[Type, ...] = LIST_TYPES,
+    tuple_types: Tuple[Type, ...] = TUPLE_TYPES,
+    dict_types: Tuple[Type, ...] = DICT_TYPES,
+) -> Tuple[Type, Type]:
     """Try to find the polymorphic and concrete type of an abstract type.
 
     Returns tuple of ``(polymorphic_type, concrete_type)``.
@@ -536,7 +566,7 @@ def guess_polymorphic_type(
         elif issubclass(typ, dict_types):
             # Dict[_, x]
             return dict, args[1] if args and len(args) > 1 else Any
-    raise TypeError(f'Not a generic type: {typ!r}')
+    raise TypeError(f"Not a generic type: {typ!r}")
 
 
 guess_concrete_type = guess_polymorphic_type  # XXX compat
@@ -548,28 +578,32 @@ def _unary_type_arg(args: List[Type]) -> Any:
 
 def label(s: Any) -> str:
     """Return the name of an object as string."""
-    return _label('label', s)
+    return _label("label", s)
 
 
 def shortlabel(s: Any) -> str:
     """Return the shortened name of an object as string."""
-    return _label('shortlabel', s)
+    return _label("shortlabel", s)
 
 
-def _label(label_attr: str, s: Any,
-           pass_types: Tuple[Type, ...] = (str,),
-           str_types: Tuple[Type, ...] = (str, int, float, Decimal)) -> str:
+def _label(
+    label_attr: str,
+    s: Any,
+    pass_types: Tuple[Type, ...] = (str,),
+    str_types: Tuple[Type, ...] = (str, int, float, Decimal),
+) -> str:
     if isinstance(s, pass_types):
         return cast(str, s)
     elif isinstance(s, str_types):
         return str(s)
     return str(
-        getattr(s, label_attr, None) or
-        getattr(s, 'name', None) or
-        getattr(s, '__qualname__', None) or
-        getattr(s, '__name__', None) or
-        getattr(type(s), '__qualname__', None) or
-        type(s).__name__)
+        getattr(s, label_attr, None)
+        or getattr(s, "name", None)
+        or getattr(s, "__qualname__", None)
+        or getattr(s, "__name__", None)
+        or getattr(type(s), "__qualname__", None)
+        or type(s).__name__
+    )
 
 
 class cached_property(Generic[RT]):
@@ -598,12 +632,14 @@ class cached_property(Generic[RT]):
                     print(f'Connection {value!r} deleted')
     """
 
-    def __init__(self,
-                 fget: Callable[[Any], RT],
-                 fset: Callable[[Any, RT], RT] = None,
-                 fdel: Callable[[Any, RT], None] = None,
-                 doc: str = None,
-                 class_attribute: str = None) -> None:
+    def __init__(
+        self,
+        fget: Callable[[Any], RT],
+        fset: Callable[[Any, RT], RT] = None,
+        fdel: Callable[[Any, RT], None] = None,
+        doc: str = None,
+        class_attribute: str = None,
+    ) -> None:
         self.__get: Callable[[Any], RT] = fget
         self.__set: Optional[Callable[[Any, RT], RT]] = fset
         self.__del: Optional[Callable[[Any, RT], None]] = fdel
@@ -615,9 +651,7 @@ class cached_property(Generic[RT]):
     def is_set(self, obj: Any) -> bool:
         return self.__name__ in obj.__dict__
 
-    def __get__(self,
-                obj: Any,
-                type: Type = None) -> RT:
+    def __get__(self, obj: Any, type: Type = None) -> RT:
         if obj is None:
             if type is not None and self.class_attribute:
                 return cast(RT, getattr(type, self.class_attribute))
@@ -638,8 +672,8 @@ class cached_property(Generic[RT]):
         if self.__del is not None and value is not _sentinel:
             self.__del(obj, value)
 
-    def setter(self, fset: Callable[[Any, RT], RT]) -> 'cached_property':
+    def setter(self, fset: Callable[[Any, RT], RT]) -> "cached_property":
         return self.__class__(self.__get, fset, self.__del)
 
-    def deleter(self, fdel: Callable[[Any, RT], None]) -> 'cached_property':
+    def deleter(self, fdel: Callable[[Any, RT], None]) -> "cached_property":
         return self.__class__(self.__get, self.__set, fdel)

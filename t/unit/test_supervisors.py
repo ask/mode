@@ -1,5 +1,7 @@
 import asyncio
+
 import pytest
+
 from mode.exceptions import MaxRestartsExceeded
 from mode.supervisors import (
     CrashingSupervisor,
@@ -12,7 +14,6 @@ from mode.utils.mocks import AsyncContextManagerMock, AsyncMock, Mock, patch
 
 
 class test_SupervisorStrategy:
-
     @pytest.fixture()
     def service(self):
         return Mock(stop=AsyncMock())
@@ -27,13 +28,13 @@ class test_SupervisorStrategy:
         assert service not in sup._services
 
     def test_insert(self, *, sup, service):
-        s1 = Mock(name='s1')
-        s2 = Mock(name='s2')
-        s3 = Mock(name='s3')
-        s4 = Mock(name='s4')
+        s1 = Mock(name="s1")
+        s2 = Mock(name="s2")
+        s3 = Mock(name="s3")
+        s4 = Mock(name="s4")
         sup._services = [s1, s2, s3, s4]
 
-        s5 = Mock(name='s5')
+        s5 = Mock(name="s5")
         sup.insert(2, s5)
         assert sup._services == [s1, s2, s5, s4]
 
@@ -48,11 +49,13 @@ class test_SupervisorStrategy:
     @pytest.mark.asyncio
     async def test__supervisor__second_stop(self, *, sup, service):
         service.started = False
-        with patch('asyncio.wait_for', AsyncMock()) as wait_for:
+        with patch("asyncio.wait_for", AsyncMock()) as wait_for:
+
             async def on_wait_for(*args, **kwargs):
                 if wait_for.call_count >= 2:
                     sup._stopped.set()
                 raise asyncio.TimeoutError()
+
             wait_for.coro.side_effect = on_wait_for
 
             sup.start_services = AsyncMock()
@@ -67,7 +70,8 @@ class test_SupervisorStrategy:
         sup._services = [
             Mock(stop=AsyncMock()),
             Mock(stop=AsyncMock()),
-            Mock(stop=AsyncMock())]
+            Mock(stop=AsyncMock()),
+        ]
         sup._services[0].started = False
         await sup.on_stop()
         for s in sup._services[1:]:
@@ -82,7 +86,7 @@ class test_SupervisorStrategy:
     @pytest.mark.asyncio
     async def test_on_stop__raises_exc(self, *, sup, service):
         sup.log.exception = Mock()
-        service.stop.coro.side_effect = KeyError('foo')
+        service.stop.coro.side_effect = KeyError("foo")
         await sup.on_stop()
         sup.log.exception.assert_called_once()
 
@@ -107,14 +111,14 @@ class test_SupervisorStrategy:
     @pytest.mark.asyncio
     async def test_restart_service__replacement(self, *, sup):
         sup._bucket = AsyncContextManagerMock()
-        s1 = Mock(name='s1')
-        s2 = Mock(name='s2')
-        s3 = Mock(name='s3')
+        s1 = Mock(name="s1")
+        s2 = Mock(name="s2")
+        s3 = Mock(name="s3")
 
         sup._services = [s1, s2, s3]
         sup._index = {s: i for i, s in enumerate(sup._services)}
 
-        s4 = Mock(name='s4')
+        s4 = Mock(name="s4")
         s4.supervisor = None
         sup.replacement = AsyncMock()
         sup.replacement.coro.return_value = s4
@@ -129,7 +133,6 @@ class test_SupervisorStrategy:
 
 
 class test_OneForAllSupervisor:
-
     @pytest.fixture()
     def sup(self):
         return OneForAllSupervisor(Mock())
@@ -140,7 +143,6 @@ class test_OneForAllSupervisor:
 
 
 class test_ForfeitOneForOneSupervisor:
-
     @pytest.fixture()
     def sup(self):
         return ForfeitOneForOneSupervisor(Mock())
@@ -151,7 +153,6 @@ class test_ForfeitOneForOneSupervisor:
 
 
 class test_ForfeitOneForAllSupervisor:
-
     @pytest.fixture()
     def sup(self):
         return ForfeitOneForAllSupervisor(Mock())
@@ -162,7 +163,6 @@ class test_ForfeitOneForAllSupervisor:
 
 
 class test_CrashingSupervisor:
-
     @pytest.fixture()
     def sup(self):
         return CrashingSupervisor(Mock())

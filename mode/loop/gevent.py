@@ -1,14 +1,15 @@
 """Enable :pypi:`gevent` support for :mod:`asyncio`."""
 import os
 import warnings
-os.environ['GEVENT_LOOP'] = 'mode.loop._gevent_loop.Loop'
+
+os.environ["GEVENT_LOOP"] = "mode.loop._gevent_loop.Loop"
 try:
     import gevent
     import gevent.monkey
 except ImportError:
     raise ImportError(
-        'Gevent loop requires the gevent library: '
-        'pip install gevent') from None
+        "Gevent loop requires the gevent library: " "pip install gevent"
+    ) from None
 gevent.monkey.patch_all()
 from typing import Optional, cast  # noqa: F401,E402
 
@@ -20,8 +21,7 @@ else:
     try:
         import psycogreen.gevent
     except ImportError:
-        warnings.warn(
-            'psycopg2 installed, but not psycogreen: pg will be blocking')
+        warnings.warn("psycopg2 installed, but not psycogreen: pg will be blocking")
     else:
         psycogreen.gevent.patch_psycopg()
 
@@ -30,12 +30,13 @@ try:
 except ImportError:
     raise
     raise ImportError(
-        'Gevent loop requires the aiogevent library: '
-        'pip install aiogevent') from None
+        "Gevent loop requires the aiogevent library: " "pip install aiogevent"
+    ) from None
 
 import asyncio  # noqa: E402,I100,I202
+
 if asyncio._get_running_loop() is not None:
-    raise RuntimeError('Event loop created before importing gevent loop!')
+    raise RuntimeError("Event loop created before importing gevent loop!")
 
 
 class Policy(aiogevent.EventLoopPolicy):  # type: ignore

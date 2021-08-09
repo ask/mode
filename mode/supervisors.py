@@ -17,11 +17,11 @@ from .utils.logging import get_logger
 from .utils.times import Bucket, Seconds, rate_limit, want_seconds
 
 __all__ = [
-    'ForfeitOneForAllSupervisor',
-    'ForfeitOneForOneSupervisor',
-    'SupervisorStrategy',
-    'OneForOneSupervisor',
-    'OneForAllSupervisor',
+    "ForfeitOneForAllSupervisor",
+    "ForfeitOneForOneSupervisor",
+    "SupervisorStrategy",
+    "OneForOneSupervisor",
+    "OneForAllSupervisor",
 ]
 
 logger = get_logger(__name__)
@@ -45,14 +45,15 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
     # This is needed for Faust and the @app.agent(concurrency=n) feature.
     _index: Dict[ServiceT, int]
 
-    def __init__(self,
-                 *services: ServiceT,
-                 max_restarts: Seconds = 100.0,
-                 over: Seconds = 1.0,
-                 raises: Type[BaseException] = MaxRestartsExceeded,
-                 replacement: Callable[[ServiceT, int],
-                                       Awaitable[ServiceT]] = None,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *services: ServiceT,
+        max_restarts: Seconds = 100.0,
+        over: Seconds = 1.0,
+        raises: Type[BaseException] = MaxRestartsExceeded,
+        replacement: Callable[[ServiceT, int], Awaitable[ServiceT]] = None,
+        **kwargs: Any,
+    ) -> None:
         self.max_restarts = want_seconds(max_restarts)
         self.over = want_seconds(over)
         self.raises = raises
@@ -150,8 +151,7 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
                 except MemoryError:
                     raise
                 except Exception as exc:
-                    self.log.exception(
-                        'Unable to stop service %r: %r', service, exc)
+                    self.log.exception("Unable to stop service %r: %r", service, exc)
 
     async def start_services(self, services: List[ServiceT]) -> None:
         for service in services:
@@ -172,9 +172,12 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
         )
 
     async def restart_service(self, service: ServiceT) -> None:
-        self.log.info('Restarting dead %r! Last crash reason: %r',
-                      service, service.crash_reason,
-                      exc_info=1)
+        self.log.info(
+            "Restarting dead %r! Last crash reason: %r",
+            service,
+            service.crash_reason,
+            exc_info=1,
+        )
         try:
             async with self._bucket:
                 if self.replacement:
@@ -185,12 +188,12 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
                 else:
                     await service.restart()
         except MaxRestartsExceeded as exc:
-            self.log.warning('Max restarts exceeded: %r', exc, exc_info=1)
+            self.log.warning("Max restarts exceeded: %r", exc, exc_info=1)
             raise SystemExit(1)
 
     @property
     def label(self) -> str:
-        return f'{type(self).__name__}: ({len(self._services)}@{id(self):#x})'
+        return f"{type(self).__name__}: ({len(self._services)}@{id(self):#x})"
 
 
 class OneForOneSupervisor(SupervisorStrategy):
@@ -216,7 +219,7 @@ class ForfeitOneForOneSupervisor(SupervisorStrategy):
 
     async def restart_services(self, services: List[ServiceT]) -> None:
         if services:
-            self.log.critical('Giving up on crashed services: %r', services)
+            self.log.critical("Giving up on crashed services: %r", services)
             await self.stop_services(services)
 
 
@@ -226,7 +229,7 @@ class ForfeitOneForAllSupervisor(SupervisorStrategy):
     async def restart_services(self, services: List[ServiceT]) -> None:
         if services:
             self.log.critical(
-                'Giving up on all services in group because %r crashed',
+                "Giving up on all services in group because %r crashed",
                 services,
             )
             await self.stop_services(self._services)

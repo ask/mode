@@ -1,17 +1,14 @@
 import asyncio
 from time import monotonic
+
 import pytest
+
 from mode.utils.futures import done_future
 from mode.utils.mocks import Mock
-from mode.utils.queues import (
-    FlowControlEvent,
-    FlowControlQueue,
-    ThrowableQueue,
-)
+from mode.utils.queues import FlowControlEvent, FlowControlQueue, ThrowableQueue
 
 
 class test_FlowControlEvent:
-
     def test_constructor(self):
         assert not FlowControlEvent(initially_suspended=True).is_active()
         assert FlowControlEvent(initially_suspended=False).is_active()
@@ -20,12 +17,11 @@ class test_FlowControlEvent:
         assert FlowControlEvent().loop is None
 
     def test_loop__custom(self):
-        loop = Mock(name='loop')
+        loop = Mock(name="loop")
         assert FlowControlEvent(loop=loop).loop is loop
 
 
 class test_FlowControlQueue:
-
     @pytest.mark.asyncio
     async def test_suspend_resume(self):
         flow_control = FlowControlEvent()
@@ -80,7 +76,6 @@ class test_FlowControlQueue:
 
 
 class test_ThrowableQueue:
-
     @pytest.mark.asyncio
     async def test_get__throw_first_in_buffer(self):
         flow_control = FlowControlEvent(initially_suspended=False)
@@ -92,12 +87,12 @@ class test_ThrowableQueue:
         assert await queue.get() == 2
         await queue.put(3)
         await queue.put(4)
-        await queue.throw(KeyError('foo'))
+        await queue.throw(KeyError("foo"))
         with pytest.raises(KeyError):
             await queue.get()
         assert await queue.get() == 3
         assert await queue.get() == 4
-        await queue.throw(ValueError('bar'))
+        await queue.throw(ValueError("bar"))
         with pytest.raises(ValueError):
             await queue.get()
         queue.clear()
@@ -113,12 +108,12 @@ class test_ThrowableQueue:
         assert queue.get_nowait() == 2
         await queue.put(3)
         await queue.put(4)
-        await queue.throw(KeyError('foo'))
+        await queue.throw(KeyError("foo"))
         with pytest.raises(KeyError):
             queue.get_nowait()
         assert queue.get_nowait() == 3
         assert queue.get_nowait() == 4
-        await queue.throw(ValueError('bar'))
+        await queue.throw(ValueError("bar"))
         with pytest.raises(ValueError):
             queue.get_nowait()
         queue.clear()

@@ -1,9 +1,11 @@
 from typing import Any
 from weakref import ref
+
+import pytest
+
 from mode import label
 from mode.signals import Signal, SignalT, SyncSignal, SyncSignalT
 from mode.utils.mocks import Mock
-import pytest
 
 
 class X:
@@ -83,19 +85,19 @@ def test_sync_signals():
 
     @x.on_stopped.connect
     def my_on_stopped(self, code: int, reason: str, **kwargs: Any) -> None:
-        assert kwargs['signal'] == x.on_stopped
+        assert kwargs["signal"] == x.on_stopped
         on_stopped_mock(self, code, reason)
 
     @x.on_started.connect
     def my_on_started(self, **kwargs: Any) -> None:
-        assert kwargs['signal'] == x.on_started
+        assert kwargs["signal"] == x.on_started
         on_started_mock(self)
 
     x.on_started.send()
     on_started_mock.assert_called_once_with(x)
 
-    x.on_stopped.send(303, 'sorry not sorry')
-    on_stopped_mock.assert_called_once_with(x, 303, 'sorry not sorry')
+    x.on_stopped.send(303, "sorry not sorry")
+    on_stopped_mock.assert_called_once_with(x, 303, "sorry not sorry")
     assert on_started_mock.call_count == 1
 
     assert x.on_started.ident
@@ -127,12 +129,12 @@ def test_sync_signals():
     sig4 = sig3.with_default_sender(new_sender2)
     assert sig4.default_sender == new_sender2
 
-    sig4.name = ''
-    sig4.__set_name__(sig3, 'foo')
-    assert sig4.name == 'foo'
+    sig4.name = ""
+    sig4.__set_name__(sig3, "foo")
+    assert sig4.name == "foo"
     assert sig4.owner == sig3
-    sig4.__set_name__(sig2, 'bar')
-    assert sig4.name == 'foo'
+    sig4.__set_name__(sig2, "bar")
+    assert sig4.name == "foo"
     assert sig4.owner == sig2
 
     sig4.default_sender = None
@@ -158,14 +160,13 @@ def test_signal_name():
         sig = Signal()
         sig2 = SyncSignal()
 
-    assert X.sig.name == 'sig'
+    assert X.sig.name == "sig"
     assert X.sig.owner is X
-    assert X.sig2.name == 'sig2'
+    assert X.sig2.name == "sig2"
     assert X.sig2.owner is X
 
 
 class test_BaseSignal:
-
     @pytest.fixture()
     def sig(self):
         return Signal()
@@ -224,7 +225,6 @@ class test_BaseSignal:
         return receivers, alive_refs, dead_refs
 
     def test__is_alive(self, sig):
-
         class Object:
             value = None
 
@@ -234,9 +234,7 @@ class test_BaseSignal:
         assert sig._is_alive(ref(x)) == (True, x)
 
     def test_create_ref_methods(self, sig):
-
         class X:
-
             def foo(self, **kwargs):
                 return 42
 

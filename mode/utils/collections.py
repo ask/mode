@@ -48,28 +48,33 @@ else:
     try:
         from django.utils.functional import LazyObject, LazySettings
     except ImportError:
-        class LazyObject: ...  # noqa
-        class LazySettings: ...  # noqa
+
+        class LazyObject:
+            ...  # noqa
+
+        class LazySettings:
+            ...  # noqa
+
 
 __all__ = [
-    'Heap',
-    'FastUserDict',
-    'FastUserSet',
-    'FastUserList',
-    'LRUCache',
-    'ManagedUserDict',
-    'ManagedUserSet',
-    'AttributeDict',
-    'AttributeDictMixin',
-    'DictAttribute',
-    'force_mapping',
+    "Heap",
+    "FastUserDict",
+    "FastUserSet",
+    "FastUserList",
+    "LRUCache",
+    "ManagedUserDict",
+    "ManagedUserSet",
+    "AttributeDict",
+    "AttributeDictMixin",
+    "DictAttribute",
+    "force_mapping",
 ]
 
-T = TypeVar('T')
-T_co = TypeVar('T_co', covariant=True)
-KT = TypeVar('KT')
-VT = TypeVar('VT')
-_S = TypeVar('_S')
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
+KT = TypeVar("KT")
+VT = TypeVar("VT")
+_S = TypeVar("_S")
 
 _Setlike = Union[AbstractSet[T], Iterable[T]]
 
@@ -90,7 +95,8 @@ class Heap(MutableSequence[T]):
             return heappop(self.data)
         else:
             raise NotImplementedError(
-                'Heap can only pop index 0, please use h.data.pop(index)')
+                "Heap can only pop index 0, please use h.data.pop(index)"
+            )
 
     def push(self, item: T) -> None:
         """Push item onto heap, maintaining the heap invariant."""
@@ -189,15 +195,13 @@ class FastUserDict(MutableMapping[KT, VT]):
     data: MutableMapping[KT, VT]
 
     @classmethod
-    def fromkeys(cls,
-                 iterable: Iterable[KT],
-                 value: VT = None) -> 'FastUserDict':
+    def fromkeys(cls, iterable: Iterable[KT], value: VT = None) -> "FastUserDict":
         d = cls()
         d.update({k: value for k in iterable})
         return d
 
     def __getitem__(self, key: KT) -> VT:
-        if not hasattr(self, '__missing__'):
+        if not hasattr(self, "__missing__"):
             return self.data[key]
         if key in self.data:
             return self.data[key]
@@ -322,28 +326,26 @@ class FastUserSet(MutableSet[T]):
         return self.data.issuperset(other)  # type: ignore
 
     def symmetric_difference(self, other: _Setlike[T]) -> MutableSet[T]:
-        return cast(
-            MutableSet,
-            self.data.symmetric_difference(other))  # type: ignore
+        return cast(MutableSet, self.data.symmetric_difference(other))  # type: ignore
 
     def union(self, other: _Setlike[T]) -> MutableSet[T]:
         return cast(MutableSet, self.data.union(other))  # type: ignore
 
     # -- Mutable Methods --
 
-    def __iand__(self, other: AbstractSet[Any]) -> 'FastUserSet':
+    def __iand__(self, other: AbstractSet[Any]) -> "FastUserSet":
         self.data.__iand__(other)
         return self
 
-    def __ior__(self, other: AbstractSet[_S]) -> 'FastUserSet':
+    def __ior__(self, other: AbstractSet[_S]) -> "FastUserSet":
         self.data.__ior__(other)
         return self
 
-    def __isub__(self, other: AbstractSet[Any]) -> 'FastUserSet[T]':
+    def __isub__(self, other: AbstractSet[Any]) -> "FastUserSet[T]":
         self.data.__isub__(other)
         return self
 
-    def __ixor__(self, other: AbstractSet[_S]) -> 'FastUserSet':
+    def __ixor__(self, other: AbstractSet[_S]) -> "FastUserSet":
         self.data.__ixor__(other)
         return self
 
@@ -380,7 +382,6 @@ class FastUserList(UserList):
 
 
 class MappingViewProxy(Generic[KT, VT]):
-
     @abc.abstractmethod
     def _keys(self) -> Iterator[KT]:
         ...
@@ -395,7 +396,6 @@ class MappingViewProxy(Generic[KT, VT]):
 
 
 class ProxyKeysView(KeysView[KT]):
-
     def __init__(self, mapping: MappingViewProxy[KT, Any]) -> None:
         self._mapping: MappingViewProxy[KT, Any] = mapping
 
@@ -404,7 +404,6 @@ class ProxyKeysView(KeysView[KT]):
 
 
 class ProxyValuesView(ValuesView[VT]):
-
     def __init__(self, mapping: MappingViewProxy[Any, VT]) -> None:
         self._mapping: MappingViewProxy[Any, VT] = mapping
 
@@ -413,7 +412,6 @@ class ProxyValuesView(ValuesView[VT]):
 
 
 class ProxyItemsView(ItemsView):
-
     def __init__(self, mapping: MappingViewProxy) -> None:
         self._mapping = mapping
 
@@ -438,9 +436,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
     _mutex: ContextManager
     data: OrderedDict
 
-    def __init__(self, limit: int = None,
-                 *,
-                 thread_safety: bool = False) -> None:
+    def __init__(self, limit: int = None, *, thread_safety: bool = False) -> None:
         self.limit = limit
         self.thread_safety = thread_safety
         self._mutex = self._new_lock()
@@ -519,7 +515,7 @@ class LRUCache(FastUserDict, MutableMapping[KT, VT], MappingViewProxy):
 
     def __getstate__(self) -> Mapping[str, Any]:
         d = dict(vars(self))
-        d.pop('_mutex')
+        d.pop("_mutex")
         return d
 
     def __setstate__(self, state: Dict[str, Any]) -> None:
@@ -564,7 +560,7 @@ class ManagedUserSet(FastUserSet[T]):
     def raw_update(self, *args: Any, **kwargs: Any) -> None:
         self.data.update(*args, **kwargs)  # type: ignore
 
-    def __iand__(self, other: AbstractSet[Any]) -> 'FastUserSet':
+    def __iand__(self, other: AbstractSet[Any]) -> "FastUserSet":
         self.on_change(
             added=set(),
             removed=cast(Set, self).difference(other),
@@ -572,7 +568,7 @@ class ManagedUserSet(FastUserSet[T]):
         self.data.__iand__(other)
         return self
 
-    def __ior__(self, other: AbstractSet[_S]) -> 'FastUserSet':
+    def __ior__(self, other: AbstractSet[_S]) -> "FastUserSet":
         self.on_change(
             added=cast(Set, other).difference(self),
             removed=set(),
@@ -580,7 +576,7 @@ class ManagedUserSet(FastUserSet[T]):
         self.data.__ior__(other)
         return self
 
-    def __isub__(self, other: AbstractSet[Any]) -> 'FastUserSet':
+    def __isub__(self, other: AbstractSet[Any]) -> "FastUserSet":
         self.on_change(
             added=set(),
             removed=cast(Set, self.data).intersection(other),
@@ -588,7 +584,7 @@ class ManagedUserSet(FastUserSet[T]):
         self.data.__isub__(other)
         return self
 
-    def __ixor__(self, other: AbstractSet[_S]) -> 'FastUserSet':
+    def __ixor__(self, other: AbstractSet[_S]) -> "FastUserSet":
         self.on_change(
             added=cast(Set, other).difference(self.data),
             removed=cast(Set, self.data).intersection(other),
@@ -688,7 +684,8 @@ class AttributeDictMixin:
             return cast(Mapping, self)[k]
         except KeyError:
             raise AttributeError(
-                f'{type(self).__name__!r} object has no attribute {k!r}')
+                f"{type(self).__name__!r} object has no attribute {k!r}"
+            )
 
     def __setattr__(self, key: str, value: Any) -> None:
         """`d[key] = value -> d.key = value`."""
@@ -709,7 +706,7 @@ class DictAttribute(MutableMapping[str, VT], MappingViewProxy):
     obj: Any = None
 
     def __init__(self, obj: Any) -> None:
-        object.__setattr__(self, 'obj', obj)
+        object.__setattr__(self, "obj", obj)
 
     def __getattr__(self, key: Any) -> Any:
         return getattr(self.obj, key)
@@ -763,6 +760,8 @@ class DictAttribute(MutableMapping[str, VT], MappingViewProxy):
         obj = self.obj
         for key in self:
             yield key, getattr(obj, key)
+
+
 collections.abc.MutableMapping.register(DictAttribute)  # noqa: E305
 
 

@@ -2,7 +2,6 @@
 import abc
 import sys
 import types
-import _collections_abc
 from collections import deque
 from contextlib import AbstractContextManager
 from functools import wraps
@@ -18,14 +17,17 @@ from typing import (
     Union,
     cast,
 )
+
+import _collections_abc
+
 from .typing import AsyncContextManager, Deque
 
 __all__ = [
-    'AbstractAsyncContextManager',
-    'AsyncExitStack',
-    'ExitStack',
-    'asynccontextmanager',
-    'nullcontext',
+    "AbstractAsyncContextManager",
+    "AsyncExitStack",
+    "ExitStack",
+    "asynccontextmanager",
+    "nullcontext",
 ]
 
 AsyncCallable = Callable[..., Awaitable]
@@ -36,23 +38,26 @@ AsyncPushArg = Union[AsyncContextManager, AsyncCallable]
 class AbstractAsyncContextManager(abc.ABC):
     """An abstract base class for asynchronous context managers."""
 
-    async def __aenter__(self) -> 'AbstractAsyncContextManager':
+    async def __aenter__(self) -> "AbstractAsyncContextManager":
         """Return `self` upon entering the runtime context."""
         return self
 
     @abc.abstractmethod
-    async def __aexit__(self,
-                        exc_type: Type[BaseException],
-                        exc_value: BaseException,
-                        traceback: types.TracebackType) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Type[BaseException],
+        exc_value: BaseException,
+        traceback: types.TracebackType,
+    ) -> None:
         """Raise any exception triggered within the runtime context."""
         return None
 
     @classmethod
     def __subclasshook__(cls, C: Type) -> bool:
         if cls is AbstractAsyncContextManager:
-            return cast(bool, _collections_abc._check_methods(
-                C, '__aenter__', '__aexit__'))
+            return cast(
+                bool, _collections_abc._check_methods(C, "__aenter__", "__aexit__")
+            )
         return cast(bool, NotImplemented)
 
 
@@ -66,7 +71,7 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
         self.gen = func(*args, **kwds)
         self.func, self.args, self.kwds = func, args, kwds
         # Issue 19330: ensure context manager instances have good docstrings
-        doc = getattr(func, '__doc__', None)
+        doc = getattr(func, "__doc__", None)
         if doc is None:
             doc = type(self).__doc__
         self.__doc__ = doc
@@ -84,10 +89,12 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
         except StopAsyncIteration:
             raise RuntimeError("generator didn't yield") from None
 
-    async def __aexit__(self,
-                        typ: Optional[Type[BaseException]],
-                        value: Optional[BaseException],
-                        traceback: Optional[types.TracebackType]) -> None:
+    async def __aexit__(
+        self,
+        typ: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[types.TracebackType],
+    ) -> None:
         if typ is None:
             try:
                 await self.gen.__anext__()
@@ -125,9 +132,11 @@ class _AsyncGeneratorContextManager(AbstractAsyncContextManager):
 
 def asynccontextmanager(func: Callable) -> Callable[..., AsyncContextManager]:
     """None."""
+
     @wraps(func)
     def helper(*args: Any, **kwds: Any) -> _AsyncGeneratorContextManager:
         return _AsyncGeneratorContextManager(func, args, kwds)
+
     return helper
 
 
@@ -137,27 +146,27 @@ class _BaseExitStack:
     _exit_callbacks: Deque[Tuple[bool, Callable]]
 
     @staticmethod
-    def _create_exit_wrapper(cm: ContextManager,
-                             cm_exit: Callable) -> Callable:
-        def _exit_wrapper(exc_type: Type,
-                          exc: BaseException,
-                          tb: types.TracebackType) -> Any:
+    def _create_exit_wrapper(cm: ContextManager, cm_exit: Callable) -> Callable:
+        def _exit_wrapper(
+            exc_type: Type, exc: BaseException, tb: types.TracebackType
+        ) -> Any:
             return cm_exit(cm, exc_type, exc, tb)
+
         return _exit_wrapper
 
     @staticmethod
-    def _create_cb_wrapper(callback: Callable,
-                           *args: Any, **kwds: Any) -> Callable:
-        def _exit_wrapper(exc_type: Type,
-                          exc: BaseException,
-                          tb: types.TracebackType) -> None:
+    def _create_cb_wrapper(callback: Callable, *args: Any, **kwds: Any) -> Callable:
+        def _exit_wrapper(
+            exc_type: Type, exc: BaseException, tb: types.TracebackType
+        ) -> None:
             callback(*args, **kwds)
+
         return _exit_wrapper
 
     def __init__(self) -> None:
         self._exit_callbacks = deque()
 
-    def pop_all(self) -> '_BaseExitStack':
+    def pop_all(self) -> "_BaseExitStack":
         """Preserve the context stack by transferring it to a new instance."""
         new_stack = type(self)()
         new_stack._exit_callbacks = self._exit_callbacks
@@ -198,8 +207,7 @@ class _BaseExitStack:
         self._push_cm_exit(cm, _exit)
         return result
 
-    def callback(self, callback: Callable,
-                 *args: Any, **kwds: Any) -> Callable:
+    def callback(self, callback: Callable, *args: Any, **kwds: Any) -> Callable:
         """Register an arbitrary callback and arguments.
 
         Cannot suppress exceptions.
@@ -218,8 +226,7 @@ class _BaseExitStack:
         _exit_wrapper.__self__ = cm  # type: ignore
         self._push_exit_callback(_exit_wrapper, True)
 
-    def _push_exit_callback(self, callback: Callable,
-                            is_sync: bool = True) -> None:
+    def _push_exit_callback(self, callback: Callable, is_sync: bool = True) -> None:
         self._exit_callbacks.append((is_sync, callback))
 
 
@@ -235,7 +242,7 @@ class ExitStack(_BaseExitStack, AbstractContextManager):
             # in the list raise an exception.
     """
 
-    def __enter__(self) -> 'ExitStack':
+    def __enter__(self) -> "ExitStack":
         return self
 
     def __exit__(self, *exc_details: Any) -> None:
@@ -245,8 +252,9 @@ class ExitStack(_BaseExitStack, AbstractContextManager):
         # we were actually nesting multiple with statements
         frame_exc = sys.exc_info()[1]
 
-        def _fix_exception_context(new_exc: BaseException,
-                                   old_exc: BaseException) -> None:
+        def _fix_exception_context(
+            new_exc: BaseException, old_exc: BaseException
+        ) -> None:
             # Context may not be correct, so find the end of the chain
             while 1:
                 exc_context = new_exc.__context__
@@ -276,8 +284,8 @@ class ExitStack(_BaseExitStack, AbstractContextManager):
                 new_exc_details = sys.exc_info()
                 # simulate the stack of exceptions by setting the context
                 _fix_exception_context(
-                    new_exc_details[1],  # type: ignore
-                    exc_details[1])
+                    new_exc_details[1], exc_details[1]  # type: ignore
+                )
                 pending_raise = True
                 exc_details = new_exc_details
         if pending_raise:
@@ -315,20 +323,24 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
 
     @staticmethod
     def _create_async_exit_wrapper(
-            cm: AsyncContextManager, cm_exit: AsyncCallable) -> AsyncCallable:
-        async def _exit_wrapper(exc_type: Type,
-                                exc: BaseException,
-                                tb: types.TracebackType) -> Any:
+        cm: AsyncContextManager, cm_exit: AsyncCallable
+    ) -> AsyncCallable:
+        async def _exit_wrapper(
+            exc_type: Type, exc: BaseException, tb: types.TracebackType
+        ) -> Any:
             return await cm_exit(cm, exc_type, exc, tb)
+
         return _exit_wrapper
 
     @staticmethod
     def _create_async_cb_wrapper(
-            callback: AsyncCallable, *args: Any, **kwds: Any) -> AsyncCallable:
-        async def _exit_wrapper(exc_type: Type,
-                                exc: BaseException,
-                                tb: types.TracebackType) -> None:
+        callback: AsyncCallable, *args: Any, **kwds: Any
+    ) -> AsyncCallable:
+        async def _exit_wrapper(
+            exc_type: Type, exc: BaseException, tb: types.TracebackType
+        ) -> None:
             await callback(*args, **kwds)
+
         return _exit_wrapper
 
     async def enter_async_context(self, cm: AsyncContextManager) -> Any:
@@ -360,8 +372,9 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
             self._push_async_cm_exit(exit, exit_method)  # type: ignore
         return exit  # Allow use as a decorator
 
-    def push_async_callback(self, callback: AsyncCallable,
-                            *args: Any, **kwds: Any) -> AsyncCallable:
+    def push_async_callback(
+        self, callback: AsyncCallable, *args: Any, **kwds: Any
+    ) -> AsyncCallable:
         """Register an arbitrary coroutine function and arguments.
 
         Cannot suppress exceptions.
@@ -378,15 +391,14 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
         """Immediately unwind the context stack."""
         await self.__aexit__(None, None, None)
 
-    def _push_async_cm_exit(
-            self, cm: AsyncContextManager, cm_exit: Callable) -> None:
+    def _push_async_cm_exit(self, cm: AsyncContextManager, cm_exit: Callable) -> None:
         # Helper to correctly register coroutine function to __aexit__
         # method.
         _exit_wrapper = self._create_async_exit_wrapper(cm, cm_exit)
         _exit_wrapper.__self__ = cm  # type: ignore
         self._push_exit_callback(_exit_wrapper, False)
 
-    async def __aenter__(self) -> 'AsyncExitStack':
+    async def __aenter__(self) -> "AsyncExitStack":
         return self
 
     async def __aexit__(self, *exc_details: Any) -> Any:
@@ -397,7 +409,8 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
         frame_exc = sys.exc_info()[1]
 
         def _fix_exception_context(
-                new_exc: BaseException, old_exc: BaseException) -> None:
+            new_exc: BaseException, old_exc: BaseException
+        ) -> None:
             # Context may not be correct, so find the end of the chain
             while 1:
                 exc_context = new_exc.__context__
@@ -431,8 +444,8 @@ class AsyncExitStack(_BaseExitStack, AbstractAsyncContextManager):
                 new_exc_details = sys.exc_info()
                 # simulate the stack of exceptions by setting the context
                 _fix_exception_context(
-                    new_exc_details[1],  # type: ignore
-                    exc_details[1])
+                    new_exc_details[1], exc_details[1]  # type: ignore
+                )
                 pending_raise = True
                 exc_details = new_exc_details
         if pending_raise:
@@ -464,8 +477,10 @@ class nullcontext(AbstractContextManager):
     def __enter__(self) -> Any:
         return self.enter_result
 
-    def __exit__(self,
-                 exc_type: Optional[Type[BaseException]],
-                 exc: Optional[BaseException],
-                 tb: Optional[types.TracebackType]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[types.TracebackType],
+    ) -> None:
         pass

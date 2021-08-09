@@ -1,4 +1,5 @@
 import pytest
+
 from mode.utils.trees import Node
 
 
@@ -15,7 +16,7 @@ def test_Node():
     node3 = node2.new(909)
     assert node3.parent is node2
     assert node3.parent.parent is node
-    assert node3.path == '303/808/909'
+    assert node3.path == "303/808/909"
     assert repr(node3)
 
     node3.children.append(10)
@@ -50,13 +51,16 @@ def test_Node():
     assert node5 not in node4.children
 
     node.children.append(11)
-    assert str(node.as_graph()) == '''\
+    assert (
+        str(node.as_graph())
+        == """\
 303(3)
      808(1)
           909(0)
      11(0)
 808(1)
-     909(0)'''
+     909(0)"""
+    )
 
     with pytest.raises(ValueError):
         node.root = node  # root node cannot be itself
