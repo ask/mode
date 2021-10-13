@@ -150,7 +150,7 @@ matrix:
     - python: 3.10.0
       env: TOXENV=3.10 IDENT="3.10.0" RUN_SUITE=y
       os: linux
-      dist: xenial
+      dist: bionic
       stage: test
 
 before_install:
