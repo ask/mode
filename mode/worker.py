@@ -331,7 +331,7 @@ class Worker(Service):
                 raise self.crash_reason from self.crash_reason
 
     async def _sentinel_task(self) -> None:
-        await asyncio.sleep(1.0, loop=self.loop)
+        await asyncio.sleep(1.0)
 
     def _gather_all(self) -> None:
         # sleeps for at most 10 * 0.1s

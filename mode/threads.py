@@ -320,11 +320,9 @@ class MethodQueue(Service):
 
     mundane_level = "debug"
 
-    def __init__(
-        self, loop: asyncio.AbstractEventLoop, num_workers: int = 2, **kwargs: Any
-    ) -> None:
+    def __init__(self, num_workers: int = 2, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self._queue = asyncio.Queue(loop=self.loop)
+        self._queue = asyncio.Queue()
         self._queue_ready = Event(loop=self.loop)
         self.num_workers = num_workers
         self._workers = []

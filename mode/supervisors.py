@@ -168,7 +168,6 @@ class SupervisorStrategy(Service, SupervisorStrategyT):
         # Stop them all simultaneously.
         await asyncio.gather(
             *[service.stop() for service in services],
-            loop=self.loop,
         )
 
     async def restart_service(self, service: ServiceT) -> None:

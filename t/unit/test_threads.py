@@ -260,7 +260,7 @@ class test_MethodQueue:
     @pytest.mark.asyncio
     async def test_call(self):
         loop = asyncio.get_event_loop()
-        queue = MethodQueue(num_workers=2, loop=loop)
+        queue = MethodQueue(num_workers=2)
 
         async with queue:
 
@@ -279,8 +279,8 @@ class test_MethodQueue:
     @pytest.mark.asyncio
     async def test_call_raising(self):
         loop = asyncio.get_event_loop()
-        queue = MethodQueue(num_workers=2, loop=loop)
-        all_done = asyncio.Event(loop=loop)
+        queue = MethodQueue(num_workers=2)
+        all_done = asyncio.Event()
         calls = 0
 
         async with queue:
@@ -310,11 +310,10 @@ class test_MethodQueue:
 
     @pytest.mark.asyncio
     async def test_cast(self):
-        loop = asyncio.get_event_loop()
-        queue = MethodQueue(num_workers=2, loop=loop)
+        queue = MethodQueue(num_workers=2)
 
         calls = 0
-        all_done = asyncio.Event(loop=loop)
+        all_done = asyncio.Event()
 
         async with queue:
 
@@ -330,11 +329,10 @@ class test_MethodQueue:
 
     @pytest.mark.asyncio
     async def test_flush(self):
-        loop = asyncio.get_event_loop()
-        queue = MethodQueue(num_workers=2, loop=loop)
+        queue = MethodQueue(num_workers=2)
 
         calls = 0
-        all_done = asyncio.Event(loop=loop)
+        all_done = asyncio.Event()
 
         async def myfun(x, y):
             nonlocal calls
