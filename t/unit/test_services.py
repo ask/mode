@@ -1,5 +1,4 @@
 import asyncio
-from time import sleep
 from typing import ContextManager
 
 import pytest

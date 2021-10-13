@@ -18,11 +18,11 @@ from setuptools import find_packages, setup
 
 NAME = "mode-streaming"
 EXTENSIONS = {"eventlet", "gevent", "uvloop"}
-E_UNSUPPORTED_PYTHON = "%s 1.0 requires %%s %%s or later!" % (NAME,)
+E_UNSUPPORTED_PYTHON = "%s 1.0 requires %%s %%s or later!" % (NAME,)  # noqa: S001
 
 PYIMP = _pyimp()
 if sys.version_info < (3, 6):
-    raise Exception(E_UNSUPPORTED_PYTHON % (PYIMP, "3.6"))
+    raise Exception(E_UNSUPPORTED_PYTHON % (PYIMP, "3.6"))  # noqa: S001
 
 from pathlib import Path  # noqa
 
