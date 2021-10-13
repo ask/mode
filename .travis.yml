@@ -15,27 +15,27 @@ matrix:
     - python: 3.8.6
       env: TOXENV=flake8
       os: linux
-      dist: focal
+      dist: bionic
       stage: lint
     - python: 3.8.6
       env: TOXENV=typecheck
       os: linux
-      dist: focal
+      dist: bionic
       stage: lint
     - python: 3.8.6
       env: TOXENV=apicheck
       os: linux
-      dist: focal
+      dist: bionic
       stage: lint
     - python: 3.8.6
       env: TOXENV=docstyle
       os: linux
-      dist: focal
+      dist: bionic
       stage: lint
     - python: 3.8.6
       env: TOXENV=bandit
       os: linux
-      dist: focal
+      dist: bionic
       stage: lint
     - python: 3.6.3
       env: TOXENV=3.6 RUN_SUITE=y
