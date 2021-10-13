@@ -1,4 +1,4 @@
-flake8>=2.5.4
+flake8>=3.8.3,<4.0  # flake8-isort doesn't work with flake8-4.0
 flake8-bandit
 flake8-bugbear
 flake8-builtins-unleashed
@@ -10,3 +10,4 @@ flake8-mock
 flake8-pep3101
 flake8-pyi
 flake8-tuple
+isort<5.0.0  # flake8-isort doesn't work with isort-5
