@@ -355,7 +355,7 @@ class test_Worker:
     async def test__sentinel_task(self, worker):
         with patch("asyncio.sleep", AsyncMock()) as sleep:
             await worker._sentinel_task()
-            sleep.coro.assert_called_once_with(1.0, loop=worker.loop)
+            sleep.coro.assert_called_once_with(1.0)
 
     def test__gather_all(self, worker):
         with patch("mode.worker.all_tasks") as all_tasks:

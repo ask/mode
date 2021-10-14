@@ -319,7 +319,7 @@ class DefaultFormatter(logging.Formatter):
         return super().format(record)
 
 
-class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
+class ExtensionFormatter(colorlog.TTYColoredFormatter):
     """Formatter that can register callbacks to format args.
 
     Extends :pypi:`colorlog`.
@@ -331,7 +331,7 @@ class ExtensionFormatter(colorlog.TTYColoredFormatter):  # type: ignore
     def format(self, record: logging.LogRecord) -> str:
         self._format_args(record)
         record.extra = _format_extra(record)  # type: ignore
-        return cast(str, super().format(record))
+        return cast(str, super().format(record))  # type: ignore
 
     def _format_args(self, record: logging.LogRecord) -> None:
         format_arg = self.format_arg

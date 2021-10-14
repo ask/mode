@@ -6,6 +6,10 @@
 import re
 import sys
 import typing
+
+# Lazy loading.
+# - See werkzeug/__init__.py for the rationale behind this.
+from types import ModuleType  # noqa
 from typing import Any, Mapping, NamedTuple, Sequence
 
 __version__ = "0.1.0"
@@ -88,10 +92,6 @@ __all__ = [
     "flight_recorder",
 ]
 
-
-# Lazy loading.
-# - See werkzeug/__init__.py for the rationale behind this.
-from types import ModuleType  # noqa
 
 all_by_module: Mapping[str, Sequence[str]] = {
     "mode.services": ["Service", "task", "timer"],

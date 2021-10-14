@@ -1,5 +1,4 @@
 import asyncio
-from time import sleep
 from typing import ContextManager
 
 import pytest
@@ -123,7 +122,7 @@ async def test_subclass_can_override_Service_task():
         values = []
 
         def __post_init__(self):
-            self.event = asyncio.Event(loop=self.loop)
+            self.event = asyncio.Event()
 
         @Service.task
         async def _background_task(self):
@@ -343,7 +342,6 @@ class test_Service:
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
                 timeout=1.0,
-                loop=service.loop,
             )
 
             for fut in done:
@@ -553,7 +551,6 @@ class test_Service:
                 [m1, m2],
                 return_when=asyncio.ALL_COMPLETED,
                 timeout=3.34,
-                loop=service.loop,
             )
 
             service._wait_one.assert_called_once_with(ANY, timeout=3.34)

@@ -148,7 +148,7 @@ class Bucket(AsyncContextManager):
             if self.raises:
                 raise self.raises()
             expected_time = self.expected_time()
-            await asyncio.sleep(expected_time, loop=self.loop)
+            await asyncio.sleep(expected_time)
         return self
 
     async def __aexit__(

@@ -26,4 +26,3 @@ Paste the full traceback (if there is any)
 * Python version
 * Mode version
 * Operating system
-

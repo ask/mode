@@ -51,7 +51,7 @@ class test_FlowControlQueue:
         time_now = monotonic()
         await queue.put(2)
         assert monotonic() - time_now > 0.1
-        await queue.get() == 2
+        assert await queue.get() == 2
 
     @pytest.mark.asyncio
     async def test_suspend_resume__initially_suspended(self):

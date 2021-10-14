@@ -692,7 +692,6 @@ class Service(ServiceBase, ServiceCallbacks):
             await asyncio.wait_for(
                 self._stopped.wait(),
                 timeout=want_seconds(n),
-                loop=loop or self.loop,
             )
         except asyncio.TimeoutError:
             pass
@@ -716,7 +715,6 @@ class Service(ServiceBase, ServiceCallbacks):
             cast(Iterable[Awaitable[Any]], coros),
             return_when=asyncio.ALL_COMPLETED,
             timeout=want_seconds(timeout),
-            loop=self.loop,
         )
         return await self._wait_one(coro, timeout=timeout)
 
@@ -747,7 +745,6 @@ class Service(ServiceBase, ServiceCallbacks):
                 futures.values(),
                 return_when=asyncio.FIRST_COMPLETED,
                 timeout=timeout,
-                loop=self.loop,
             )
             for f in done:
                 if f.done() and f.exception() is not None:
@@ -784,7 +781,6 @@ class Service(ServiceBase, ServiceCallbacks):
             [stopped, crashed],
             return_when=asyncio.FIRST_COMPLETED,
             timeout=timeout,
-            loop=self.loop,
         )
         for fut in done:
             fut.result()  # propagate exceptions
@@ -971,7 +967,6 @@ class Service(ServiceBase, ServiceCallbacks):
             await asyncio.wait(
                 self._futures,
                 return_when=asyncio.ALL_COMPLETED,
-                loop=self.loop,
                 timeout=timeout,
             )
 
