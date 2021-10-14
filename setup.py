@@ -147,4 +147,5 @@ setup(
     python_requires="~=3.6",
     classifiers=classifiers,
     long_description=long_description,
+    long_description_content_type="text/x-rst",
 )
