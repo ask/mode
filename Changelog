@@ -4,6 +4,19 @@
  Change history
 ================
 
+.. version-0.2.0:
+
+0.2.0
+=====
+:release-date: 2021-10-14
+:release-by: Taybin Rutkin (:github_user:`taybin`)
+
+- Support python-3.10
+
+- format with black and isort
+
+- add crontab timer from Faust (:github_user:`lqhuang`)
+
 .. version-0.1.0:
 
 0.1.0
