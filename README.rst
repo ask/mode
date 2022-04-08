@@ -180,7 +180,7 @@ It's a Graph!
 
 Services can start other services, coroutines, and background tasks.
 
-1) Starting other services using ``add_depenency``::
+1) Starting other services using ``add_dependency``::
 
     class MyService(Service):
 
