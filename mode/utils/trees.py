@@ -9,10 +9,10 @@ from .types.trees import NodeT
 from .typing import Deque
 
 __all__ = [
-    'Node',
+    "Node",
 ]
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class Node(NodeT[T]):
@@ -44,11 +44,14 @@ class Node(NodeT[T]):
     def _new_node(cls, data: T, **kwargs: Any) -> NodeT[T]:
         return cls(data, **kwargs)
 
-    def __init__(self, data: T,
-                 *,
-                 root: NodeT = None,
-                 parent: NodeT = None,
-                 children: List[NodeT[T]] = None) -> None:
+    def __init__(
+        self,
+        data: T,
+        *,
+        root: NodeT = None,
+        parent: NodeT = None,
+        children: List[NodeT[T]] = None,
+    ) -> None:
         self.data = data
         if root is not None:
             self.root = root
@@ -133,7 +136,7 @@ class Node(NodeT[T]):
         return graph
 
     def __repr__(self) -> str:
-        return f'{type(self).__name__}: {self.path}'
+        return f"{type(self).__name__}: {self.path}"
 
     @property
     def depth(self) -> int:
@@ -144,9 +147,7 @@ class Node(NodeT[T]):
 
     @property
     def path(self) -> str:
-        return '/'.join(reversed([
-            shortlabel(node.data) for node in self.walk()
-        ]))
+        return "/".join(reversed([shortlabel(node.data) for node in self.walk()]))
 
     @property
     def parent(self) -> Optional[NodeT]:
@@ -155,7 +156,7 @@ class Node(NodeT[T]):
     @parent.setter
     def parent(self, node: NodeT) -> None:
         if node is self:
-            raise ValueError('Parent node cannot be itself.')
+            raise ValueError("Parent node cannot be itself.")
         self._parent = node
 
     @property
@@ -165,5 +166,5 @@ class Node(NodeT[T]):
     @root.setter
     def root(self, node: NodeT) -> None:
         if node is self:
-            raise ValueError('Root node cannot be itself.')
+            raise ValueError("Root node cannot be itself.")
         self._root = node

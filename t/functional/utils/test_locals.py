@@ -1,7 +1,9 @@
 import asyncio
-import pytest
-import time
 import threading
+import time
+
+import pytest
+
 from mode.utils.locals import LocalStack
 
 
@@ -12,7 +14,7 @@ class Request:
         self.id = id
 
     def __repr__(self) -> str:
-        return f'<{type(self).__name__}: id={self.id!r}>'
+        return f"<{type(self).__name__}: id={self.id!r}>"
 
 
 def test_typing():
@@ -94,7 +96,7 @@ def test_stack_pop__when_empty_list():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('retry', range(3))
+@pytest.mark.parametrize("retry", range(3))
 async def test_threads(retry):
     stack = LocalStack()
 
@@ -103,10 +105,7 @@ async def test_threads(retry):
         for _ in range(2):
             loop.run_until_complete(assert_stack(stack))
 
-    threads = [
-        threading.Thread(target=thread_enter, daemon=False)
-        for _ in range(10)
-    ]
+    threads = [threading.Thread(target=thread_enter, daemon=False) for _ in range(10)]
     for thread in threads:
         thread.start()
     for thread in threads:

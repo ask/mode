@@ -1,5 +1,7 @@
 import asyncio
+
 import pytest
+
 from mode.utils.mocks import Mock, patch
 from mode.utils.tracebacks import Traceback, format_task_stack
 
@@ -58,17 +60,15 @@ async def test_format_task_stack():
 
 
 class test_Traceback:
-
     @pytest.fixture()
     def frame(self):
-        return Mock(name='frame')
+        return Mock(name="frame")
 
     @pytest.fixture()
     def tb(self, *, frame):
         return Traceback(frame)
 
     def test_from_coroutine__async_generator_asend(self, tb):
-
         class async_generator_asend:
             f_lineno = 303
             f_lasti = None
@@ -76,7 +76,6 @@ class test_Traceback:
         assert Traceback.from_coroutine(async_generator_asend())
 
     def test_from_coroutine__unknown(self, tb):
-
         class foo_frame:
             f_lineno = 303
             f_lasti = None
@@ -98,6 +97,6 @@ class test_Traceback:
             cr_frame = None
             cr_await = Mock()
 
-        with patch('asyncio.iscoroutine') as iscoroutine:
+        with patch("asyncio.iscoroutine") as iscoroutine:
             iscoroutine.return_value = True
             Traceback.from_coroutine(coro(), limit=10)

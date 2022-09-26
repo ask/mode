@@ -1,11 +1,13 @@
 import asyncio
 import logging
 from typing import ContextManager
+
+import pytest
+
+import mode
 from mode.utils.locks import Event
 from mode.utils.mocks import Mock
 from mode.utils.typing import AsyncContextManager
-import mode
-import pytest
 
 
 class X(mode.Service):
@@ -148,7 +150,7 @@ async def crash(service, exc):
 async def test_crash_leaf():
     async with Complex() as service:
         error = None
-        error = await crash(service.y.z, KeyError('foo'))
+        error = await crash(service.y.z, KeyError("foo"))
 
         # crash propagates up chain
         assert service.y.z.x.crash_reason is error
@@ -161,7 +163,7 @@ async def test_crash_leaf():
 @pytest.mark.asyncio
 async def test_crash_middle():
     async with Complex() as service:
-        error = await crash(service.y, KeyError('foo'))
+        error = await crash(service.y, KeyError("foo"))
         assert service.y.z.x.crash_reason is error
         assert service.y.z.crash_reason is error
         assert service.y.crash_reason is error
@@ -172,7 +174,7 @@ async def test_crash_middle():
 @pytest.mark.asyncio
 async def test_crash_head():
     async with Complex() as service:
-        error = await crash(service, KeyError('foo'))
+        error = await crash(service, KeyError("foo"))
         assert service.y.z.x.crash_reason is error
         assert service.y.z.crash_reason is error
         assert service.y.crash_reason is error
@@ -237,7 +239,7 @@ async def test_wait__when_crashed():
         async def crasher():
             await asyncio.sleep(0.1)
             try:
-                raise RuntimeError('foo')
+                raise RuntimeError("foo")
             except RuntimeError as exc:
                 await service.crash(exc)
 
@@ -280,24 +282,27 @@ class MundaneLogsDefault(mode.Service):
 
 
 class MundaneLogsDebug(mode.Service):
-    mundane_level = 'debug'
+    mundane_level = "debug"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('service_cls,expected_level', [
-    (MundaneLogsDefault, logging.INFO),
-    (MundaneLogsDebug, logging.DEBUG),
-])
+@pytest.mark.parametrize(
+    "service_cls,expected_level",
+    [
+        (MundaneLogsDefault, logging.INFO),
+        (MundaneLogsDebug, logging.DEBUG),
+    ],
+)
 async def test_mundane_level__default(service_cls, expected_level):
     service = service_cls()
     await assert_mundane_level_is(expected_level, service)
 
 
 async def assert_mundane_level_is(level: int, service: mode.ServiceT) -> None:
-    logger = service.log = Mock(name='service.log')
+    logger = service.log = Mock(name="service.log")
     async with service:
         ...
-    severity = _find_logging_call_severity(logger.log, 'Starting...')
+    severity = _find_logging_call_severity(logger.log, "Starting...")
     assert severity == level
 
 

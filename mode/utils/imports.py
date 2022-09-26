@@ -34,27 +34,28 @@ else:
     try:
         from yarl import URL
     except ImportError:  # pragma: no cover
-        class URL:
 
+        class URL:
             def __init__(self, url: str) -> None:
-                assert '://' in url
-                self.scheme = url.split('://')[0]
+                assert "://" in url
+                self.scheme = url.split("://")[0]
+
 
 # - these are taken from kombu.utils.imports
 
 __all__ = [
-    'FactoryMapping',
-    'SymbolArg',
-    'symbol_by_name',
-    'load_extension_class_names',
-    'load_extension_classes',
-    'cwd_in_path',
-    'import_from_cwd',
-    'smart_import',
+    "FactoryMapping",
+    "SymbolArg",
+    "symbol_by_name",
+    "load_extension_class_names",
+    "load_extension_classes",
+    "cwd_in_path",
+    "import_from_cwd",
+    "smart_import",
 ]
 
-_T = TypeVar('_T')
-_T_contra = TypeVar('_T_contra', contravariant=True)
+_T = TypeVar("_T")
+_T_contra = TypeVar("_T_contra", contravariant=True)
 SymbolArg = Union[_T, str]
 
 
@@ -106,13 +107,14 @@ class FactoryMapping(FastUserDict, Generic[_T]):
             return symbol_by_name(name, aliases=self.aliases)
         except ModuleNotFoundError as exc:
             name_ = cast(str, name)
-            if '.' in name_:
+            if "." in name_:
                 raise
             alt = didyoumean(
-                self.aliases, name_,
-                fmt_none=f'Available choices: {", ".join(self.aliases)}')
-            raise ModuleNotFoundError(
-                f'{name!r} is not a valid name. {alt}') from exc
+                self.aliases,
+                name_,
+                fmt_none=f'Available choices: {", ".join(self.aliases)}',
+            )
+            raise ModuleNotFoundError(f"{name!r} is not a valid name. {alt}") from exc
 
     def get_alias(self, name: str) -> str:
         self._maybe_finalize()
@@ -128,10 +130,12 @@ class FactoryMapping(FastUserDict, Generic[_T]):
 
     def _finalize(self) -> None:
         for namespace in self.namespaces:
-            self.aliases.update({
-                name: cls_name
-                for name, cls_name in load_extension_class_names(namespace)
-            })
+            self.aliases.update(
+                {
+                    name: cls_name
+                    for name, cls_name in load_extension_class_names(namespace)
+                }
+            )
 
     @cached_property
     def data(self) -> MutableMapping:  # type: ignore
@@ -139,10 +143,11 @@ class FactoryMapping(FastUserDict, Generic[_T]):
 
 
 def _ensure_identifier(path: str, full: str) -> None:
-    for part in path.split('.'):
+    for part in path.split("."):
         if not part.isidentifier():
             raise ValueError(
-                f'Component {part!r} of {full!r} is not a valid identifier')
+                f"Component {part!r} of {full!r} is not a valid identifier"
+            )
 
 
 class ParsedSymbol(NamedTuple):
@@ -152,10 +157,13 @@ class ParsedSymbol(NamedTuple):
     attribute_name: Optional[str]
 
 
-def parse_symbol(s: str, *,
-                 package: str = None,
-                 strict_separator: str = ':',
-                 relative_separator: str = '.') -> ParsedSymbol:
+def parse_symbol(
+    s: str,
+    *,
+    package: str = None,
+    strict_separator: str = ":",
+    relative_separator: str = ".",
+) -> ParsedSymbol:
     """Parse :func:`symbol_by_name` argument into components.
 
     Returns:
@@ -180,25 +188,22 @@ def parse_symbol(s: str, *,
     """
     module_name: Optional[str]
     attribute_name: Optional[str]
-    partition_by = (strict_separator
-                    if strict_separator in s else relative_separator)
+    partition_by = strict_separator if strict_separator in s else relative_separator
 
     module_name, used_separator, attribute_name = s.rpartition(partition_by)
     if not module_name:
         # Module name is missing must be either ".foo" or ":foo",
         # and is a relative import.
-        if used_separator == ':':
+        if used_separator == ":":
             # ":foo" is illegal and will result in ValueError below.
             raise ValueError(f'Missing module name with ":" separator: {s!r}')
-        elif used_separator == '.':
+        elif used_separator == ".":
             # ".foo" is legal but requires a ``package`` argument.
             if not package:
-                raise ValueError(
-                    f'Relative import {s!r} but package=None (required)')
+                raise ValueError(f"Relative import {s!r} but package=None (required)")
             module_name, attribute_name = s, None
         else:
-            attribute_name, module_name = (
-                None, package if package else attribute_name)
+            attribute_name, module_name = (None, package if package else attribute_name)
 
     if attribute_name:
         _ensure_identifier(attribute_name, full=s)
@@ -209,13 +214,14 @@ def parse_symbol(s: str, *,
 
 
 def symbol_by_name(
-        name: SymbolArg[_T],
-        aliases: Mapping[str, str] = None,
-        imp: Any = None,
-        package: str = None,
-        sep: str = '.',
-        default: _T = None,
-        **kwargs: Any) -> _T:
+    name: SymbolArg[_T],
+    aliases: Mapping[str, str] = None,
+    imp: Any = None,
+    package: str = None,
+    sep: str = ".",
+    default: _T = None,
+    **kwargs: Any,
+) -> _T:
     """Get symbol by qualified name.
 
     The name should be the full dot-separated path to the class::
@@ -260,16 +266,18 @@ def symbol_by_name(
     try:
         try:
             module = imp(  # type: ignore
-                module_name or '', package=package,
+                module_name or "",
+                package=package,
                 # kwargs can be used to extend symbol_by_name when a custom
                 # `imp` function is used.
                 # importib does not support additional arguments
                 # beyond (name, package=None), so we have to silence
                 # mypy error here.
-                **kwargs)
+                **kwargs,
+            )
         except ValueError as exc:
             raise ValueError(
-                f'Cannot import {name!r}: {exc}',
+                f"Cannot import {name!r}: {exc}",
             ).with_traceback(sys.exc_info()[2])
         if attribute_name:
             return cast(_T, getattr(module, attribute_name))
@@ -312,14 +320,12 @@ def load_extension_classes(namespace: str) -> Iterable[EntrypointExtension]:
         try:
             cls: Type = symbol_by_name(cls_name)
         except (ImportError, SyntaxError) as exc:
-            warnings.warn(
-                f'Cannot load {namespace} extension {cls_name!r}: {exc!r}')
+            warnings.warn(f"Cannot load {namespace} extension {cls_name!r}: {exc!r}")
         else:
             yield EntrypointExtension(name, cls)
 
 
-def load_extension_class_names(
-        namespace: str) -> Iterable[RawEntrypointExtension]:
+def load_extension_class_names(namespace: str) -> Iterable[RawEntrypointExtension]:
     """Get setuptools entrypoint extension class names.
 
     If the entrypoint is defined in ``setup.py`` as::
@@ -342,7 +348,7 @@ def load_extension_class_names(
     for ep in iter_entry_points(namespace):
         yield RawEntrypointExtension(
             ep.name,
-            ':'.join([ep.module_name, ep.attrs[0]]),
+            ":".join([ep.module_name, ep.attrs[0]]),
         )
 
 
@@ -361,10 +367,9 @@ def cwd_in_path() -> Generator:
                 sys.path.remove(cwd)
 
 
-def import_from_cwd(module: str,
-                    *,
-                    imp: Callable = None,
-                    package: str = None) -> ModuleType:
+def import_from_cwd(
+    module: str, *, imp: Callable = None, package: str = None
+) -> ModuleType:
     """Import module, temporarily including modules in the current directory.
 
     Modules located in the current directory has
@@ -379,7 +384,7 @@ def import_from_cwd(module: str,
 def smart_import(path: str, imp: Any = None) -> Any:
     """Import module if module, otherwise same as :func:`symbol_by_name`."""
     imp = importlib.import_module if imp is None else imp
-    if ':' in path:
+    if ":" in path:
         # Path includes attribute so can just jump
         # here (e.g., ``os.path:abspath``).
         return symbol_by_name(path, imp=imp)

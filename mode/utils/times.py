@@ -12,18 +12,18 @@ from .text import pluralize
 from .typing import AsyncContextManager
 
 __all__ = [
-    'Bucket',
-    'Seconds',
-    'TokenBucket',
-    'rate',
-    'rate_limit',
-    'want_seconds',
-    'humanize_seconds',
-    'humanize_seconds_ago',
+    "Bucket",
+    "Seconds",
+    "TokenBucket",
+    "rate",
+    "rate_limit",
+    "want_seconds",
+    "humanize_seconds",
+    "humanize_seconds_ago",
 ]
 
 TIME_MONOTONIC: Callable[[], float]
-if sys.platform == 'win32':
+if sys.platform == "win32":
     TIME_MONOTONIC = time.time
 else:
     TIME_MONOTONIC = time.monotonic
@@ -39,19 +39,19 @@ class Unit(NamedTuple):
 
 
 TIME_UNITS: List[Unit] = [
-    Unit('day', 60 * 60 * 24.0, lambda n: format(n, '.2f')),
-    Unit('hour', 60 * 60.0, lambda n: format(n, '.2f')),
-    Unit('minute', 60.0, lambda n: format(n, '.2f')),
-    Unit('second', 1.0, lambda n: format(n, '.2f')),
+    Unit("day", 60 * 60 * 24.0, lambda n: format(n, ".2f")),
+    Unit("hour", 60 * 60.0, lambda n: format(n, ".2f")),
+    Unit("minute", 60.0, lambda n: format(n, ".2f")),
+    Unit("second", 1.0, lambda n: format(n, ".2f")),
 ]
 
 #: What the characters in a "rate" string means.
 #: E.g. 8/s is "eight in one second"
 RATE_MODIFIER_MAP: Mapping[str, Callable[[float], float]] = {
-    's': lambda n: n,
-    'm': lambda n: n / 60.0,
-    'h': lambda n: n / 60.0 / 60.0,
-    'd': lambda n: n / 60.0 / 60.0 / 24,
+    "s": lambda n: n,
+    "m": lambda n: n / 60.0,
+    "h": lambda n: n / 60.0 / 60.0,
+    "d": lambda n: n / 60.0 / 60.0 / 24,
 }
 
 
@@ -104,12 +104,16 @@ class Bucket(AsyncContextManager):
 
     _tokens: float
 
-    def __init__(self, rate: Seconds, over: Seconds = 1.0,
-                 *,
-                 fill_rate: Seconds = None,
-                 capacity: Seconds = None,
-                 raises: Type[BaseException] = None,
-                 loop: asyncio.AbstractEventLoop = None) -> None:
+    def __init__(
+        self,
+        rate: Seconds,
+        over: Seconds = 1.0,
+        *,
+        fill_rate: Seconds = None,
+        capacity: Seconds = None,
+        raises: Type[BaseException] = None,
+        loop: asyncio.AbstractEventLoop = None
+    ) -> None:
         self.rate = want_seconds(rate)
         self.capacity = want_seconds(over)
         self.raises = raises
@@ -139,18 +143,20 @@ class Bucket(AsyncContextManager):
         #: faster/slower, then just override this.
         return self.rate
 
-    async def __aenter__(self) -> 'Bucket':
+    async def __aenter__(self) -> "Bucket":
         if not self.pour():
             if self.raises:
                 raise self.raises()
             expected_time = self.expected_time()
-            await asyncio.sleep(expected_time, loop=self.loop)
+            await asyncio.sleep(expected_time)
         return self
 
-    async def __aexit__(self,
-                        exc_type: Type[BaseException] = None,
-                        exc_val: BaseException = None,
-                        exc_tb: TracebackType = None) -> Optional[bool]:
+    async def __aexit__(
+        self,
+        exc_type: Type[BaseException] = None,
+        exc_val: BaseException = None,
+        exc_tb: TracebackType = None,
+    ) -> Optional[bool]:
         return None
 
 
@@ -197,8 +203,8 @@ def rate(r: float) -> float:
 
 @rate.register(str)
 def _rate_str(r: str) -> float:  # noqa: F811
-    ops, _, modifier = r.partition('/')
-    return RATE_MODIFIER_MAP[modifier or 's'](float(ops)) or 0
+    ops, _, modifier = r.partition("/")
+    return RATE_MODIFIER_MAP[modifier or "s"](float(ops)) or 0
 
 
 @rate.register(int)  # noqa: F811
@@ -211,11 +217,14 @@ def _rate_None(r: None) -> float:
     return 0.0
 
 
-def rate_limit(rate: float, over: Seconds = 1.0,
-               *,
-               bucket_type: Type[Bucket] = TokenBucket,
-               raises: Type[BaseException] = None,
-               loop: asyncio.AbstractEventLoop = None) -> Bucket:
+def rate_limit(
+    rate: float,
+    over: Seconds = 1.0,
+    *,
+    bucket_type: Type[Bucket] = TokenBucket,
+    raises: Type[BaseException] = None,
+    loop: asyncio.AbstractEventLoop = None
+) -> Bucket:
     """Create rate limiting manager."""
     return bucket_type(rate, over, raises=raises, loop=loop)
 
@@ -236,12 +245,15 @@ def _want_seconds_timedelta(s: timedelta) -> float:
     return s.total_seconds()
 
 
-def humanize_seconds(secs: float, *,
-                     prefix: str = '',
-                     suffix: str = '',
-                     sep: str = '',
-                     now: str = 'now',
-                     microseconds: bool = False) -> str:
+def humanize_seconds(
+    secs: float,
+    *,
+    prefix: str = "",
+    suffix: str = "",
+    sep: str = "",
+    now: str = "now",
+    microseconds: bool = False
+) -> str:
     """Show seconds in human form.
 
     For example, 60 becomes "1 minute", and 7200 becomes "2 hours".
@@ -255,25 +267,29 @@ def humanize_seconds(secs: float, *,
         now (str): Literal 'now'.
         microseconds (bool): Include microseconds.
     """
-    secs = float(format(float(secs), '.2f'))
+    secs = float(format(float(secs), ".2f"))
     for unit, divider, formatter in TIME_UNITS:
         if secs >= divider:
             w = secs / float(divider)
-            return '{0}{1}{2} {3}{4}'.format(
-                prefix, sep, formatter(w),
-                pluralize(int(w), unit), suffix)
+            return "{0}{1}{2} {3}{4}".format(
+                prefix, sep, formatter(w), pluralize(int(w), unit), suffix
+            )
     if microseconds and secs > 0.0:
-        return '{prefix}{sep}{0:.2f} seconds{suffix}'.format(
-            secs, sep=sep, prefix=prefix, suffix=suffix)
+        return "{prefix}{sep}{0:.2f} seconds{suffix}".format(
+            secs, sep=sep, prefix=prefix, suffix=suffix
+        )
     return now
 
 
-def humanize_seconds_ago(secs: float, *,
-                         prefix: str = '',
-                         suffix: str = ' ago',
-                         sep: str = '',
-                         now: str = 'just now',
-                         microseconds: bool = False) -> str:
+def humanize_seconds_ago(
+    secs: float,
+    *,
+    prefix: str = "",
+    suffix: str = " ago",
+    sep: str = "",
+    now: str = "just now",
+    microseconds: bool = False
+) -> str:
     """Show seconds in "3.33 seconds ago" form.
 
     If seconds are less than one, returns "just now".

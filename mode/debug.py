@@ -9,20 +9,26 @@ from .services import Service
 from .utils.logging import get_logger
 from .utils.times import Seconds, want_seconds
 
-__all__ = ['Blocking', 'BlockingDetector']
+__all__ = ["Blocking", "BlockingDetector"]
 
 logger = get_logger(__name__)
 
-if hasattr(signal, 'setitimer'):  # pragma: no cover
+if hasattr(signal, "setitimer"):  # pragma: no cover
+
     def arm_alarm(seconds: float) -> None:
         signal.setitimer(signal.ITIMER_REAL, seconds)
+
+
 else:  # pragma: no cover
     try:
         import itimer
     except ImportError:
+
         def arm_alarm(seconds: float) -> None:
             signal.alarm(math.ceil(seconds))
+
     else:
+
         def arm_alarm(seconds: float) -> None:
             itimer(seconds)
 
@@ -47,10 +53,9 @@ class BlockingDetector(Service):
 
     logger = logger
 
-    def __init__(self,
-                 timeout: Seconds,
-                 raises: Type[BaseException] = Blocking,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self, timeout: Seconds, raises: Type[BaseException] = Blocking, **kwargs: Any
+    ) -> None:
         self.timeout: float = want_seconds(timeout)
         self.raises: Type[BaseException] = raises
         super().__init__(**kwargs)
@@ -75,9 +80,8 @@ class BlockingDetector(Service):
         arm_alarm(timeout)
 
     def _on_alarm(self, signum: int, frame: FrameType) -> None:
-        msg = f'Blocking detected (timeout={self.timeout})'
-        stack = ''.join(traceback.format_stack(frame))
-        self.log.warning('Blocking detected (timeout=%r) %s',
-                         self.timeout, stack)
+        msg = f"Blocking detected (timeout={self.timeout})"
+        stack = "".join(traceback.format_stack(frame))
+        self.log.warning("Blocking detected (timeout=%r) %s", self.timeout, stack)
         self._reset_signal()
         raise self.raises(msg)

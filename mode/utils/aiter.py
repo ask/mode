@@ -16,20 +16,21 @@ from typing import (
 )
 
 __all__ = [
-    'aenumerate',
-    'aiter',
-    'alist',
-    'anext',
-    'arange',
-    'aslice',
-    'chunks',
+    "aenumerate",
+    "aiter",
+    "alist",
+    "anext",
+    "arange",
+    "aslice",
+    "chunks",
 ]
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
-async def aenumerate(it: AsyncIterable[T],
-                     start: int = 0) -> AsyncIterator[Tuple[int, T]]:
+async def aenumerate(
+    it: AsyncIterable[T], start: int = 0
+) -> AsyncIterator[Tuple[int, T]]:
     """``async for`` version of ``enumerate``."""
     i = start
     async for item in it:
@@ -53,7 +54,7 @@ class AsyncIterWrapper(AsyncIterator[T]):
             raise StopAsyncIteration() from exc
 
     def __repr__(self) -> str:
-        return f'<{type(self).__name__}: {self._it}>'
+        return f"<{type(self).__name__}: {self._it}>"
 
 
 @singledispatch
@@ -64,7 +65,7 @@ def aiter(it: Any) -> AsyncIterator[T]:
         If the object is already an iterator, the iterator
         should return self when ``__aiter__`` is called.
     """
-    raise TypeError(f'{it!r} object is not an iterable')
+    raise TypeError(f"{it!r} object is not an iterable")
 
 
 # XXX In Py3.7: register cannot take typing.AsyncIterator
@@ -95,8 +96,7 @@ async def anext(it: AsyncIterator[T], *default: Optional[T]) -> T:
 
 
 class _ARangeIterator(AsyncIterator[int]):
-
-    def __init__(self, parent: 'arange', it: Iterator[int]) -> None:
+    def __init__(self, parent: "arange", it: Iterator[int]) -> None:
         self.parent = arange
         self.it = it
 
@@ -113,9 +113,9 @@ class _ARangeIterator(AsyncIterator[int]):
 class arange(AsyncIterable[int]):
     """Async generator that counts like :class:`range`."""
 
-    def __init__(self,
-                 *slice_args: Optional[int],
-                 **slice_kwargs: Optional[int]) -> None:
+    def __init__(
+        self, *slice_args: Optional[int], **slice_kwargs: Optional[int]
+    ) -> None:
         s = slice(*slice_args, **slice_kwargs)
         self.start = s.start or 0
         self.stop = s.stop

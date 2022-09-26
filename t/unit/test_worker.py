@@ -3,22 +3,17 @@ import signal
 import sys
 from contextlib import contextmanager
 from signal import Signals
+
+import pytest
+
 from mode import Service
 from mode.debug import BlockingDetector
+from mode.utils.mocks import AsyncMock, Mock, call, mask_module, patch, patch_module
 from mode.worker import Worker, exiting
-from mode.utils.mocks import (
-    AsyncMock,
-    Mock,
-    call,
-    mask_module,
-    patch,
-    patch_module,
-)
-import pytest
 
 
 def test_exiting():
-    with patch('builtins.print') as print:
+    with patch("builtins.print") as print:
         with pytest.raises(SystemExit) as excinfo:
             with exiting(print_exception=True):
                 raise KeyError()
@@ -27,14 +22,12 @@ def test_exiting():
 
 
 class test_Worker:
-
     @pytest.fixture()
     def worker(self):
-        return Worker(loglevel='INFO', logfile=None)
+        return Worker(loglevel="INFO", logfile=None)
 
     def setup_method(self, method):
-        self.setup_logging_patch = patch(
-            'mode.utils.logging.setup_logging')
+        self.setup_logging_patch = patch("mode.utils.logging.setup_logging")
         self.setup_logging = self.setup_logging_patch.start()
 
     def teardown_method(self):
@@ -55,22 +48,22 @@ class test_Worker:
 
     def test_say__quiet(self, worker):
         worker.quiet = True
-        with patch('builtins.print') as print:
-            worker.say('msg')
+        with patch("builtins.print") as print:
+            worker.say("msg")
             print.assert_not_called()
 
     def test__say(self, worker):
         worker.quiet = False
         file = Mock()
-        with patch('builtins.print') as print:
-            worker._say('msg', file=file, foo=1)
-            print.assert_called_once_with('msg', file=file, foo=1, end='\n')
+        with patch("builtins.print") as print:
+            worker._say("msg", file=file, foo=1)
+            print.assert_called_once_with("msg", file=file, foo=1, end="\n")
 
     def test__say__default_file(self, worker):
         worker.quiet = False
-        with patch('builtins.print') as print:
-            worker._say('msg', file=None, end='.')
-            print.assert_called_once_with('msg', file=worker.stdout, end='.')
+        with patch("builtins.print") as print:
+            worker._say("msg", file=None, end=".")
+            print.assert_called_once_with("msg", file=worker.stdout, end=".")
 
     def test_on_init_dependencies(self, worker):
         workers = [Mock(), Mock(), Mock()]
@@ -110,32 +103,35 @@ class test_Worker:
     async def test_on_execute(self, worker):
         await worker.on_execute()
 
-    @pytest.mark.parametrize('loghandlers', [
-        [],
-        [Mock(), Mock()],
-        [Mock()],
-        None,
-    ])
+    @pytest.mark.parametrize(
+        "loghandlers",
+        [
+            [],
+            [Mock(), Mock()],
+            [Mock()],
+            None,
+        ],
+    )
     def test_setup_logging(self, loghandlers):
         worker_inst = Worker(
             loglevel=5,
-            logfile='TEMP',
+            logfile="TEMP",
             logging_config=None,
             loghandlers=loghandlers,
         )
         worker_inst._setup_logging()
         self.setup_logging.assert_called_once_with(
             loglevel=5,
-            logfile='TEMP',
+            logfile="TEMP",
             logging_config=None,
             loghandlers=loghandlers or [],
         )
 
     def test_setup_logging_raises_exception(self, worker):
-        with patch('sys.stderr'):
-            with patch('traceback.print_stack') as print_stack:
-                with patch('mode.utils.logging.setup_logging') as sl:
-                    sl.side_effect = KeyError('foo')
+        with patch("sys.stderr"):
+            with patch("traceback.print_stack") as print_stack:
+                with patch("mode.utils.logging.setup_logging") as sl:
+                    sl.side_effect = KeyError("foo")
                     with pytest.raises(KeyError):
                         worker._setup_logging()
 
@@ -145,7 +141,7 @@ class test_Worker:
 
     def test_setup_logging__no_redirect(self, worker):
         worker.redirect_stdouts = False
-        with patch('mode.utils.logging.setup_logging'):
+        with patch("mode.utils.logging.setup_logging"):
             worker._setup_logging()
 
     def test_stop_and_shutdown(self, worker):
@@ -162,8 +158,7 @@ class test_Worker:
         worker._signal_stop_future.done.return_value = False
         worker.stop_and_shutdown()
 
-        worker.loop.run_until_complete.assert_called_with(
-            worker._signal_stop_future)
+        worker.loop.run_until_complete.assert_called_with(worker._signal_stop_future)
 
     @pytest.mark.asyncio
     async def test_maybe_start_blockdetection(self, worker):
@@ -181,26 +176,27 @@ class test_Worker:
         worker._install_signal_handlers_unix = Mock()
 
         worker.install_signal_handlers()
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             worker._install_signal_handlers_windows.assert_called_once_with()
         else:
             worker._install_signal_handlers_unix.assert_called_once_with()
 
     def test__install_signal_handlers_windows(self, worker):
-        with patch('signal.signal') as sig:
+        with patch("signal.signal") as sig:
             worker._install_signal_handlers_windows()
-            sig.assert_called_once_with(
-                signal.SIGTERM, worker._on_win_sigterm)
+            sig.assert_called_once_with(signal.SIGTERM, worker._on_win_sigterm)
 
-    @pytest.mark.skipif(sys.platform == 'win32', reason='win32: no SIGUSR1')
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32: no SIGUSR1")
     def test__install_signal_handlers_unix(self, worker):
         worker.loop = Mock()
         worker._install_signal_handlers_unix()
-        worker.loop.add_signal_handler.assert_has_calls([
-            call(signal.SIGINT, worker._on_sigint),
-            call(signal.SIGTERM, worker._on_sigterm),
-            call(signal.SIGUSR1, worker._on_sigusr1),
-        ])
+        worker.loop.add_signal_handler.assert_has_calls(
+            [
+                call(signal.SIGINT, worker._on_sigint),
+                call(signal.SIGTERM, worker._on_sigterm),
+                call(signal.SIGUSR1, worker._on_sigusr1),
+            ]
+        )
 
     def test__on_sigint(self, worker):
         worker._schedule_shutdown = Mock()
@@ -225,12 +221,12 @@ class test_Worker:
 
     @pytest.mark.asyncio
     async def test__cry(self, worker):
-        with patch('mode.utils.logging.cry') as cry:
+        with patch("mode.utils.logging.cry") as cry:
             await worker._cry()
             cry.assert_called_once_with(file=worker.stderr)
 
     def test__schedule_shutdown(self, worker):
-        with patch('asyncio.ensure_future') as ensure_future:
+        with patch("asyncio.ensure_future") as ensure_future:
             worker._stop_on_signal = Mock()
             worker._schedule_shutdown(Signals.SIGTERM)
             assert worker._signal_stop_time
@@ -254,7 +250,9 @@ class test_Worker:
                 worker.execute_from_commandline()
             assert excinfo.value.code == 0
             assert worker._starting_fut is ensure_future.return_value
-            ensure_future.assert_called_once_with(worker.start.return_value)
+            ensure_future.assert_called_once_with(
+                worker.start.return_value, loop=worker.loop
+            )
             worker.stop_and_shutdown.assert_called_once_with()
 
     def test_execute_from_commandline__MemoryError(self, worker):
@@ -273,7 +271,7 @@ class test_Worker:
 
     def test_execute_from_commandline__Exception(self, worker):
         with self.patch_execute(worker):
-            worker.start.side_effect = KeyError('foo')
+            worker.start.side_effect = KeyError("foo")
             with pytest.raises(SystemExit) as excinfo:
                 worker.execute_from_commandline()
             assert excinfo.value.code > 0
@@ -283,7 +281,7 @@ class test_Worker:
         worker.loop = Mock()
         worker.start = Mock()
         worker.stop_and_shutdown = Mock()
-        with patch('asyncio.ensure_future') as ensure_future:
+        with patch("asyncio.ensure_future") as ensure_future:
             yield ensure_future
 
     def test_on_worker_shutdown(self, worker):
@@ -298,8 +296,7 @@ class test_Worker:
         worker.loop = Mock()
         worker.stop_and_shutdown()
 
-        worker.loop.run_until_complete.assert_called_with(
-            worker.stop.return_value)
+        worker.loop.run_until_complete.assert_called_with(worker.stop.return_value)
 
     def test__shutdown_loop(self, worker):
         with self.patch_shutdown_loop(worker, is_running=False):
@@ -312,6 +309,7 @@ class test_Worker:
                 if worker.loop.stop.call_count >= 3:
                     worker.loop.is_running.return_value = False
                 return worker.loop.stop.return_value
+
             worker.loop.stop.side_effect = on_loop_stop
 
             worker._shutdown_loop()
@@ -324,10 +322,11 @@ class test_Worker:
 
             def on_loop_stop():
                 if worker.loop.stop.call_count >= 3:
-                    print('MOO')
+                    print("MOO")
                     worker.loop.stop.side_effect = None
-                    raise ValueError('moo')
+                    raise ValueError("moo")
                 return worker.loop.stop.return_value
+
             worker.loop.stop.side_effect = on_loop_stop
 
             worker._shutdown_loop()
@@ -336,7 +335,7 @@ class test_Worker:
             worker.log.exception.assert_called_once()
 
     def test__shutdown_loop__service_crashed(self, worker):
-        worker.crash_reason = KeyError('foo')
+        worker.crash_reason = KeyError("foo")
         with self.patch_shutdown_loop(worker, is_running=False):
             with pytest.raises(KeyError):
                 worker._shutdown_loop()
@@ -348,19 +347,19 @@ class test_Worker:
         worker._gather_all = Mock()
         worker.loop.is_running.return_value = is_running
         worker._sentinel_task = Mock()
-        with patch('asyncio.ensure_future') as ensure_future:
-            with patch('asyncio.sleep'):
+        with patch("asyncio.ensure_future") as ensure_future:
+            with patch("asyncio.sleep"):
                 yield ensure_future
 
     @pytest.mark.asyncio
     async def test__sentinel_task(self, worker):
-        with patch('asyncio.sleep', AsyncMock()) as sleep:
+        with patch("asyncio.sleep", AsyncMock()) as sleep:
             await worker._sentinel_task()
-            sleep.coro.assert_called_once_with(1.0, loop=worker.loop)
+            sleep.coro.assert_called_once_with(1.0)
 
     def test__gather_all(self, worker):
-        with patch('mode.worker.all_tasks') as all_tasks:
-            with patch('asyncio.sleep'):
+        with patch("mode.worker.all_tasks") as all_tasks:
+            with patch("asyncio.sleep"):
                 all_tasks.return_value = [Mock(), Mock(), Mock()]
                 worker.loop = Mock()
 
@@ -370,8 +369,8 @@ class test_Worker:
                     task.cancel.assert_called_once_with()
 
     def test__gather_all_early(self, worker):
-        with patch('mode.worker.all_tasks') as all_tasks:
-            with patch('asyncio.sleep'):
+        with patch("mode.worker.all_tasks") as all_tasks:
+            with patch("asyncio.sleep"):
                 worker.loop = Mock()
 
                 def on_all_tasks(loop):
@@ -399,12 +398,14 @@ class test_Worker:
     @pytest.mark.asyncio
     async def test__add_monitor(self, worker):
         worker.add_context = Mock()
-        with patch_module('aiomonitor'):
+        with patch_module("aiomonitor"):
             import aiomonitor
+
             await worker._add_monitor()
 
             worker.add_context.assert_called_once_with(
-                aiomonitor.start_monitor.return_value)
+                aiomonitor.start_monitor.return_value
+            )
 
             aiomonitor.start_monitor.assert_called_once_with(
                 port=worker.console_port,
@@ -414,7 +415,7 @@ class test_Worker:
     @pytest.mark.asyncio
     async def test__add_monitor__no_aiomonitor(self, worker):
         worker.log.warning = Mock()
-        with mask_module('aiomonitor'):
+        with mask_module("aiomonitor"):
             await worker._add_monitor()
             worker.log.warning.assert_called_once()
 

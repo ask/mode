@@ -1,21 +1,22 @@
 """Text and string manipulation utilities."""
 from difflib import SequenceMatcher
 from typing import AnyStr, Iterable, Iterator, NamedTuple, Optional
+
 from .compat import want_str
 
 __all__ = [
-    'FuzzyMatch',
-    'title',
-    'didyoumean',
-    'fuzzymatch_choices',
-    'fuzzymatch_iter',
-    'fuzzymatch_best',
-    'abbr',
-    'abbr_fqdn',
-    'enumeration',
-    'shorten_fqdn',
-    'pluralize',
-    'maybecat',
+    "FuzzyMatch",
+    "title",
+    "didyoumean",
+    "fuzzymatch_choices",
+    "fuzzymatch_iter",
+    "fuzzymatch_best",
+    "abbr",
+    "abbr_fqdn",
+    "enumeration",
+    "shorten_fqdn",
+    "pluralize",
+    "maybecat",
 ]
 
 
@@ -33,18 +34,20 @@ def title(s: str) -> str:
 
     ``"foo-bar" -> "Foo Bar"``
     """
-    return ' '.join(
-        p.capitalize()
-        for p in s.replace('-', ' ')
-                  .replace('_', ' ').split())
+    return " ".join(
+        p.capitalize() for p in s.replace("-", " ").replace("_", " ").split()
+    )
 
 
-def didyoumean(haystack: Iterable[str], needle: str,
-               *,
-               fmt_many: str = 'Did you mean one of {alt}?',
-               fmt_one: str = 'Did you mean {alt}?',
-               fmt_none: str = '',
-               min_ratio: float = 0.6) -> str:
+def didyoumean(
+    haystack: Iterable[str],
+    needle: str,
+    *,
+    fmt_many: str = "Did you mean one of {alt}?",
+    fmt_one: str = "Did you mean {alt}?",
+    fmt_none: str = "",
+    min_ratio: float = 0.6,
+) -> str:
     """Generate message with helpful list of alternatives.
 
     Examples:
@@ -74,7 +77,8 @@ def didyoumean(haystack: Iterable[str], needle: str,
             Default is 0.6.
     """
     return fuzzymatch_choices(
-        list(haystack), needle,
+        list(haystack),
+        needle,
         fmt_many=fmt_many,
         fmt_one=fmt_one,
         fmt_none=fmt_none,
@@ -82,10 +86,13 @@ def didyoumean(haystack: Iterable[str], needle: str,
     )
 
 
-def enumeration(items: Iterable[str], *,
-                start: int = 1,
-                sep: str = '\n',
-                template: str = '{index}) {item}') -> str:
+def enumeration(
+    items: Iterable[str],
+    *,
+    start: int = 1,
+    sep: str = "\n",
+    template: str = "{index}) {item}",
+) -> str:
     r"""Enumerate list of strings.
 
     Example:
@@ -98,31 +105,34 @@ def enumeration(items: Iterable[str], *,
     )
 
 
-def fuzzymatch_choices(haystack: Iterable[str], needle: str,
-                       *,
-                       fmt_many: str = 'one of {alt}',
-                       fmt_one: str = '{alt}',
-                       fmt_none: str = '',
-                       min_ratio: float = 0.6) -> str:
+def fuzzymatch_choices(
+    haystack: Iterable[str],
+    needle: str,
+    *,
+    fmt_many: str = "one of {alt}",
+    fmt_one: str = "{alt}",
+    fmt_none: str = "",
+    min_ratio: float = 0.6,
+) -> str:
     """Fuzzy match reducing to error message suggesting an alternative."""
     alt = list(fuzzymatch(haystack, needle, min_ratio=min_ratio))
     if not alt:
         return fmt_none
     return (fmt_many if len(alt) > 1 else fmt_one).format(
-        alt=', '.join(alt),
+        alt=", ".join(alt),
     )
 
 
-def fuzzymatch(haystack: Iterable[str], needle: str,
-               *,
-               min_ratio: float = 0.6) -> Iterator[str]:
+def fuzzymatch(
+    haystack: Iterable[str], needle: str, *, min_ratio: float = 0.6
+) -> Iterator[str]:
     for match in fuzzymatch_iter(haystack, needle, min_ratio=min_ratio):
         yield match.value
 
 
-def fuzzymatch_iter(haystack: Iterable[str], needle: str,
-                    *,
-                    min_ratio: float = 0.6) -> Iterator[FuzzyMatch]:
+def fuzzymatch_iter(
+    haystack: Iterable[str], needle: str, *, min_ratio: float = 0.6
+) -> Iterator[FuzzyMatch]:
     """Fuzzy Match: Including actual ratio.
 
     Yields:
@@ -134,24 +144,20 @@ def fuzzymatch_iter(haystack: Iterable[str], needle: str,
             yield FuzzyMatch(ratio, key)
 
 
-def fuzzymatch_best(haystack: Iterable[str], needle: str,
-                    *,
-                    min_ratio: float = 0.6) -> Optional[str]:
+def fuzzymatch_best(
+    haystack: Iterable[str], needle: str, *, min_ratio: float = 0.6
+) -> Optional[str]:
     """Fuzzy Match - Return best match only (single scalar value)."""
     try:
         return sorted(
-            fuzzymatch_iter(
-                haystack,
-                needle,
-                min_ratio=min_ratio),
+            fuzzymatch_iter(haystack, needle, min_ratio=min_ratio),
             reverse=True,
         )[0].value
     except IndexError:
         return None
 
 
-def abbr(s: str, max: int, suffix: str = '...',
-         words: bool = False) -> str:
+def abbr(s: str, max: int, suffix: str = "...", words: bool = False) -> str:
     """Abbreviate word."""
     if words:
         return _abbr_word_boundary(s, max, suffix)
@@ -162,18 +168,18 @@ def _abbr_word_boundary(s: str, max: int, suffix: str) -> str:
     # Do not cut-off any words, but means the limit is even harder
     # and we won't include any partial words.
     if len(s) > max:
-        return suffix and (s[:max - len(suffix)] + suffix) or s[:max]
+        return suffix and (s[: max - len(suffix)] + suffix) or s[:max]
     return s
 
 
-def _abbr_abrupt(s: str, max: int, suffix: str = '...') -> str:
+def _abbr_abrupt(s: str, max: int, suffix: str = "...") -> str:
     # hard limit (can cut off in the middle of a word).
     if max and len(s) >= max:
-        return s[:max].rsplit(' ', 1)[0] + suffix
+        return s[:max].rsplit(" ", 1)[0] + suffix
     return s
 
 
-def abbr_fqdn(origin: str, name: str, *, prefix: str = '') -> str:
+def abbr_fqdn(origin: str, name: str, *, prefix: str = "") -> str:
     """Abbreviate fully-qualified Python name, by removing origin.
 
     ``app.origin`` is the package where the app is defined,
@@ -191,31 +197,31 @@ def abbr_fqdn(origin: str, name: str, *, prefix: str = '') -> str:
     abbr_fqdn will only remove the origin portion of the name.
     """
     if name.startswith(origin):
-        name = name[len(origin) + 1:]
-        return f'{prefix}{name}'
+        name = name[len(origin) + 1 :]
+        return f"{prefix}{name}"
     return name
 
 
 def shorten_fqdn(s: str, max: int = 32) -> str:
     """Shorten fully-qualified Python name (like "os.path.isdir")."""
     if len(s) > max:
-        module, sep, cls = s.rpartition('.')
+        module, sep, cls = s.rpartition(".")
         if sep:
-            module = abbr(module, max - len(cls) - 3, '', words=True)
-            return module + '[.]' + cls
+            module = abbr(module, max - len(cls) - 3, "", words=True)
+            return module + "[.]" + cls
     return s
 
 
-def pluralize(n: int, text: str, suffix: str = 's') -> str:
+def pluralize(n: int, text: str, suffix: str = "s") -> str:
     """Pluralize term when n is greater than one."""
     if n != 1:
         return text + suffix
     return text
 
 
-def maybecat(s: Optional[AnyStr], suffix: str = '',
-             *,
-             prefix: str = '') -> Optional[str]:
+def maybecat(
+    s: Optional[AnyStr], suffix: str = "", *, prefix: str = ""
+) -> Optional[str]:
     """Concatenate string only if existing string s' is defined.
 
     Keyword Arguments:
