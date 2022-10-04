@@ -5,9 +5,9 @@
 |build-status| |coverage| |license| |wheel| |pyversion| |pyimp|
 
 :Version: 0.2.0
-:Web: http://mode-streaming.readthedocs.org/
-:Download: http://pypi.org/project/mode-streaming
-:Source: http://github.com/faust-streaming/mode
+:Web: https://faust-streaming.github.io/mode/
+:Download: https://pypi.org/project/mode-streaming
+:Source: https://github.com/faust-streaming/mode
 :Keywords: async, service, framework, actors, bootsteps, graph
 
 
