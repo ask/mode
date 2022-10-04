@@ -55,7 +55,6 @@ except ImportError:  # pragma: no cover
     def _is_class_var(x: Any) -> bool:  # noqa
         return isinstance(x, _GenericAlias) and x.__origin__ is ClassVar
 
-
 else:  # pragma: no cover
     # CPython 3.6
     def _is_class_var(x: Any) -> bool:
@@ -72,7 +71,6 @@ if typing.TYPE_CHECKING:
 
         def __init__(self, arg: str, is_argument: bool = True) -> None:
             ...
-
 
 else:
     try:
@@ -118,7 +116,6 @@ try:
     @typing.no_type_check  # type: ignore
     class _UsingKwargsInNew(_InitSubclassCheck, ident=909):
         ...
-
 
 except TypeError:
     abc_compatible_with_init_subclass = False

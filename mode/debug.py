@@ -18,7 +18,6 @@ if hasattr(signal, "setitimer"):  # pragma: no cover
     def arm_alarm(seconds: float) -> None:
         signal.setitimer(signal.ITIMER_REAL, seconds)
 
-
 else:  # pragma: no cover
     try:
         import itimer

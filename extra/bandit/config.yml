@@ -43,9 +43,8 @@
 # B319 : xml_bad_pulldom
 # B320 : xml_bad_etree
 # B321 : ftplib
-# B322 : input
 # B323 : unverified_context
-# B324 : hashlib_new_insecure_functions
+# B324 : hashlib_insecure_functions
 # B325 : tempnam
 # B401 : import_telnetlib
 # B402 : import_ftplib
@@ -60,7 +59,7 @@
 # B411 : import_xmlrpclib
 # B412 : import_httpoxy
 # B413 : import_pycrypto
-# B414 : import_pycryptodome
+# B415 : import_pyghmi
 # B501 : request_with_no_cert_validation
 # B502 : ssl_with_bad_version
 # B503 : ssl_with_bad_defaults
@@ -68,6 +67,8 @@
 # B505 : weak_cryptographic_key
 # B506 : yaml_load
 # B507 : ssh_no_host_key_verification
+# B508 : snmp_insecure_version
+# B509 : snmp_weak_cryptography
 # B601 : paramiko_calls
 # B602 : subprocess_popen_with_shell_equals_true
 # B603 : subprocess_without_shell_equals_true
@@ -133,6 +134,8 @@ any_other_function_with_shell_equals_true:
   - subprocess.check_call
   - subprocess.check_output
   - subprocess.run
+assert_used:
+  skips: []
 hardcoded_tmp_directory:
   tmp_dirs:
   - /tmp
@@ -395,3 +398,4 @@ weak_cryptographic_key:
   weak_key_size_ec_medium: 224
   weak_key_size_rsa_high: 1024
   weak_key_size_rsa_medium: 2048
+
