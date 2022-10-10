@@ -426,7 +426,14 @@ class Service(ServiceBase, ServiceCallbacks):
         return ServiceTask(fun)
 
     @classmethod
-    def timer(cls, interval: Seconds) -> Callable[[Callable], ServiceTask]:
+    def timer(
+        cls,
+        interval: Seconds,
+        *,
+        exec_first: bool = False,
+        name: str = None,
+        max_drift_correction: float = 0.1,
+    ) -> Callable[[Callable], ServiceTask]:
         """Background timer executing every ``n`` seconds.
 
         Example:
@@ -439,10 +446,17 @@ class Service(ServiceBase, ServiceCallbacks):
         _interval = want_seconds(interval)
 
         def _decorate(fun: Callable[[ServiceT], Awaitable[None]]) -> ServiceTask:
+            _timer_name = name or qualname(fun)
+
             @wraps(fun)
             async def _repeater(self: Service) -> None:
-                await self.sleep(_interval)
-                async for sleep_time in self.itertimer(_interval, name=qualname(fun)):
+                if exec_first:
+                    await fun(self)
+                async for sleep_time in self.itertimer(
+                    _interval,
+                    name=_timer_name,
+                    max_drift_correction=max_drift_correction,
+                ):
                     await fun(self)
 
             return cls.task(_repeater)

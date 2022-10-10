@@ -21,6 +21,7 @@ Documentation/
 .project
 .pydevproject
 .idea/
+.vscode/
 .coverage
 .ve*
 cover/

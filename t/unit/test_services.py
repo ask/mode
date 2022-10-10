@@ -1,4 +1,5 @@
 import asyncio
+from functools import partial
 from typing import ContextManager
 
 import pytest
@@ -205,6 +206,54 @@ class test_Service:
             yield 0.4
             yield 0.5
             yield 0.6
+
+        foo = Foo()
+        foo.sleep = AsyncMock()
+        foo.itertimer = itertimer
+        async with foo:
+            pass
+        assert m.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_timer__not_to_wait_twice(self) -> None:
+        m = Mock()
+
+        class Foo(Service):
+            @Service.timer(0.1)
+            async def foo(self) -> None:
+                m()
+                if m.call_count >= 3:
+                    self._stopped.set()
+
+        async def itertimer(self, t, *args, **kwargs):
+            for i in range(4):
+                await self.sleep(t)
+                yield
+
+        foo = Foo()
+        foo.sleep = AsyncMock()
+        foo.itertimer = partial(itertimer, foo)
+        async with foo:
+            pass
+
+        assert foo.sleep.call_count == 4
+        assert m.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_timer__exec_first(self) -> None:
+        m = Mock()
+
+        class Foo(Service):
+            @Service.timer(1.0, exec_first=True)
+            async def foo(self) -> None:
+                m()
+                if m.call_count >= 3:
+                    self._stopped.set()
+
+        async def itertimer(*args, **kwargs):
+            yield 0.1
+            yield 0.2
+            yield 0.3
 
         foo = Foo()
         foo.sleep = AsyncMock()
