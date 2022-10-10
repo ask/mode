@@ -9,31 +9,8 @@ on:
       - 'master'
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04, macos-11]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.8.1
-        env:
-          CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
-          CIBW_ARCHS: auto64
-          CIBW_BUILD: 'cp3*'
-          CIBW_SKIP: '*p36*'
-          CIBW_BEFORE_BUILD: pip3 install Cython
-
-      - uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
-
-  build_sdist:
-    name: 'Build source distribution'
+  build:
+    name: 'Build distributable files'
     runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@v2
@@ -41,19 +18,17 @@ jobs:
 
       - uses: actions/setup-python@v4
 
-      - name: 'Build sdist'
-        run: >
-          pip3 install pkgconfig cython --upgrade &&
-          python3 setup.py sdist
+      - name: 'Build sdist and wheel'
+        run: python3 setup.py sdist bdist_wheel
 
       - uses: actions/upload-artifact@v2
         name: 'Upload build artifacts'
         with:
-          path: 'dist/*.tar.gz'
+          path: 'dist/*'
 
   upload_pypi:
     name: 'Upload packages'
-    needs: ['build_wheels', 'build_sdist']
+    needs: ['build']
     runs-on: 'ubuntu-latest'
     if: github.event_name == 'release' && github.event.action == 'created'
     steps:
