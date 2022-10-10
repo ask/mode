@@ -1,4 +1,4 @@
-:Version: 0.2.0
+:Version: 0.2.1
 :Web: http://mode-streaming.readthedocs.org/
 :Download: http://pypi.org/project/mode-streaming
 :Source: http://github.com/faust-streaming/mode

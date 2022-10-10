@@ -12,7 +12,7 @@ import typing
 from types import ModuleType  # noqa
 from typing import Any, Mapping, NamedTuple, Sequence
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __author__ = "Robinhood Markets"
 __contact__ = "opensource@robinhood.com"
 __homepage__ = "https://github.com/faust-streaming/mode"
