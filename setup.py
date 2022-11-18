@@ -31,7 +31,7 @@ README = Path("README.rst")
 # -*- Classifiers -*-
 
 classes = """
-    Development Status :: 5 - Production/Stable,
+    Development Status :: 5 - Production/Stable
     License :: OSI Approved :: BSD License
     Programming Language :: Python :: 3 :: Only
     Programming Language :: Python :: 3.7
