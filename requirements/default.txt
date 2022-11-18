@@ -3,3 +3,4 @@ aiocontextvars>=0.2 ; python_version<'3.7'
 mypy_extensions
 typing_extensions; python_version<'3.8'
 croniter>=0.3.16
+importlib-metadata; python_version<'3.8'

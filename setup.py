@@ -31,10 +31,9 @@ README = Path("README.rst")
 # -*- Classifiers -*-
 
 classes = """
-    Development Status :: 4 - Beta
+    Development Status :: 5 - Production/Stable,
     License :: OSI Approved :: BSD License
     Programming Language :: Python :: 3 :: Only
-    Programming Language :: Python :: 3.6
     Programming Language :: Python :: 3.7
     Programming Language :: Python :: 3.8
     Programming Language :: Python :: 3.9
@@ -129,7 +128,8 @@ assert not any(package.startswith("t.") for package in packages)
 
 setup(
     name=NAME,
-    version=meta["version"],
+    use_scm_version=True,
+    setup_requires=["setuptools_scm"],
     description=meta["doc"],
     author=meta["author"],
     author_email=meta["contact"],

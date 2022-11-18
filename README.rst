@@ -2,9 +2,8 @@
  AsyncIO Services Fork
 =====================================================================
 
-|build-status| |coverage| |license| |wheel| |pyversion| |pyimp|
+|release| |coverage| |license| |wheel| |pyversion| |pyimp|
 
-:Version: 0.2.1
 :Web: https://faust-streaming.github.io/mode/
 :Download: https://pypi.org/project/mode-streaming
 :Source: https://github.com/faust-streaming/mode
@@ -285,7 +284,7 @@ With pip
 You can install the latest snapshot of Mode using the following
 pip command::
 
-    $ pip install https://github.com/faust-streaming/mode/zipball/master#egg=mode-streaming
+    $ pip install mode-streaming
 
 FAQ
 ===
@@ -484,3 +483,7 @@ version 1.2.0 available at http://contributor-covenant.org/version/1/2/0/.
 .. |pyimp| image:: https://img.shields.io/pypi/implementation/mode-streaming.svg
     :alt: Supported Python implementations.
     :target: http://pypi.org/project/mode-streaming/
+
+.. |release| image:: https://img.shields.io/pypi/v/mode-streaming.svg
+    :alt: Latest release
+    :target: https://pypi.python.org/pypi/mode-streaming/

@@ -1,3 +1,4 @@
+-r default.txt
 bandit
 black
 isort

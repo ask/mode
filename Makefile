@@ -11,7 +11,6 @@ FLAKE8 ?= flake8
 PYDOCSTYLE ?= pydocstyle
 MYPY ?= mypy
 SPHINX2RST ?= sphinx2rst
-BUMPVERSION ?= bumpversion
 
 TESTDIR ?= t
 SPHINX_DIR ?= docs/
@@ -50,23 +49,11 @@ help:
 	@echo "    clean-pyc        - Remove .pyc/__pycache__ files"
 	@echo "    clean-docs       - Remove documentation build artifacts."
 	@echo "    clean-build      - Remove setup artifacts."
-	@echo "bump                 - Bump patch version number."
-	@echo "bump-minor           - Bump minor version number."
-	@echo "bump-major           - Bump major version number."
 	@echo "release              - Make PyPI release."
 
 clean: clean-docs clean-pyc clean-build
 
 clean-dist: clean clean-git-force
-
-bump:
-	$(BUMPVERSION) patch
-
-bump-minor:
-	$(BUMPVERSION) minor
-
-bump-major:
-	$(BUMPVERSION) major
 
 release:
 	$(PYTHON) setup.py register sdist bdist_wheel upload --sign --identity="$(PGPIDENT)"

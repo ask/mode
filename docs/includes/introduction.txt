@@ -1,5 +1,13 @@
-:Version: 0.2.1
-:Web: http://mode-streaming.readthedocs.org/
+.. image:: https://img.shields.io/pypi/v/mode-streaming.svg
+    :target: https://pypi.python.org/pypi/mode-streaming/
+
+.. image:: https://img.shields.io/pypi/pyversions/mode-streaming.svg
+    :target: https://pypi.org/project/mode-streaming/
+
+.. image:: https://img.shields.io/pypi/dm/mode-streaming
+   :target: https://pypi.python.org/pypi/mode-streaming/
+
+:Web: https://faust-streaming.github.io/mode/
 :Download: http://pypi.org/project/mode-streaming
 :Source: http://github.com/faust-streaming/mode
 :Keywords: async, service, framework, actors, bootsteps, graph

@@ -12,9 +12,14 @@ import typing
 from types import ModuleType  # noqa
 from typing import Any, Mapping, NamedTuple, Sequence
 
-__version__ = "0.2.1"
+if sys.version_info < (3, 8):
+    from importlib_metadata import version
+else:
+    from importlib.metadata import version
+
+__version__ = version("mode-streaming")
 __author__ = "Robinhood Markets"
-__contact__ = "opensource@robinhood.com"
+__contact__ = "vpatki@wayfair.com, williambbarnhart@gmail.com"
 __homepage__ = "https://github.com/faust-streaming/mode"
 __docformat__ = "restructuredtext"
 
