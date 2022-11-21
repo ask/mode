@@ -2,20 +2,23 @@ import asyncio
 import io
 import logging
 import sys
+import time
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
+from typing import IO, Type
+from unittest.mock import ANY, AsyncMock, Mock, call, patch
 
 import pytest
 
 from mode.utils.logging import (
-    HAS_STACKLEVEL,
     CompositeLogger,
     DefaultFormatter,
+    ExtensionFormatter,
     FileLogProxy,
     LogMessage,
     Logwrapped,
     _FlightRecorderProxy,
     _formatter_registry,
-    _logger_config,
     _setup_logging,
     current_flight_recorder,
     flight_recorder,
@@ -28,28 +31,14 @@ from mode.utils.logging import (
     redirect_stdouts,
     setup_logging,
 )
-from mode.utils.mocks import ANY, AsyncMock, Mock, call, patch
-
-
-def test__logger_config():
-    assert _logger_config([1, 2], level="WARNING") == {
-        "handlers": [1, 2],
-        "level": "WARNING",
-    }
 
 
 def log_called_with(logger, *args, stacklevel, **kwargs):
-    if HAS_STACKLEVEL:
-        logger.log.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
-    else:
-        logger.log.assert_called_once_with(*args, **kwargs)
+    logger.log.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
 
 
 def formatter_called_with(formatter, *args, stacklevel, **kwargs):
-    if HAS_STACKLEVEL:
-        formatter.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
-    else:
-        formatter.assert_called_once_with(*args, **kwargs)
+    formatter.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
 
 
 class test_CompositeLogger:
@@ -202,7 +191,7 @@ class test_setup_logging:
             )
 
     def test_io(self):
-        logfile = Mock()
+        logfile = Mock(spec=IO)
         with patch("mode.utils.logging._setup_logging") as _sl:
             setup_logging(loglevel="INFO", logfile=logfile)
 
@@ -215,7 +204,7 @@ class test_setup_logging:
             )
 
     def test_io_no_tty(self):
-        logfile = Mock()
+        logfile = Mock(spec=IO)
         logfile.isatty.side_effect = AttributeError()
         with patch("mode.utils.logging._setup_logging") as _sl:
             setup_logging(loglevel="INFO", logfile=logfile)
@@ -339,11 +328,9 @@ def test_print_task_name():
     out = io.StringIO()
     task = Mock()
     task.__wrapped__ = Mock()
-    task._coro.__name__ = "foo"
     print_task_name(task, file=out)
     assert out.getvalue()
 
-    task._coro.__name__ = None
     task.__wrapped__ = None
     print_task_name(task, file=out)
     assert out.getvalue()
@@ -422,7 +409,7 @@ class test_flight_recorder:
         fut = bb._fut = Mock()
         bb.cancel()
         assert bb._fut is None
-        fut.cancel.assert_called_once_with()
+        fut.cancel.assert_called_once_with()  # type: ignore
 
     def test_log__active(self, bb, logger):
         bb._fut = Mock()
@@ -464,7 +451,7 @@ class test_flight_recorder:
         assert not bb._logs
         bb._buffer_log(logging.ERROR, "msg %r %(foo)s", (1,), {"foo": "bar"})
         with patch("asyncio.sleep", AsyncMock()) as sleep:
-            sleep.coro.side_effect = asyncio.CancelledError()
+            sleep.side_effect = asyncio.CancelledError()
             await bb._waiting()
             sleep.assert_called_once_with(bb.timeout)
             assert bb._logs
@@ -645,8 +632,7 @@ def _assert_log_severities(logger):
 
 
 def _log_kwargs(kwargs):
-    if HAS_STACKLEVEL:
-        kwargs.setdefault("stacklevel", 3)
+    kwargs.setdefault("stacklevel", 3)
     return kwargs
 
 

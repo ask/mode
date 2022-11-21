@@ -1,8 +1,8 @@
 import asyncio
+from unittest.mock import Mock, patch
 
 import pytest
 
-from mode.utils.mocks import Mock, patch
 from mode.utils.tracebacks import Traceback, format_task_stack
 
 
@@ -17,16 +17,15 @@ async def test_format_task_stack():
     async def bar():
         await baz()
 
-    @asyncio.coroutine
-    def baz():
+    async def baz():
         task = asyncio.ensure_future(xuz())
-        yield from asyncio.sleep(0.1)
+        await asyncio.sleep(0.1)
         for _ in range(100):
             assert format_task_stack(task, limit=0)
             assert format_task_stack(task, limit=-300)
             assert format_task_stack(task, limit=None)
             assert format_task_stack(task, limit=3, capture_locals=True)
-        yield from on_done.wait()
+        await on_done.wait()
 
     async def xuz():
         await xuz1()
@@ -50,9 +49,8 @@ async def test_format_task_stack():
     await asyncio.sleep(0.05)
     assert format_task_stack(task, limit=None)
 
-    @asyncio.coroutine
-    def moo():
-        yield from asyncio.sleep(0.1)
+    async def moo():
+        await asyncio.sleep(0.1)
 
     task = asyncio.ensure_future(moo())
     await asyncio.sleep(0.05)

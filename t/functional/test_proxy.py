@@ -1,8 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, Mock
+
 import pytest
 
 from mode import Service, label, shortlabel
 from mode.proxy import ServiceProxy
-from mode.utils.mocks import AsyncMock, MagicMock, Mock
 
 
 class Proxy(ServiceProxy):
@@ -47,15 +48,15 @@ class test_Proxy:
     @pytest.mark.asyncio
     async def test_add_runtime_dependency(self, *, proxy, service, subservice):
         ret = await proxy.add_runtime_dependency(subservice)
-        service.add_runtime_dependency.assert_called_once_with(subservice)
-        assert ret is service.add_runtime_dependency.coro()
+        service.add_runtime_dependency.assert_awaited_once_with(subservice)
+        assert ret is service.add_runtime_dependency.return_value
 
     @pytest.mark.asyncio
     async def test_add_async_context(self, *, proxy, service):
         context = MagicMock()
         ret = await proxy.add_async_context(context)
-        service.add_async_context.assert_called_once_with(context)
-        assert ret is service.add_async_context.coro()
+        service.add_async_context.assert_awaited_once_with(context)
+        assert ret is service.add_async_context.return_value
 
     def test_add_context(self, *, proxy, service):
         context = MagicMock()
@@ -66,19 +67,19 @@ class test_Proxy:
     @pytest.mark.asyncio
     async def test_start(self, *, proxy, service):
         await proxy.start()
-        service.start.assert_called_once_with()
+        service.start.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test_maybe_start(self, *, proxy, service):
-        service.maybe_start.coro.return_value = False
+        service.maybe_start.return_value = False
         assert not await proxy.maybe_start()
-        service.maybe_start.assert_called_once_with()
+        service.maybe_start.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test_crash(self, *, proxy, service):
         exc = KeyError()
         await proxy.crash(exc)
-        service.crash.assert_called_once_with(exc)
+        service.crash.assert_awaited_once_with(exc)
 
     def test__crash(self, *, proxy, service):
         exc = KeyError()
@@ -88,7 +89,7 @@ class test_Proxy:
     @pytest.mark.asyncio
     async def test_stop(self, *, proxy, service):
         await proxy.stop()
-        service.stop.assert_called_once_with()
+        service.stop.assert_awaited_once_with()
 
     def test_service_reset(self, *, proxy, service):
         proxy.service_reset()
@@ -97,12 +98,12 @@ class test_Proxy:
     @pytest.mark.asyncio
     async def test_restart(self, *, proxy, service):
         await proxy.restart()
-        service.restart.assert_called_once_with()
+        service.restart.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test_wait_until_stopped(self, *, proxy, service):
         await proxy.wait_until_stopped()
-        service.wait_until_stopped.assert_called_once_with()
+        service.wait_until_stopped.assert_awaited_once_with()
 
     def test_set_shutdown(self, *, proxy, service):
         proxy.set_shutdown()

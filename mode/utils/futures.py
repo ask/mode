@@ -122,7 +122,7 @@ def done_future(
     result: Any = None, *, loop: asyncio.AbstractEventLoop = None
 ) -> asyncio.Future:
     """Return :class:`asyncio.Future` that is already evaluated."""
-    f = (loop or asyncio.get_event_loop()).create_future()
+    f = (loop or asyncio.get_event_loop_policy().get_event_loop()).create_future()
     f.set_result(result)
     return f
 

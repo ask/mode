@@ -1,4 +1,5 @@
 import pickle
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -13,7 +14,6 @@ from mode.utils.collections import (
     ManagedUserSet,
     force_mapping,
 )
-from mode.utils.mocks import Mock, call, patch
 
 
 class test_FastUserDict:

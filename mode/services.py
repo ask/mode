@@ -2,19 +2,22 @@
 import asyncio
 import logging
 import sys
+from asyncio.locks import Event
+from contextlib import AsyncExitStack, ExitStack
 from datetime import tzinfo
 from functools import wraps
 from time import monotonic, perf_counter
 from types import TracebackType
 from typing import (
     Any,
+    AsyncContextManager,
     AsyncIterator,
     Awaitable,
     Callable,
     ClassVar,
     ContextManager,
+    Coroutine,
     Dict,
-    Generator,
     Iterable,
     List,
     Mapping,
@@ -30,9 +33,7 @@ from typing import (
 
 from .timers import Timer
 from .types import DiagT, ServiceT
-from .utils.contexts import AsyncExitStack, ExitStack
 from .utils.cron import secs_for_next
-from .utils.locks import Event
 from .utils.logging import CompositeLogger, get_logger, level_number
 from .utils.objects import iter_mro_reversed, qualname
 from .utils.text import maybecat
@@ -40,26 +41,17 @@ from .utils.times import Seconds, want_seconds
 from .utils.tracebacks import format_task_stack
 from .utils.trees import Node
 from .utils.types.trees import NodeT
-from .utils.typing import AsyncContextManager
 
-__all__ = [
-    "ServiceBase",
-    "Service",
-    "Diag",
-    "task",
-    "timer",
-]
+__all__ = ["ServiceBase", "Service", "Diag", "task", "timer", "crontab"]
 
 ClockArg = Callable[[], float]
 
 #: Future type: Different types of awaitables.
-FutureT = Union[asyncio.Future, Generator[Any, None, Any], Awaitable]
+FutureT = Union[asyncio.Future, Coroutine[Any, None, Any], Awaitable]
 
 #: Argument type for ``Service.wait(*events)``
 #: Wait can take any number of futures or events to wait for.
-WaitArgT = Union[FutureT, asyncio.Event, Event]
-
-EVENT_TYPES = (asyncio.Event, Event)
+WaitArgT = Union[FutureT, Event]
 
 
 class WaitResults(NamedTuple):
@@ -96,10 +88,10 @@ class ServiceBase(ServiceT):
     # the None to logger.
     logger: logging.Logger = cast(logging.Logger, None)
 
-    def __init_subclass__(self) -> None:
-        if self.abstract:
-            self.abstract = False
-        self._init_subclass_logger()
+    def __init_subclass__(cls) -> None:
+        if cls.abstract:
+            cls.abstract = False
+        cls._init_subclass_logger()
 
     @classmethod
     def _init_subclass_logger(cls) -> None:
@@ -146,11 +138,11 @@ class ServiceBase(ServiceT):
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
         if self._loop is None:
-            self._loop = asyncio.get_event_loop()
+            self._loop = asyncio.get_event_loop_policy().get_event_loop()
         return self._loop
 
     @loop.setter
-    def loop(self, loop: Optional[asyncio.AbstractEventLoop]) -> None:
+    def loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
 
 
@@ -231,7 +223,7 @@ class ServiceCallbacks:
 
     When calling ``await service.start()`` this happens:
 
-    .. sourcecode:: text
+    .. code-block:: text
 
         +--------------------+
         | INIT (not started) |
@@ -255,7 +247,7 @@ class ServiceCallbacks:
 
     When stopping and ``wait_for_shutdown`` is unset, this happens:
 
-    .. sourcecode:: text
+    .. code-block:: text
 
         .-----------------------.
         / await service.stop()  |
@@ -272,7 +264,7 @@ class ServiceCallbacks:
     When stopping and ``wait_for_shutdown`` is set, the stop operation
     will wait for something to set the shutdown flag ``self.set_shutdown()``:
 
-    .. sourcecode:: text
+    .. code-block:: text
 
         .-----------------------.
         / await service.stop()  |
@@ -293,7 +285,7 @@ class ServiceCallbacks:
     When restarting the order is as follows (assuming
     ``wait_for_shutdown`` unset):
 
-    .. sourcecode:: text
+    .. code-block:: text
 
         .-------------------------.
         / await service.restart() |
@@ -511,13 +503,13 @@ class Service(ServiceBase, ServiceCallbacks):
 
         return _decorate
 
-    def __init_subclass__(self) -> None:
+    def __init_subclass__(cls) -> None:
         # Every new subclass adds @Service.task decorated methods
         # to the class-local `_tasks` list.
-        if self.abstract:
-            self.abstract = False
-        self._init_subclass_logger()
-        self._init_subclass_tasks()
+        if cls.abstract:
+            cls.abstract = False
+        cls._init_subclass_logger()
+        cls._init_subclass_tasks()
 
     @classmethod
     def _init_subclass_tasks(cls) -> None:
@@ -575,16 +567,16 @@ class Service(ServiceBase, ServiceCallbacks):
         super().__init__(loop=self._loop)
 
     def _new_started_event(self) -> Event:
-        return Event(loop=self._loop)
+        return Event()
 
     def _new_stopped_event(self) -> Event:
-        return Event(loop=self._loop)
+        return Event()
 
     def _new_shutdown_event(self) -> Event:
-        return Event(loop=self._loop)
+        return Event()
 
     def _new_crashed_event(self) -> Event:
-        return Event(loop=self._loop)
+        return Event()
 
     async def transition_with(
         self, flag: str, fut: Awaitable, *args: Any, **kwargs: Any
@@ -640,7 +632,7 @@ class Service(ServiceBase, ServiceCallbacks):
         """
         fut = asyncio.ensure_future(self._execute_task(coro), loop=self.loop)
         try:
-            fut.set_name(repr(coro))  # type: ignore
+            fut.set_name(repr(coro))
         except AttributeError:
             pass
         fut.__wrapped__ = coro  # type: ignore
@@ -698,9 +690,7 @@ class Service(ServiceBase, ServiceCallbacks):
         for service in reversed(services):
             await service.stop()
 
-    async def sleep(
-        self, n: Seconds, *, loop: asyncio.AbstractEventLoop = None
-    ) -> None:
+    async def sleep(self, n: Seconds) -> None:
         """Sleep for ``n`` seconds, or until service stopped."""
         try:
             await asyncio.wait_for(
@@ -715,6 +705,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
     async def wait(self, *coros: WaitArgT, timeout: Seconds = None) -> WaitResult:
         """Wait for coroutines to complete, or until the service stops."""
+        timeout = want_seconds(timeout) if timeout is not None else None
         if coros:
             assert len(coros) == 1
             return await self._wait_one(coros[0], timeout=timeout)
@@ -725,27 +716,30 @@ class Service(ServiceBase, ServiceCallbacks):
     async def wait_many(
         self, coros: Iterable[WaitArgT], *, timeout: Seconds = None
     ) -> WaitResult:
+        timeout = want_seconds(timeout) if timeout is not None else None
         coro = asyncio.wait(
-            cast(Iterable[Awaitable[Any]], coros),
+            [
+                asyncio.ensure_future(
+                    c.wait() if isinstance(c, Event) else c, loop=self.loop
+                )
+                for c in coros
+            ],
             return_when=asyncio.ALL_COMPLETED,
-            timeout=want_seconds(timeout),
+            timeout=timeout,
         )
         return await self._wait_one(coro, timeout=timeout)
 
     async def wait_first(
         self, *coros: WaitArgT, timeout: Seconds = None
     ) -> WaitResults:
-        _coros: Mapping[WaitArgT, FutureT]
         timeout = want_seconds(timeout) if timeout is not None else None
         stopped = self._stopped
         crashed = self._crashed
         loop = self.loop
 
-        # asyncio.wait will also ensure_future, but we need the handle
-        # so we can cancel them (if we don't they will leak).
         futures = {
             coro: asyncio.ensure_future(
-                (coro.wait() if isinstance(coro, EVENT_TYPES) else coro),
+                (coro.wait() if isinstance(coro, Event) else coro),
                 loop=loop,
             )
             for coro in coros
@@ -789,8 +783,8 @@ class Service(ServiceBase, ServiceCallbacks):
 
     async def _wait_stopped(self, timeout: Seconds = None) -> None:
         timeout = want_seconds(timeout) if timeout is not None else None
-        stopped = self._stopped.wait()
-        crashed = self._crashed.wait()
+        stopped = asyncio.ensure_future(self._stopped.wait(), loop=self.loop)
+        crashed = asyncio.ensure_future(self._crashed.wait(), loop=self.loop)
         done, pending = await asyncio.wait(
             [stopped, crashed],
             return_when=asyncio.FIRST_COMPLETED,
@@ -1018,7 +1012,6 @@ class Service(ServiceBase, ServiceCallbacks):
         interval: Seconds,
         *,
         max_drift_correction: float = 0.1,
-        loop: asyncio.AbstractEventLoop = None,
         sleep: Callable[..., Awaitable] = None,
         clock: ClockArg = perf_counter,
         name: str = "",
@@ -1120,6 +1113,7 @@ class Service(ServiceBase, ServiceCallbacks):
 
 task = Service.task
 timer = Service.timer
+crontab = Service.crontab
 
 
 class _AwaitableService(Service):

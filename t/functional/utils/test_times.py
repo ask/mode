@@ -1,5 +1,5 @@
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta
 from time import monotonic
 
 import pytest
@@ -27,7 +27,6 @@ from mode.utils.times import (
         ("1333/d", 0.01542824074074074),
         (1, 1),
         (timedelta(seconds=1.234), 1.234),
-        (None, None),
     ],
 )
 def test_want_seconds(input, expected):

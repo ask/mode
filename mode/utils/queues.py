@@ -2,11 +2,11 @@
 import asyncio
 import math
 import typing
+from asyncio.locks import Event
 from collections import deque
 from typing import Any, Callable, List, Set, TypeVar, cast, no_type_check
 from weakref import WeakSet
 
-from .locks import Event
 from .objects import cached_property
 from .typing import Deque
 
@@ -60,8 +60,8 @@ class FlowControlEvent:
         loop: asyncio.AbstractEventLoop = None
     ) -> None:
         self.loop = loop
-        self._resume = Event(loop=self.loop)
-        self._suspend = Event(loop=self.loop)
+        self._resume = Event()
+        self._suspend = Event()
         if initially_suspended:
             self._suspend.set()
         self._queues = WeakSet()

@@ -1,10 +1,10 @@
 import signal
 import sys
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from mode.debug import Blocking, BlockingDetector
-from mode.utils.mocks import AsyncMock, Mock, patch
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="win32: no SIGALRM")
@@ -21,7 +21,7 @@ class test_BlockingDetector:
         def on_sleep(*args, **kwargs):
             block._stopped.set()
 
-        block.sleep.coro.side_effect = on_sleep
+        block.sleep.side_effect = on_sleep
         await block._deadman_switch(block)
 
     def test_reset_signal(self, block):

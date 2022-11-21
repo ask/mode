@@ -1,11 +1,11 @@
 from typing import Any
+from unittest.mock import Mock
 from weakref import ref
 
 import pytest
 
 from mode import label
 from mode.signals import Signal, SignalT, SyncSignal, SyncSignalT
-from mode.utils.mocks import Mock
 
 
 class X:

@@ -1,11 +1,12 @@
 """Text and string manipulation utilities."""
 from difflib import SequenceMatcher
-from typing import AnyStr, Iterable, Iterator, NamedTuple, Optional
-
-from .compat import want_str
+from typing import IO, AnyStr, Iterable, Iterator, NamedTuple, Optional
 
 __all__ = [
     "FuzzyMatch",
+    "want_bytes",
+    "want_str",
+    "isatty",
     "title",
     "didyoumean",
     "fuzzymatch_choices",
@@ -25,6 +26,32 @@ class FuzzyMatch(NamedTuple):
 
     ratio: float
     value: str
+
+
+def want_bytes(s: AnyStr) -> bytes:
+    """Convert string to bytes."""
+    if isinstance(s, str):
+        return s.encode()
+    return s
+
+
+def want_str(s: AnyStr) -> str:
+    """Convert bytes to string."""
+    if isinstance(s, bytes):
+        return s.decode()
+    return s
+
+
+def isatty(fh: IO) -> bool:
+    """Return True if fh has a controlling terminal.
+
+    Notes:
+        Use with e.g. :data:`sys.stdin`.
+    """
+    try:
+        return fh.isatty()
+    except AttributeError:
+        return False
 
 
 def title(s: str) -> str:

@@ -1,6 +1,7 @@
 import os
 import sys
 from contextlib import contextmanager
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -16,7 +17,7 @@ from mode.utils.imports import (
     smart_import,
     symbol_by_name,
 )
-from mode.utils.mocks import Mock, call, mask_module, patch
+from mode.utils.mocks import mask_module
 
 
 class test_FactoryMapping:

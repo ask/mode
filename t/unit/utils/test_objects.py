@@ -19,12 +19,13 @@ from typing import (
     Tuple,
     Union,
 )
+from unittest.mock import ANY, Mock
 
 import pytest
 
 from mode import Service, ServiceT
 from mode.services import ServiceBase, ServiceCallbacks
-from mode.utils.mocks import ANY, IN, Mock
+from mode.utils.mocks import IN
 from mode.utils.objects import (
     ForwardRef,
     InvalidAnnotation,
@@ -34,7 +35,6 @@ from mode.utils.objects import (
     _remove_optional,
     _restore_from_keywords,
     annotations,
-    cached_property,
     canoname,
     canonshortname,
     guess_polymorphic_type,
@@ -95,101 +95,6 @@ class A(B):
 )
 def test_iter_mro_reversed(cls, stop, expected_mro):
     assert list(iter_mro_reversed(cls, stop=stop)) == expected_mro
-
-
-class test_cached_property:
-    class X(object):
-        @cached_property
-        def foo(self):
-            return 42
-
-    class X_setter(object):
-        _foo = 1
-
-        @cached_property
-        def foo(self):
-            return self._foo
-
-        @foo.setter
-        def foo(self, value):
-            self._foo = value
-            return value
-
-    class X_deleter(object):
-        _foo = 1
-
-        @cached_property
-        def foo(self):
-            return self._foo
-
-        @foo.deleter
-        def foo(self, value):
-            assert value == 1
-            self._foo = None
-
-    @pytest.fixture()
-    def x(self):
-        return self.X()
-
-    @pytest.fixture()
-    def x_setter(self):
-        return self.X_setter()
-
-    @pytest.fixture()
-    def x_deleter(self):
-        return self.X_deleter()
-
-    def test_get(self, x):
-        assert "foo" not in x.__dict__
-        assert not type(x).foo.is_set(x)
-        assert x.foo == 42
-        assert x.__dict__["foo"] == 42
-        assert type(x).foo.is_set(x)
-        assert x.foo == 42
-
-    def test_get_class(self, x):
-        assert type(x).foo.__get__(None) is type(x).foo
-
-    def test_get_setter(self, x_setter):
-        assert x_setter.foo == 1
-
-    def test_set(self, x):
-        assert x.foo == 42
-        x.foo = 303
-        assert x.foo == 303
-        assert x.__dict__["foo"] == 303
-
-    def test_set_setter(self, x_setter):
-        assert x_setter.foo == 1
-        x_setter.foo = 2
-        assert x_setter.foo == 2
-        assert x_setter._foo == 2
-
-    def test_del(self, x):
-        assert "foo" not in x.__dict__
-        assert x.foo == 42
-        assert "foo" in x.__dict__
-        del x.foo
-        assert "foo" not in x.__dict__
-
-    def test_del_deleter(self, x_deleter):
-        del x_deleter.foo
-        assert x_deleter._foo == 1
-        assert x_deleter.foo == 1
-        del x_deleter.foo
-        assert x_deleter._foo is None
-
-    def test_get__class_attribute(self):
-        class X:
-            foo = "quick brown fox"
-
-            def _get_bar(self):
-                return 42
-
-            bar = cached_property(_get_bar, class_attribute="foo")
-
-        assert X.bar == "quick brown fox"
-        assert X().bar == 42
 
 
 def test_Unordered():

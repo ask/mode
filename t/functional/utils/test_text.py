@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import pytest
 
 from mode.utils import text
@@ -79,7 +81,12 @@ def test_fuzzymatch_best(choices, choice, expected):
 @pytest.mark.parametrize(
     "origin,name,prefix,expected",
     [
-        ("examples.simple", "examples.simple.Withdrawal", "[...]", "[...]Withdrawal"),
+        (
+            "examples.simple",
+            "examples.simple.Withdrawal",
+            "[...]",
+            "[...]Withdrawal",
+        ),
         (
             "examples.other",
             "examples.simple.Withdrawal",
@@ -124,7 +131,10 @@ def test_maybecat(s, prefix, suffix, expected):
 @pytest.mark.parametrize(
     "s,expected",
     [
-        ("faust.utils.transformators.frobster", "faust.utils.transform[.]frobster"),
+        (
+            "faust.utils.transformators.frobster",
+            "faust.utils.transform[.]frobster",
+        ),
         ("foo.bar.baz", "foo.bar.baz"),
         (
             "foobarbazdeliciouslybubblyfluffychocolatebar",
@@ -134,3 +144,33 @@ def test_maybecat(s, prefix, suffix, expected):
 )
 def test_shorten_fqdn(s, expected):
     assert text.shorten_fqdn(s) == expected
+
+
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        ("foo", b"foo"),
+        (b"foo", b"foo"),
+    ],
+)
+def test_want_bytes(input, expected):
+    assert text.want_bytes(input) == expected
+
+
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        (b"foo", "foo"),
+        ("foo", "foo"),
+    ],
+)
+def test_want_str(input, expected):
+    assert text.want_str(input) == expected
+
+
+def test_isatty():
+    m = Mock()
+    m.isatty.return_value = True
+    assert text.isatty(m)
+    m.isatty.side_effect = AttributeError()
+    assert not text.isatty(m)

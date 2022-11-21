@@ -55,4 +55,4 @@ class Policy(aiogevent.EventLoopPolicy):  # type: ignore
 
 policy = Policy()
 asyncio.set_event_loop_policy(policy)
-loop = asyncio.get_event_loop()
+loop = asyncio.get_event_loop_policy().get_event_loop()

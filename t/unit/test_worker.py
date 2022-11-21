@@ -3,12 +3,13 @@ import signal
 import sys
 from contextlib import contextmanager
 from signal import Signals
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from mode import Service
 from mode.debug import BlockingDetector
-from mode.utils.mocks import AsyncMock, Mock, call, mask_module, patch, patch_module
+from mode.utils.mocks import call, mask_module, patch_module
 from mode.worker import Worker, exiting
 
 
@@ -83,13 +84,13 @@ class test_Worker:
 
         await worker.on_first_start()
         worker._setup_logging.assert_called_once_with()
-        worker.on_execute.coro.assert_called_once_with()
+        worker.on_execute.assert_awaited_once_with()
         worker._add_monitor.assert_not_called()
         worker.install_signal_handlers.assert_called_once_with()
 
         worker.debug = True
         await worker.on_first_start()
-        worker._add_monitor.coro.assert_called_once_with()
+        worker._add_monitor.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test_on_first_start__override_logging(self):
@@ -97,7 +98,7 @@ class test_Worker:
         self._setup_for_on_first_start(worker)
         await worker.on_first_start()
 
-        worker._setup_logging.assert_not_called()
+        worker._setup_logging.assert_not_called()  # type: ignore[attr-defined]
 
     @pytest.mark.asyncio
     async def test_on_execute(self, worker):
@@ -116,15 +117,15 @@ class test_Worker:
         worker_inst = Worker(
             loglevel=5,
             logfile="TEMP",
-            logging_config=None,
             loghandlers=loghandlers,
+            logging_config=None,
         )
         worker_inst._setup_logging()
         self.setup_logging.assert_called_once_with(
             loglevel=5,
             logfile="TEMP",
-            logging_config=None,
             loghandlers=loghandlers or [],
+            logging_config=None,
         )
 
     def test_setup_logging_raises_exception(self, worker):
@@ -144,32 +145,16 @@ class test_Worker:
         with patch("mode.utils.logging.setup_logging"):
             worker._setup_logging()
 
-    def test_stop_and_shutdown(self, worker):
-        worker.loop = Mock()
-        worker.stop = Mock()
-        worker._signal_stop_future = None
-        worker._stopped.set()
-        worker._shutdown_loop = Mock()
-
-        worker.stop_and_shutdown()
-        worker._shutdown_loop.assert_called_once_with()
-
-        worker._signal_stop_future = Mock()
-        worker._signal_stop_future.done.return_value = False
-        worker.stop_and_shutdown()
-
-        worker.loop.run_until_complete.assert_called_with(worker._signal_stop_future)
-
     @pytest.mark.asyncio
     async def test_maybe_start_blockdetection(self, worker):
         worker._blocking_detector = Mock(maybe_start=AsyncMock())
         worker.debug = False
         await worker.maybe_start_blockdetection()
-        worker._blocking_detector.maybe_start.assert_not_called()
+        worker._blocking_detector.maybe_start.assert_not_awaited()
 
         worker.debug = True
         await worker.maybe_start_blockdetection()
-        worker._blocking_detector.maybe_start.coro.assert_called_once_with()
+        worker._blocking_detector.maybe_start.assert_awaited_once_with()
 
     def test_instal_signal_handlers(self, worker):
         worker._install_signal_handlers_windows = Mock()
@@ -242,7 +227,7 @@ class test_Worker:
     async def test__stop_on_signal(self, worker):
         worker.stop = AsyncMock()
         await worker._stop_on_signal(Signals.SIGTERM)
-        worker.stop.coro.assert_called_once_with()
+        worker.stop.assert_awaited_once()
 
     def test_execute_from_commandline(self, worker):
         with self.patch_execute(worker) as ensure_future:
@@ -346,20 +331,20 @@ class test_Worker:
         worker._gather_futures = Mock()
         worker._gather_all = Mock()
         worker.loop.is_running.return_value = is_running
-        worker._sentinel_task = Mock()
+        worker._sentinel_task = AsyncMock()
         with patch("asyncio.ensure_future") as ensure_future:
-            with patch("asyncio.sleep"):
+            with patch("asyncio.sleep", AsyncMock()):
                 yield ensure_future
 
     @pytest.mark.asyncio
     async def test__sentinel_task(self, worker):
         with patch("asyncio.sleep", AsyncMock()) as sleep:
             await worker._sentinel_task()
-            sleep.coro.assert_called_once_with(1.0)
+            sleep.assert_called_once_with(1.0)
 
     def test__gather_all(self, worker):
         with patch("mode.worker.all_tasks") as all_tasks:
-            with patch("asyncio.sleep"):
+            with patch("asyncio.sleep", AsyncMock()):
                 all_tasks.return_value = [Mock(), Mock(), Mock()]
                 worker.loop = Mock()
 
@@ -390,10 +375,10 @@ class test_Worker:
         worker.daemon = False
         worker.wait_until_stopped = AsyncMock()
         await worker.on_started()
-        worker.wait_until_stopped.assert_not_called()
+        worker.wait_until_stopped.assert_not_awaited()
         worker.daemon = True
         await worker.on_started()
-        worker.wait_until_stopped.coro.assert_called_once()
+        worker.wait_until_stopped.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test__add_monitor(self, worker):

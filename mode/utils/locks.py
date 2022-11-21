@@ -82,5 +82,5 @@ class Event:
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
         if self._loop is None:
-            self._loop = asyncio.get_event_loop()
+            self._loop = asyncio.get_event_loop_policy().get_event_loop()
         return self._loop

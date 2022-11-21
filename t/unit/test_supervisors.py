@@ -1,4 +1,5 @@
 import asyncio
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -10,7 +11,6 @@ from mode.supervisors import (
     OneForAllSupervisor,
     SupervisorStrategy,
 )
-from mode.utils.mocks import AsyncContextManagerMock, AsyncMock, Mock, patch
 
 
 class test_SupervisorStrategy:
@@ -43,8 +43,8 @@ class test_SupervisorStrategy:
         sup.start = AsyncMock()
         sup.stop = AsyncMock()
         await sup.run_until_complete()
-        sup.start.coro.assert_called_once_with()
-        sup.stop.coro.assert_called_once_with()
+        sup.start.assert_awaited_once_with()
+        sup.stop.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test__supervisor__second_stop(self, *, sup, service):
@@ -56,7 +56,7 @@ class test_SupervisorStrategy:
                     sup._stopped.set()
                 raise asyncio.TimeoutError()
 
-            wait_for.coro.side_effect = on_wait_for
+            wait_for.side_effect = on_wait_for
 
             sup.start_services = AsyncMock()
             sup.restart_services = AsyncMock()
@@ -75,42 +75,42 @@ class test_SupervisorStrategy:
         sup._services[0].started = False
         await sup.on_stop()
         for s in sup._services[1:]:
-            s.stop.coro.assert_called_once_with()
+            s.stop.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test_on_stop__raises_MemoryError(self, *, sup, service):
-        service.stop.coro.side_effect = MemoryError()
+        service.stop.side_effect = MemoryError()
         with pytest.raises(MemoryError):
             await sup.on_stop()
 
     @pytest.mark.asyncio
     async def test_on_stop__raises_exc(self, *, sup, service):
         sup.log.exception = Mock()
-        service.stop.coro.side_effect = KeyError("foo")
+        service.stop.side_effect = KeyError("foo")
         await sup.on_stop()
         sup.log.exception.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_restart_service(self, *, sup, service):
         service.restart = AsyncMock()
-        sup._bucket = AsyncContextManagerMock()
+        sup._bucket = AsyncMock()
         await sup.restart_service(service)
-        service.restart.coro.assert_called_once_with()
+        service.restart.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test_restart_service__max_restarts(self, *, sup, service):
         sup.log.warning = Mock(0)
-        sup._bucket = AsyncContextManagerMock()
+        sup._bucket = AsyncMock()
         service.restart = AsyncMock()
-        service.restart.coro.side_effect = MaxRestartsExceeded()
+        service.restart.side_effect = MaxRestartsExceeded()
         with pytest.raises(SystemExit):
             await sup.restart_service(service)
-        service.restart.coro.assert_called_once_with()
+        service.restart.assert_awaited_once_with()
         sup.log.warning.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_restart_service__replacement(self, *, sup):
-        sup._bucket = AsyncContextManagerMock()
+        sup._bucket = AsyncMock()
         s1 = Mock(name="s1")
         s2 = Mock(name="s2")
         s3 = Mock(name="s3")
@@ -121,7 +121,7 @@ class test_SupervisorStrategy:
         s4 = Mock(name="s4")
         s4.supervisor = None
         sup.replacement = AsyncMock()
-        sup.replacement.coro.return_value = s4
+        sup.replacement.return_value = s4
 
         await sup.restart_service(s2)
 

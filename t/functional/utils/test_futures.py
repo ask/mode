@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+from unittest.mock import Mock
 
 import pytest
 
@@ -12,7 +13,6 @@ from mode.utils.futures import (
     maybe_set_result,
     stampede,
 )
-from mode.utils.mocks import Mock
 
 
 class X:
@@ -144,7 +144,7 @@ class test_StampedeWrapper:
 
 @pytest.mark.asyncio
 async def test_maybe_set_exception():
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop_policy().get_event_loop()
     future = loop.create_future()
     maybe_set_exception(future, KeyError())
     with pytest.raises(KeyError):
@@ -157,7 +157,7 @@ async def test_maybe_set_exception():
 
 @pytest.mark.asyncio
 async def test_maybe_set_result():
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop_policy().get_event_loop()
     future = loop.create_future()
     maybe_set_result(future, 42)
     assert future.result() == 42
