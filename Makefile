@@ -162,7 +162,7 @@ test-all: clean-pyc
 	$(TOX)
 
 test:
-	$(PYTHON) setup.py test
+	$(PYTEST) .
 
 cov:
 	$(PYTEST) -x --cov="$(PROJ)" --cov-report=html
