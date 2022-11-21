@@ -1,4 +1,5 @@
 -r default.txt
+mock; python_version<'3.8'  # backport that contains AsyncMock class, includes mock library as dependency
 bandit
 black
 isort

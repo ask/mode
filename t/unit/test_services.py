@@ -1,7 +1,13 @@
 import asyncio
+import sys
 from functools import partial
 from typing import AsyncContextManager, ContextManager
-from unittest.mock import ANY, AsyncMock, MagicMock, Mock, call, patch
+from unittest.mock import ANY, MagicMock, Mock, call, patch
+
+if sys.version_info < (3, 8):
+    from mock.mock import AsyncMock
+else:
+    from unittest.mock import AsyncMock
 
 import pytest
 
@@ -367,10 +373,9 @@ class test_Service:
         service._stopped = Mock()
         service._crashed = Mock()
 
-        with (
-            patch("asyncio.wait", AsyncMock()) as wait,
-            patch("asyncio.ensure_future", Mock()) as ensure_future,
-        ):
+        with patch("asyncio.wait", AsyncMock()) as wait, patch(
+            "asyncio.ensure_future", Mock()
+        ) as ensure_future:
             f1 = Mock()
             f2 = Mock()
             f3 = Mock()
@@ -592,10 +597,9 @@ class test_Service:
 
     @pytest.mark.asyncio
     async def test_wait_many(self, *, service):
-        with (
-            patch("asyncio.wait", AsyncMock()) as wait,
-            patch("asyncio.ensure_future", Mock()) as ensure_future,
-        ):
+        with patch("asyncio.wait", AsyncMock()) as wait, patch(
+            "asyncio.ensure_future", Mock()
+        ) as ensure_future:
             service._wait_one = AsyncMock()
             m1 = AsyncMock()
             m2 = AsyncMock()

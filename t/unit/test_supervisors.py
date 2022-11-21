@@ -1,5 +1,11 @@
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+import sys
+from unittest.mock import Mock, patch
+
+if sys.version_info < (3, 8):
+    from mock.mock import AsyncMock
+else:
+    from unittest.mock import AsyncMock
 
 import pytest
 

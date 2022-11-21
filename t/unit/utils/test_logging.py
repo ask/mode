@@ -2,15 +2,19 @@ import asyncio
 import io
 import logging
 import sys
-import time
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
-from typing import IO, Type
-from unittest.mock import ANY, AsyncMock, Mock, call, patch
+from typing import IO
+from unittest.mock import ANY, Mock, call, patch
+
+if sys.version_info < (3, 8):
+    from mock.mock import AsyncMock
+else:
+    from unittest.mock import AsyncMock
 
 import pytest
 
 from mode.utils.logging import (
+    HAS_STACKLEVEL,
     CompositeLogger,
     DefaultFormatter,
     ExtensionFormatter,
@@ -34,11 +38,17 @@ from mode.utils.logging import (
 
 
 def log_called_with(logger, *args, stacklevel, **kwargs):
-    logger.log.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
+    if HAS_STACKLEVEL:
+        logger.log.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
+    else:
+        logger.log.assert_called_once_with(*args, **kwargs)
 
 
 def formatter_called_with(formatter, *args, stacklevel, **kwargs):
-    formatter.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
+    if HAS_STACKLEVEL:
+        formatter.assert_called_once_with(*args, stacklevel=stacklevel, **kwargs)
+    else:
+        formatter.assert_called_once_with(*args, **kwargs)
 
 
 class test_CompositeLogger:
@@ -632,7 +642,8 @@ def _assert_log_severities(logger):
 
 
 def _log_kwargs(kwargs):
-    kwargs.setdefault("stacklevel", 3)
+    if HAS_STACKLEVEL:
+        kwargs.setdefault("stacklevel", 3)
     return kwargs
 
 

@@ -1,6 +1,11 @@
 import signal
 import sys
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
+
+if sys.version_info < (3, 8):
+    from mock.mock import AsyncMock
+else:
+    from unittest.mock import AsyncMock
 
 import pytest
 

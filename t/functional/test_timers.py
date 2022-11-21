@@ -1,9 +1,15 @@
 import asyncio
+import sys
 from contextlib import asynccontextmanager
 from functools import reduce
 from itertools import chain
 from typing import List, NamedTuple, Tuple
-from unittest.mock import ANY, AsyncMock, Mock, patch
+from unittest.mock import ANY, Mock, patch
+
+if sys.version_info < (3, 8):
+    from mock.mock import AsyncMock
+else:
+    from unittest.mock import AsyncMock
 
 import pytest
 
