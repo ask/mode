@@ -264,7 +264,8 @@ class ServiceThread(Service):
     @Service.task
     async def _thread_keepalive(self) -> None:
         async for sleep_time in self.itertimer(
-            1.0, name=f"_thread_keepalive-{self.label}", loop=self.thread_loop
+            1.0,
+            name=f"_thread_keepalive-{self.label}",
         ):  # pragma: no cover
             # The consumer thread will have a separate event loop,
             # and so we use this trick to make sure our loop is
